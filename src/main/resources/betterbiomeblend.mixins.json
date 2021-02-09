@@ -1,0 +1,11 @@
+{
+	"required": true,
+	"package": "fionathemortal.betterbiomeblend.mixin",
+	"compatibilityLevel": "JAVA_8",
+	"refmap": "betterbiomeblend.refmap.json",
+	"client": [
+		MixinBiomeColors
+	],
+	"minVersion": "0.8"
+}
+
