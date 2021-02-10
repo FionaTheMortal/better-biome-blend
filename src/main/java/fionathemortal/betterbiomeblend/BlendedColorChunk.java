@@ -7,7 +7,6 @@ public class BlendedColorChunk
 	public int[] data;
 	
 	public long key;
-	public int  dimension;
 	public int  index;
 	
 	public AtomicInteger refCount = new AtomicInteger();

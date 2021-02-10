@@ -21,10 +21,8 @@ public class MixinBiomeColors
 		
 		int chunkX = x >> 4;
 		int chunkZ = z >> 4;
-		
-		int dimension = BetterBiomeBlend.currentDimensionID;
-		
-		BlendedColorChunk chunk = BetterBiomeBlend.getBlendedWaterColorChunk(worldIn, chunkX, chunkZ, dimension);
+
+		BlendedColorChunk chunk = BetterBiomeBlend.getBlendedWaterColorChunk(worldIn, chunkX, chunkZ);
 		
 		int blockX = x & 15;
 		int blockZ = z & 15;
@@ -39,13 +37,41 @@ public class MixinBiomeColors
 	public static int 
 	getGrassColor(IBlockDisplayReader worldIn, BlockPos blockPosIn) 
 	{
-		return 0;
+		int x = blockPosIn.getX();
+		int z = blockPosIn.getZ();
+		
+		int chunkX = x >> 4;
+		int chunkZ = z >> 4;
+
+		BlendedColorChunk chunk = BetterBiomeBlend.getBlendedGrassColorChunk(worldIn, chunkX, chunkZ);
+		
+		int blockX = x & 15;
+		int blockZ = z & 15;
+		
+		int blockIndex = blockX | (blockZ << 4);
+		int result = chunk.data[blockIndex];
+		
+		return result;
 	}
 
 	@Overwrite
 	public static int 
 	getFoliageColor(IBlockDisplayReader worldIn, BlockPos blockPosIn) 
 	{
-		return 0;
+		int x = blockPosIn.getX();
+		int z = blockPosIn.getZ();
+		
+		int chunkX = x >> 4;
+		int chunkZ = z >> 4;
+		
+		BlendedColorChunk chunk = BetterBiomeBlend.getBlendedFoliageColorChunk(worldIn, chunkX, chunkZ);
+		
+		int blockX = x & 15;
+		int blockZ = z & 15;
+		
+		int blockIndex = blockX | (blockZ << 4);
+		int result = chunk.data[blockIndex];
+		
+		return result;
 	}
 }
