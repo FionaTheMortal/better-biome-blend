@@ -150,6 +150,9 @@ public class BlendedColorCache
 		return result;
 	}
 	
+	// BUG: If 2 threads start generating the same chunk with the first one being an invalid chunk. If the first one gets done after the second it will take its place
+	//      in the hash as the legitimate chunk. This will cause incorrect colors to be rendered.
+	
 	public void
 	putChunk(BlendedColorChunk chunk)
 	{
