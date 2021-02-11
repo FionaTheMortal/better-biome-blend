@@ -6,8 +6,9 @@ public class BlendedColorChunk
 {
 	public int[] data;
 	
-	public long key;
-	public int  index;
+	public long    key;
+	public int     index;
+	public int     invalidationCounter;
 	
 	public AtomicInteger refCount = new AtomicInteger();
 	

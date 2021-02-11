@@ -11,8 +11,9 @@ public class BlendedColorCache
 	public Long2ObjectLinkedOpenHashMap<BlendedColorChunk> hash;
 	public List<BlendedColorChunk> freeList;
 	
-	public int chunkCount;
-
+	public int chunkCount; 
+	public int invalidationCounter;
+	
 	public
 	BlendedColorCache(int count)
 	{
@@ -36,49 +37,7 @@ public class BlendedColorCache
 		
 		return result;
 	}
-	
-	public void
-	resize(int newCount)
-	{
-		int countDiff = newCount - chunkCount;
-		
-		synchronized(this)
-		{
-			if (countDiff > 0)
-			{
-				for (int index = 0;
-					index < countDiff;
-					++index)
-				{
-					freeList.add(new BlendedColorChunk());
-				}
-			}
-			else if (countDiff < 0)
-			{
-				int toRemove = -countDiff;
-				int fromFree =  Math.min(freeList.size(), toRemove);
-				
-				for (int index = 0;
-					index < fromFree;
-					++index)
-				{
-					freeList.remove(freeList.size() - 1);
-				}
-				
-				int remaining = toRemove - fromFree;
-				
-				for (int index = 0;
-					index < remaining;
-					++index)
-				{
-					hash.removeLast();
-				}
-			}
-		}
-		
-		chunkCount = newCount;
-	}
-	
+
 	public void
 	releaseChunkWithoutLock(BlendedColorChunk chunk)
 	{
@@ -109,6 +68,8 @@ public class BlendedColorCache
 	{
 		synchronized(this)
 		{
+			++invalidationCounter;
+			
 			for (int x = -1;
 				x <= 1;
 				++x)
@@ -131,11 +92,11 @@ public class BlendedColorCache
 	}
 
 	public BlendedColorChunk
-	getChunk(int chunkX, int chunkZ)
+	getChunkFromHash(int chunkX, int chunkZ)
 	{
-		BlendedColorChunk result;
-		
 		long key = getChunkKey(chunkX, chunkZ);
+	
+		BlendedColorChunk result;
 		
 		synchronized(this)
 		{
@@ -150,27 +111,48 @@ public class BlendedColorCache
 		return result;
 	}
 	
-	// BUG: If 2 threads start generating the same chunk with the first one being an invalid chunk. If the first one gets done after the second it will take its place
-	//      in the hash as the legitimate chunk. This will cause incorrect colors to be rendered.
+	// BUG:  If 2 threads start generating the same chunk with the first one being an invalid chunk. If the first one gets done after the second it will take its place
+	//       in the hash as the legitimate chunk. This will cause incorrect colors to be rendered.
+	
+	// NOTE: Adding an invalidationCounter does not fix the issue
+	//       We also do not invalidate the thread local chunk. To if the same thread generates the same chunk first incomplete and then complete the second will be incorrect.
+	//       The thread local cache seems to be causing it. So that ^ is probably the issue
 	
 	public void
-	putChunk(BlendedColorChunk chunk)
+	addChunkToHash(BlendedColorChunk chunk)
 	{
 		chunk.acquire();
 		
 		synchronized(this)
-		{		
-			BlendedColorChunk prev = hash.putAndMoveToFirst(chunk.key, chunk);
+		{
+			BlendedColorChunk prev = hash.getAndMoveToFirst(chunk.key);
 			
 			if (prev != null)
 			{
-				releaseChunkWithoutLock(prev);
+				BlendedColorChunk chunkToRelease;
+				
+				if (chunk.invalidationCounter >= prev.invalidationCounter)
+				{
+					hash.putAndMoveToFirst(chunk.key, chunk);
+					
+					chunkToRelease = prev;
+				}
+				else
+				{
+					chunkToRelease = chunk;
+				}
+				
+				releaseChunkWithoutLock(chunkToRelease);
+			}
+			else
+			{
+				hash.putAndMoveToFirst(chunk.key, chunk);
 			}
 		}
 	}
 	
 	public BlendedColorChunk
-	newChunk(int chunkX, int chunkZ)
+	allocateChunk(int chunkX, int chunkZ)
 	{
 		BlendedColorChunk result = null;
 		
@@ -199,9 +181,11 @@ public class BlendedColorCache
 			}
 		}
 		
-		result.acquire();
 		result.key = key;
-
+		result.invalidationCounter = invalidationCounter;
+		
+		result.acquire();
+		
 		return result;
 	}
 }

@@ -3,23 +3,40 @@ package fionathemortal.betterbiomeblend;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import fionathemortal.betterbiomeblend.mixin.AccessorAbstractSlider;
 import fionathemortal.betterbiomeblend.mixin.AccessorChunkRenderCache;
+import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
+import net.minecraft.client.AbstractOption;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.IGuiEventListener;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.VideoSettingsScreen;
+import net.minecraft.client.gui.widget.OptionSlider;
+import net.minecraft.client.gui.widget.Widget;
+import net.minecraft.client.gui.widget.list.OptionsRowList;
 import net.minecraft.client.renderer.chunk.ChunkRenderCache;
+import net.minecraft.client.settings.SliderPercentageOption;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.CubeCoordinateIterator;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IChunk;
+import net.minecraftforge.client.event.GuiScreenEvent.InitGuiEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -45,13 +62,76 @@ public class BetterBiomeBlend
 
 	public static int blendRadius = 14;
 	
+	public static final SliderPercentageOption BIOME_BLEND_RADIUS = new SliderPercentageOption("options.biomeBlendRadius", 0.0D, 14.0D, 1.0F, (settings) -> {
+		return (double)settings.biomeBlendRadius;
+	}, (settings, optionValues) -> {
+		settings.biomeBlendRadius = MathHelper.clamp((int)optionValues.doubleValue(), 0, 14);
+		Minecraft.getInstance().worldRenderer.loadRenderers();
+	}, (settings, optionValues) -> {
+		double d0 = optionValues.get(settings);
+		int i = (int)d0 * 2 + 1;
+		
+		return new TranslationTextComponent("options.generic_value", new TranslationTextComponent("options.biomeBlendRadius"), new TranslationTextComponent("options.biomeBlendRadius." + i));
+	});
+
 	@SubscribeEvent
 	public static void
 	chunkLoadedEvent(ChunkEvent.Load event)
 	{
 		chunkWasLoaded(event.getChunk());
 	}
-	
+	    
+    @SubscribeEvent
+    public static void
+    postInitGUIEvent(InitGuiEvent.Post event)
+    {
+    	Screen screen = event.getGui();
+    	
+    	if (screen instanceof VideoSettingsScreen)
+    	{
+    		VideoSettingsScreen videoSettingsScreen = (VideoSettingsScreen)screen;
+    		
+    		List<? extends IGuiEventListener> children = videoSettingsScreen.getEventListeners();
+    		
+    		for (IGuiEventListener child : children)
+    		{
+    			if (child instanceof OptionsRowList)
+    			{
+    				OptionsRowList rowList = (OptionsRowList)child;
+    				
+    				List<OptionsRowList.Row> rowListEntries = rowList.getEventListeners();
+    				
+    				for (int index = 0;
+    					index < rowListEntries.size();
+    					++index)
+    				{
+    					OptionsRowList.Row row = rowListEntries.get(index);
+    					
+        				List<? extends IGuiEventListener> rowChildren = row.getEventListeners();
+
+        				if (rowChildren.size() == 1)
+        				{
+        					IGuiEventListener rowChild = rowChildren.get(0);
+        					
+        					if (rowChild instanceof AccessorOptionSlider)
+        					{
+        						AccessorOptionSlider accessor = (AccessorOptionSlider)rowChild;
+        						
+        						if (accessor.getOption() == AbstractOption.BIOME_BLEND_RADIUS)
+        						{
+        							
+        							OptionsRowList.Row newRow = OptionsRowList.Row.create(screen.getMinecraft().gameSettings, screen.width, BIOME_BLEND_RADIUS);
+        							
+        							rowListEntries.set(index, newRow);
+        						}
+        					}
+        				}
+    				}
+    			}
+    		}
+    	}
+    }
+    
 	public
 	BetterBiomeBlend()
 	{
@@ -67,18 +147,6 @@ public class BetterBiomeBlend
 		waterColorCache.invalidateNeighbourhood(x, z);
 		grassColorCache.invalidateNeighbourhood(x, z);
 		foliageColorCache.invalidateNeighbourhood(x, z);
-	}
-	
-	public static void
-	viewDistanceChanged(int newValue)
-	{
-		int cacheRadius = Math.max(2, newValue) + 3;
-		int cacheDim = 2 * cacheRadius + 1;
-		int cacheSize = cacheDim * cacheDim;
-		
-		waterColorCache.resize(cacheSize);
-		grassColorCache.resize(cacheSize);
-		foliageColorCache.resize(cacheSize);
 	}
 	
 	public static GenCache
@@ -420,11 +488,11 @@ public class BetterBiomeBlend
 	public static BlendedColorChunk
 	getBlendedColorChunk(IBlockDisplayReader worldIn, int chunkX, int chunkZ, BlendedColorCache cache, BiomeColorType colorType)
 	{
-		BlendedColorChunk chunk = cache.getChunk(chunkX, chunkZ);
+		BlendedColorChunk chunk = cache.getChunkFromHash(chunkX, chunkZ);
 		
 		if (chunk == null)
 		{
-			chunk = cache.newChunk(chunkX, chunkZ);
+			chunk = cache.allocateChunk(chunkX, chunkZ);
 			
 			World world = null;
 			
@@ -439,7 +507,7 @@ public class BetterBiomeBlend
 			
 			generateBlendedColorChunk(world, chunk.data, chunkX, chunkZ, colorType);
 			
-			cache.putChunk(chunk);
+			cache.addChunkToHash(chunk);
 		}
 		
 		return chunk;
@@ -448,13 +516,15 @@ public class BetterBiomeBlend
 	public static BlendedColorChunk
 	getBlendedWaterColorChunk(IBlockDisplayReader world, int chunkX, int chunkZ)
 	{
-		BlendedColorChunk chunk = getThreadLocalChunk(threadLocalWaterChunk, chunkX, chunkZ);
+		BlendedColorChunk chunk; // = getThreadLocalChunk(threadLocalWaterChunk, chunkX, chunkZ);
 		
-		if (chunk == null)
+		// if (chunk == null)
 		{
 			chunk = getBlendedColorChunk(world, chunkX, chunkZ, waterColorCache, BiomeColorType.WATER);
 			
-			setThreadLocalChunk(threadLocalWaterChunk, chunk, waterColorCache);
+			// setThreadLocalChunk(threadLocalWaterChunk, chunk, waterColorCache);
+			
+			chunk.release();
 		}
 		
 		return chunk;

@@ -5,6 +5,7 @@
 	"refmap": "betterbiomeblend.refmap.json",
 	"client": [
 		AccessorChunkRenderCache,
+		AccessorOptionSlider,
 		MixinBiomeColors
 	],
 	"minVersion": "0.8"
