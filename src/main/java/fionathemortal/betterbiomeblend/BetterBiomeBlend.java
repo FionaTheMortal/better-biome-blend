@@ -8,6 +8,7 @@ import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -42,7 +43,7 @@ public class BetterBiomeBlend
 	
 	public static final int chunkDim = 16;
 	
-	public static final List<GenCache> freeGenCaches = new ArrayList<GenCache>();
+	public static final Stack<GenCache> freeGenCaches = new Stack<GenCache>();
 	
 	public static final ThreadLocal<BlendedColorChunk> threadLocalWaterChunk   = ThreadLocal.withInitial(() -> { BlendedColorChunk chunk = new BlendedColorChunk(); chunk.acquire(); return chunk; });
 	public static final ThreadLocal<BlendedColorChunk> threadLocalGrassChunk   = ThreadLocal.withInitial(() -> { BlendedColorChunk chunk = new BlendedColorChunk(); chunk.acquire(); return chunk; });
@@ -72,7 +73,7 @@ public class BetterBiomeBlend
 	{
 		MinecraftForge.EVENT_BUS.register(BetterBiomeBlend.class);
 	}
-		
+
 	@SubscribeEvent
 	public static void
 	chunkLoadedEvent(ChunkEvent.Load event)
@@ -80,8 +81,60 @@ public class BetterBiomeBlend
 		chunkWasLoaded(event.getChunk());
 	}
 	
+	@SuppressWarnings("resource")
+	public static void
+	replaceBiomeBlendRadiusOption(VideoSettingsScreen screen)
+	{
+		List<? extends IGuiEventListener> children = screen.getEventListeners();
+		
+		for (IGuiEventListener child : children)
+		{
+			if (child instanceof OptionsRowList)
+			{
+				OptionsRowList rowList = (OptionsRowList)child;
+				
+				List<OptionsRowList.Row> rowListEntries = rowList.getEventListeners();
+				
+				boolean replacedOption = false;
+				
+				for (int index = 0;
+					index < rowListEntries.size();
+					++index)
+				{
+					OptionsRowList.Row row = rowListEntries.get(index);
+					
+    				List<? extends IGuiEventListener> rowChildren = row.getEventListeners();
+    				
+    				for (IGuiEventListener rowChild : rowChildren)
+    				{
+    					if (rowChild instanceof AccessorOptionSlider)
+    					{
+    						AccessorOptionSlider accessor = (AccessorOptionSlider)rowChild;
+    						
+    						if (accessor.getOption() == AbstractOption.BIOME_BLEND_RADIUS)
+    						{
+    							OptionsRowList.Row newRow = OptionsRowList.Row.create(
+									screen.getMinecraft().gameSettings, 
+									screen.width, 
+									BIOME_BLEND_RADIUS);
+    							
+    							rowListEntries.set(index, newRow);
+    							
+    							replacedOption = true;
+    						}
+    					}
+    				}
+    				
+    				if (replacedOption)
+    				{
+    					break;
+    				}
+				}
+			}
+		}
+	}
+	
     @SubscribeEvent
-    @SuppressWarnings("resource")
     public static void
     postInitGUIEvent(InitGuiEvent.Post event)
     {
@@ -91,53 +144,7 @@ public class BetterBiomeBlend
     	{
     		VideoSettingsScreen videoSettingsScreen = (VideoSettingsScreen)screen;
     		
-    		List<? extends IGuiEventListener> children = videoSettingsScreen.getEventListeners();
-    		
-    		for (IGuiEventListener child : children)
-    		{
-    			if (child instanceof OptionsRowList)
-    			{
-    				OptionsRowList rowList = (OptionsRowList)child;
-    				
-    				List<OptionsRowList.Row> rowListEntries = rowList.getEventListeners();
-    				
-    				boolean replacedOption = false;
-    				
-    				for (int index = 0;
-    					index < rowListEntries.size();
-    					++index)
-    				{
-    					OptionsRowList.Row row = rowListEntries.get(index);
-    					
-        				List<? extends IGuiEventListener> rowChildren = row.getEventListeners();
-        				
-        				for (IGuiEventListener rowChild : rowChildren)
-        				{
-        					if (rowChild instanceof AccessorOptionSlider)
-        					{
-        						AccessorOptionSlider accessor = (AccessorOptionSlider)rowChild;
-        						
-        						if (accessor.getOption() == AbstractOption.BIOME_BLEND_RADIUS)
-        						{
-        							OptionsRowList.Row newRow = OptionsRowList.Row.create(
-    									screen.getMinecraft().gameSettings, 
-    									screen.width, 
-    									BIOME_BLEND_RADIUS);
-        							
-        							rowListEntries.set(index, newRow);
-        							
-        							replacedOption = true;
-        						}
-        					}
-        				}
-        				
-        				if (replacedOption)
-        				{
-        					break;
-        				}
-    				}
-    			}
-    		}
+    		replaceBiomeBlendRadiusOption(videoSettingsScreen);
     	}
     }
     	
@@ -181,50 +188,12 @@ public class BetterBiomeBlend
 	public static void
 	chunkWasLoaded(IChunk chunk)
 	{
-		int x = chunk.getPos().x;
-		int z = chunk.getPos().z;
+		int chunkX = chunk.getPos().x;
+		int chunkZ = chunk.getPos().z;
 		
-		waterColorCache.invalidateNeighbourhood(x, z);
-		grassColorCache.invalidateNeighbourhood(x, z);
-		foliageColorCache.invalidateNeighbourhood(x, z);
-	}
-	
-	public static GenCache
-	acquireGenCache()
-	{
-		GenCache result = new GenCache();
-		
-		synchronized(freeGenCaches)
-		{
-			if (freeGenCaches.size() > 0)
-			{
-				result.colors = freeGenCaches.remove(freeGenCaches.size() - 1);
-			}
-			
-			result.blendRadius = blendRadius;
-		}
-		
-		if (result.colors == null)
-		{
-			int blendRadius = result.blendRadius;
-			int genCacheDim = chunkDim + 2 * blendRadius;
-			
-			result.colors = new int[genCacheDim * genCacheDim];
-		}
-		
-		return result;
-	}
-	
-	public static void
-	releaseGenCache(GenCache value)
-	{
-		synchronized(freeGenCaches)
-		{
-			if (value.blendRadius == blendRadius)
-			{
-				freeGenCaches.add(value.colors);						
-			}
-		}
+		waterColorCache.invalidateNeighbourhood(chunkX, chunkZ);
+		grassColorCache.invalidateNeighbourhood(chunkX, chunkZ);
+		foliageColorCache.invalidateNeighbourhood(chunkX, chunkZ);
 	}
 	
 	public static void
@@ -235,11 +204,45 @@ public class BetterBiomeBlend
 			synchronized (freeGenCaches)
 			{
 				blendRadius = newBlendRadius;
+				
 				freeGenCaches.clear();
 			}
 		}
 	}
 	
+	public static GenCache
+	acquireGenCache()
+	{
+		GenCache result = null;
+		
+		synchronized(freeGenCaches)
+		{
+			if (!freeGenCaches.empty())
+			{
+				result = freeGenCaches.pop();				
+			}
+		}
+		
+		if (result == null)
+		{
+			result = new GenCache(blendRadius);
+		}
+		
+		return result;
+	}
+	
+	public static void
+	releaseGenCache(GenCache cache)
+	{
+		synchronized(freeGenCaches)
+		{
+			if (cache.blendRadius == blendRadius)
+			{
+				freeGenCaches.push(cache);
+			}
+		}
+	}
+		
 	public static BlendedColorChunk
 	getThreadLocalChunk(ThreadLocal<BlendedColorChunk> threadLocal, int chunkX, int chunkZ)
 	{
