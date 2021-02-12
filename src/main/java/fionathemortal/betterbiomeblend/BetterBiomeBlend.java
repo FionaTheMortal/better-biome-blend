@@ -8,8 +8,12 @@ import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import net.minecraft.client.AbstractOption;
+import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.gui.screen.Screen;
@@ -18,6 +22,7 @@ import net.minecraft.client.gui.widget.list.OptionsRowList;
 import net.minecraft.client.settings.SliderPercentageOption;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraft.world.IWorldReader;
@@ -37,6 +42,8 @@ public class BetterBiomeBlend
 	
 	public static final int chunkDim = 16;
 	
+	public static final List<GenCache> freeGenCaches = new ArrayList<GenCache>();
+	
 	public static final ThreadLocal<BlendedColorChunk> threadLocalWaterChunk   = ThreadLocal.withInitial(() -> { BlendedColorChunk chunk = new BlendedColorChunk(); chunk.acquire(); return chunk; });
 	public static final ThreadLocal<BlendedColorChunk> threadLocalGrassChunk   = ThreadLocal.withInitial(() -> { BlendedColorChunk chunk = new BlendedColorChunk(); chunk.acquire(); return chunk; });
 	public static final ThreadLocal<BlendedColorChunk> threadLocalFoliageChunk = ThreadLocal.withInitial(() -> { BlendedColorChunk chunk = new BlendedColorChunk(); chunk.acquire(); return chunk; });
@@ -45,37 +52,27 @@ public class BetterBiomeBlend
 	public static final BlendedColorCache grassColorCache   = new BlendedColorCache(512);
 	public static final BlendedColorCache foliageColorCache = new BlendedColorCache(512);
 
-	public static final List<int[]> freeGenCaches = new ArrayList<int[]>();
-
-	@SuppressWarnings("resource")
+	public static final int BIOME_BLEND_RADIUS_MAX = 14;
+	public static final int BIOME_BLEND_RADIUS_MIN = 0;
+	
 	public static final SliderPercentageOption BIOME_BLEND_RADIUS = new SliderPercentageOption(
 		"options.biomeBlendRadius", 
-		0.0D, 
-		14.0D, 
-		1.0F, 
-		(settings) -> 
-		{
-			return (double)settings.biomeBlendRadius;
-		}, 
-		(settings, optionValues) -> 
-		{
-			settings.biomeBlendRadius = MathHelper.clamp((int)optionValues.doubleValue(), 0, 14);
-			Minecraft.getInstance().worldRenderer.loadRenderers();
-		},
-		(settings, optionValues) -> 
-		{
-			double d0 = optionValues.get(settings);
-			int i = (int)d0 * 2 + 1;
-			
-			return new TranslationTextComponent(
-				"options.generic_value", 
-				new TranslationTextComponent("options.biomeBlendRadius"), 
-				new TranslationTextComponent("options.biomeBlendRadius." + i));
-		}
+		BIOME_BLEND_RADIUS_MIN, 
+		BIOME_BLEND_RADIUS_MAX, 
+		1.0F,
+		BetterBiomeBlend::biomeBlendRadiusOptionGetValue, 
+		BetterBiomeBlend::biomeBlendRadiusOptionSetValue,
+		BetterBiomeBlend::biomeBlendRadiusOptionGetDisplayText
 	);
 
 	public static int blendRadius = 14;
-	
+
+	public
+	BetterBiomeBlend()
+	{
+		MinecraftForge.EVENT_BUS.register(BetterBiomeBlend.class);
+	}
+		
 	@SubscribeEvent
 	public static void
 	chunkLoadedEvent(ChunkEvent.Load event)
@@ -143,13 +140,44 @@ public class BetterBiomeBlend
     		}
     	}
     }
-    
-	public
-	BetterBiomeBlend()
+    	
+    public static Double
+	biomeBlendRadiusOptionGetValue(GameSettings settings)
 	{
-		MinecraftForge.EVENT_BUS.register(BetterBiomeBlend.class);
+		double result = (double)settings.biomeBlendRadius;
+		
+		return result;
 	}
 	
+	@SuppressWarnings("resource")
+	public static void
+	biomeBlendRadiusOptionSetValue(GameSettings settings, Double optionValues)
+	{
+		int currentValue = (int)optionValues.doubleValue();
+		int newSetting   = MathHelper.clamp(currentValue, BIOME_BLEND_RADIUS_MIN, BIOME_BLEND_RADIUS_MAX);
+		
+		if (settings.biomeBlendRadius != newSetting)
+		{
+			settings.biomeBlendRadius = newSetting;
+			
+			Minecraft.getInstance().worldRenderer.loadRenderers();	
+		}
+	}
+	
+	public static ITextComponent
+	biomeBlendRadiusOptionGetDisplayText(GameSettings settings, SliderPercentageOption optionValues)
+	{
+		int currentValue  = (int)optionValues.get(settings);
+		int blendDiameter = 2 * currentValue + 1;
+		
+		ITextComponent result = new TranslationTextComponent(
+			"options.generic_value",
+			new TranslationTextComponent("options.biomeBlendRadius"), 
+			new TranslationTextComponent("options.biomeBlendRadius." + blendDiameter));
+		
+		return result;
+	}
+    
 	public static void
 	chunkWasLoaded(IChunk chunk)
 	{
@@ -162,7 +190,7 @@ public class BetterBiomeBlend
 	}
 	
 	public static GenCache
-	getGenCache()
+	acquireGenCache()
 	{
 		GenCache result = new GenCache();
 		
@@ -188,7 +216,7 @@ public class BetterBiomeBlend
 	}
 	
 	public static void
-	freeGenCache(GenCache value)
+	releaseGenCache(GenCache value)
 	{
 		synchronized(freeGenCaches)
 		{
@@ -338,7 +366,7 @@ public class BetterBiomeBlend
 	public static void
 	generateBlendedColorChunk(IWorldReader world, int[] blendedColors, int chunkX, int chunkZ, BiomeColorType colorType)
 	{
-		GenCache cache = getGenCache();
+		GenCache cache = acquireGenCache();
 		
 		int[] rawColors = cache.colors;
 		int blendRadius = cache.blendRadius;
@@ -494,7 +522,7 @@ public class BetterBiomeBlend
 			}
 		}
 		
-		freeGenCache(cache);
+		releaseGenCache(cache);
 	}
 	
 	public static BlendedColorChunk
