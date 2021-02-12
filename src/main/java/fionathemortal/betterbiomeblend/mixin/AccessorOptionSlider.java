@@ -11,8 +11,5 @@ public interface AccessorOptionSlider
 {
 	@Accessor()
 	SliderPercentageOption getOption();
-	
-	@Accessor()
-	void setOption(SliderPercentageOption value);
 }
 

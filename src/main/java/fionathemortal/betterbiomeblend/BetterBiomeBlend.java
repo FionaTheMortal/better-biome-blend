@@ -3,7 +3,6 @@ package fionathemortal.betterbiomeblend;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import fionathemortal.betterbiomeblend.mixin.AccessorAbstractSlider;
 import fionathemortal.betterbiomeblend.mixin.AccessorChunkRenderCache;
 import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
 
@@ -119,7 +118,6 @@ public class BetterBiomeBlend
         						
         						if (accessor.getOption() == AbstractOption.BIOME_BLEND_RADIUS)
         						{
-        							
         							OptionsRowList.Row newRow = OptionsRowList.Row.create(screen.getMinecraft().gameSettings, screen.width, BIOME_BLEND_RADIUS);
         							
         							rowListEntries.set(index, newRow);
