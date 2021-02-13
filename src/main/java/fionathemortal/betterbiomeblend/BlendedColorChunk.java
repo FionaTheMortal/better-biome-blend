@@ -37,4 +37,17 @@ public class BlendedColorChunk
 	{
 		key = Long.MIN_VALUE;
 	}
+	
+	public int
+	getColor(int x, int z)
+	{
+		int blockX = x & 15;
+		int blockZ = z & 15;
+		
+		int blockIndex = blockX | (blockZ << 4);
+		
+		int result = this.data[blockIndex];
+		
+		return result;
+	}
 }
