@@ -6,7 +6,7 @@ modId="betterbiomeblend"
 version="${version}"
 displayName="Better Biome Blend"
 authors="FionaTheMortal"
-description="    Mod for better biome color blending."
+description="    This mod increases the biome color blending radius and replaces the original blending algorithm with a more efficient one."
 
 [[dependencies.betterbiomeblend]]
     modId="forge"
