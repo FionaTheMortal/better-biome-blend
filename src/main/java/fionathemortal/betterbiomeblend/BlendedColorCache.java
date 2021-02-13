@@ -90,9 +90,25 @@ public class BlendedColorCache
 			}	
 		}
 	}
+	
+	public void
+	invalidateAll()
+	{
+		synchronized(this)
+		{
+			++invalidationCounter;
+			
+			for (BlendedColorChunk chunk : hash.values())
+			{
+				releaseChunkWithoutLock(chunk);
+			}
+			
+			hash.clear();	
+		}
+	}
 
 	public BlendedColorChunk
-	getChunkFromHash(int chunkX, int chunkZ)
+	getChunk(int chunkX, int chunkZ)
 	{
 		long key = getChunkKey(chunkX, chunkZ);
 	
@@ -111,15 +127,8 @@ public class BlendedColorCache
 		return result;
 	}
 	
-	// BUG:  If 2 threads start generating the same chunk with the first one being an invalid chunk. If the first one gets done after the second it will take its place
-	//       in the hash as the legitimate chunk. This will cause incorrect colors to be rendered.
-	
-	// NOTE: Adding an invalidationCounter does not fix the issue
-	//       We also do not invalidate the thread local chunk. To if the same thread generates the same chunk first incomplete and then complete the second will be incorrect.
-	//       The thread local cache seems to be causing it. So that ^ is probably the issue
-	
 	public void
-	addChunkToHash(BlendedColorChunk chunk)
+	putChunk(BlendedColorChunk chunk)
 	{
 		chunk.acquire();
 		
@@ -129,20 +138,20 @@ public class BlendedColorCache
 			
 			if (prev != null)
 			{
-				BlendedColorChunk chunkToRelease;
+				BlendedColorChunk olderChunk;
 				
 				if (chunk.invalidationCounter >= prev.invalidationCounter)
 				{
-					hash.putAndMoveToFirst(chunk.key, chunk);
+					olderChunk = prev;
 					
-					chunkToRelease = prev;
+					hash.put(chunk.key, chunk);
 				}
 				else
 				{
-					chunkToRelease = chunk;
+					olderChunk = chunk;
 				}
 				
-				releaseChunkWithoutLock(chunkToRelease);
+				releaseChunkWithoutLock(olderChunk);
 			}
 			else
 			{
@@ -152,7 +161,7 @@ public class BlendedColorCache
 	}
 	
 	public BlendedColorChunk
-	allocateChunk(int chunkX, int chunkZ)
+	newChunk(int chunkX, int chunkZ)
 	{
 		BlendedColorChunk result = null;
 		
@@ -168,15 +177,13 @@ public class BlendedColorCache
 			{
 				for (;;)
 				{
-					result  = hash.removeLast();
+					result = hash.removeLast();
 					
 					if (result.refCount.get() == 1)
 					{
 						result.release();
 						break;
 					}
-					
-					hash.putAndMoveToFirst(result.key, result);
 				}
 			}
 		}

@@ -6,12 +6,8 @@ import org.apache.logging.log4j.Logger;
 import fionathemortal.betterbiomeblend.mixin.AccessorChunkRenderCache;
 import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import net.minecraft.client.AbstractOption;
 import net.minecraft.client.GameSettings;
@@ -66,8 +62,8 @@ public class BetterBiomeBlend
 		BetterBiomeBlend::biomeBlendRadiusOptionGetDisplayText
 	);
 
-	public static int blendRadius = 14;
-
+	public static GameSettings gameSettings = Minecraft.getInstance().gameSettings;
+	
 	public
 	BetterBiomeBlend()
 	{
@@ -81,6 +77,20 @@ public class BetterBiomeBlend
 		chunkWasLoaded(event.getChunk());
 	}
 	
+    @SubscribeEvent
+    public static void
+    postInitGUIEvent(InitGuiEvent.Post event)
+    {
+    	Screen screen = event.getGui();
+    	
+    	if (screen instanceof VideoSettingsScreen)
+    	{
+    		VideoSettingsScreen videoSettingsScreen = (VideoSettingsScreen)screen;
+    		
+    		replaceBiomeBlendRadiusOption(videoSettingsScreen);
+    	}
+    }
+
 	@SuppressWarnings("resource")
 	public static void
 	replaceBiomeBlendRadiusOption(VideoSettingsScreen screen)
@@ -133,21 +143,7 @@ public class BetterBiomeBlend
 			}
 		}
 	}
-	
-    @SubscribeEvent
-    public static void
-    postInitGUIEvent(InitGuiEvent.Post event)
-    {
-    	Screen screen = event.getGui();
-    	
-    	if (screen instanceof VideoSettingsScreen)
-    	{
-    		VideoSettingsScreen videoSettingsScreen = (VideoSettingsScreen)screen;
-    		
-    		replaceBiomeBlendRadiusOption(videoSettingsScreen);
-    	}
-    }
-    	
+    
     public static Double
 	biomeBlendRadiusOptionGetValue(GameSettings settings)
 	{
@@ -167,7 +163,16 @@ public class BetterBiomeBlend
 		{
 			settings.biomeBlendRadius = newSetting;
 			
-			Minecraft.getInstance().worldRenderer.loadRenderers();	
+			synchronized (freeGenCaches)
+			{
+				freeGenCaches.clear();
+			}
+			
+			waterColorCache.invalidateAll();
+			grassColorCache.invalidateAll();
+			foliageColorCache.invalidateAll();
+			
+			Minecraft.getInstance().worldRenderer.loadRenderers();
 		}
 	}
 	
@@ -196,20 +201,6 @@ public class BetterBiomeBlend
 		foliageColorCache.invalidateNeighbourhood(chunkX, chunkZ);
 	}
 	
-	public static void
-	setBlendRadius(int newBlendRadius)
-	{
-		if (blendRadius != newBlendRadius)
-		{
-			synchronized (freeGenCaches)
-			{
-				blendRadius = newBlendRadius;
-				
-				freeGenCaches.clear();
-			}
-		}
-	}
-	
 	public static GenCache
 	acquireGenCache()
 	{
@@ -225,7 +216,7 @@ public class BetterBiomeBlend
 		
 		if (result == null)
 		{
-			result = new GenCache(blendRadius);
+			result = new GenCache(gameSettings.biomeBlendRadius);
 		}
 		
 		return result;
@@ -236,7 +227,7 @@ public class BetterBiomeBlend
 	{
 		synchronized(freeGenCaches)
 		{
-			if (cache.blendRadius == blendRadius)
+			if (cache.blendRadius == gameSettings.biomeBlendRadius)
 			{
 				freeGenCaches.push(cache);
 			}
@@ -246,17 +237,17 @@ public class BetterBiomeBlend
 	public static BlendedColorChunk
 	getThreadLocalChunk(ThreadLocal<BlendedColorChunk> threadLocal, int chunkX, int chunkZ)
 	{
-		BlendedColorChunk chunk = null;
+		BlendedColorChunk result = null;
 		BlendedColorChunk local = threadLocal.get();
 		
 		long key = BlendedColorCache.getChunkKey(chunkX, chunkZ);
 		
-		if (local.key == key)
+		if (local.key == key && local.refCount.get() > 1)
 		{
-			chunk = local;
+			result = local;
 		}
 		
-		return chunk;
+		return result;
 	}
 	
 	public static void
@@ -531,26 +522,32 @@ public class BetterBiomeBlend
 	public static BlendedColorChunk
 	getBlendedColorChunk(IBlockDisplayReader worldIn, int chunkX, int chunkZ, BlendedColorCache cache, BiomeColorType colorType)
 	{
-		BlendedColorChunk chunk = cache.getChunkFromHash(chunkX, chunkZ);
+		BlendedColorChunk chunk = cache.getChunk(chunkX, chunkZ);
 		
 		if (chunk == null)
 		{
-			chunk = cache.allocateChunk(chunkX, chunkZ);
+			chunk = cache.newChunk(chunkX, chunkZ);
 			
-			World world = null;
+			IWorldReader world = null;
 			
 			if (worldIn instanceof AccessorChunkRenderCache)
 			{
-				world = ((AccessorChunkRenderCache)worldIn).getWorld();
+				AccessorChunkRenderCache accessor = (AccessorChunkRenderCache)worldIn; 
+				
+				world = accessor.getWorld();
+			}
+			else if (world instanceof IWorldReader)
+			{
+				world = (IWorldReader)worldIn;
 			}
 			else
 			{
-				world = (World)worldIn;
+				throw new IllegalArgumentException();
 			}
 			
 			generateBlendedColorChunk(world, chunk.data, chunkX, chunkZ, colorType);
 			
-			cache.addChunkToHash(chunk);
+			cache.putChunk(chunk);
 		}
 		
 		return chunk;
@@ -559,15 +556,13 @@ public class BetterBiomeBlend
 	public static BlendedColorChunk
 	getBlendedWaterColorChunk(IBlockDisplayReader world, int chunkX, int chunkZ)
 	{
-		BlendedColorChunk chunk; // = getThreadLocalChunk(threadLocalWaterChunk, chunkX, chunkZ);
+		BlendedColorChunk chunk = getThreadLocalChunk(threadLocalWaterChunk, chunkX, chunkZ);
 		
-		// if (chunk == null)
+		if (chunk == null)
 		{
 			chunk = getBlendedColorChunk(world, chunkX, chunkZ, waterColorCache, BiomeColorType.WATER);
 			
-			// setThreadLocalChunk(threadLocalWaterChunk, chunk, waterColorCache);
-			
-			chunk.release();
+			setThreadLocalChunk(threadLocalWaterChunk, chunk, waterColorCache);
 		}
 		
 		return chunk;
