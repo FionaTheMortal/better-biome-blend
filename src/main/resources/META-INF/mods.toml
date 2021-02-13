@@ -1,13 +1,12 @@
 modLoader="javafml"
 loaderVersion="[36,)"
-license="All rights reserved"
+license="Creative Commons Zero v1.0 Universal"
 [[mods]]
 modId="betterbiomeblend"
 version="${version}"
 displayName="Better Biome Blend"
-logoFile=""
 authors="FionaTheMortal"
-description='    Mod for better biome color blending.'
+description="    Mod for better biome color blending."
 
 [[dependencies.betterbiomeblend]]
     modId="forge"
