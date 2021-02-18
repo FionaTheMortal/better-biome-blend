@@ -42,8 +42,6 @@ public class BetterBiomeBlend
 	public static final String MOD_ID = "betterbiomeblend";
 	public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
 	
-	public static final int chunkDim = 16;
-	
 	public static final Stack<GenCache> freeGenCaches = new Stack<GenCache>();
 	
 	public static final ThreadLocal<BlendedColorChunk> threadLocalWaterChunk   = ThreadLocal.withInitial(() -> { BlendedColorChunk chunk = new BlendedColorChunk(); chunk.acquire(); return chunk; });
@@ -95,19 +93,19 @@ public class BetterBiomeBlend
 		chunkWasLoaded(event.getChunk());
 	}
 	
-    @SubscribeEvent
-    public static void
-    postInitGUIEvent(InitGuiEvent.Post event)
-    {
-    	Screen screen = event.getGui();
-    	
-    	if (screen instanceof VideoSettingsScreen)
-    	{
-    		VideoSettingsScreen videoSettingsScreen = (VideoSettingsScreen)screen;
-    		
-    		replaceBiomeBlendRadiusOption(videoSettingsScreen);
-    	}
-    }
+	@SubscribeEvent
+	public static void
+	postInitGUIEvent(InitGuiEvent.Post event)
+	{
+		Screen screen = event.getGui();
+		
+		if (screen instanceof VideoSettingsScreen)
+		{
+			VideoSettingsScreen videoSettingsScreen = (VideoSettingsScreen)screen;
+			
+			replaceBiomeBlendRadiusOption(videoSettingsScreen);
+		}
+	}
 
 	@SuppressWarnings("resource")
 	public static void
@@ -131,38 +129,38 @@ public class BetterBiomeBlend
 				{
 					OptionsRowList.Row row = rowListEntries.get(index);
 					
-    				List<? extends IGuiEventListener> rowChildren = row.getEventListeners();
-    				
-    				for (IGuiEventListener rowChild : rowChildren)
-    				{
-    					if (rowChild instanceof AccessorOptionSlider)
-    					{
-    						AccessorOptionSlider accessor = (AccessorOptionSlider)rowChild;
-    						
-    						if (accessor.getOption() == AbstractOption.BIOME_BLEND_RADIUS)
-    						{
-    							OptionsRowList.Row newRow = OptionsRowList.Row.create(
+					List<? extends IGuiEventListener> rowChildren = row.getEventListeners();
+					
+					for (IGuiEventListener rowChild : rowChildren)
+					{
+						if (rowChild instanceof AccessorOptionSlider)
+						{
+							AccessorOptionSlider accessor = (AccessorOptionSlider)rowChild;
+							
+							if (accessor.getOption() == AbstractOption.BIOME_BLEND_RADIUS)
+							{
+								OptionsRowList.Row newRow = OptionsRowList.Row.create(
 									screen.getMinecraft().gameSettings, 
 									screen.width, 
 									BIOME_BLEND_RADIUS);
-    							
-    							rowListEntries.set(index, newRow);
-    							
-    							replacedOption = true;
-    						}
-    					}
-    				}
-    				
-    				if (replacedOption)
-    				{
-    					break;
-    				}
+								
+								rowListEntries.set(index, newRow);
+								
+								replacedOption = true;
+							}
+						}
+					}
+					
+					if (replacedOption)
+					{
+						break;
+					}
 				}
 			}
 		}
 	}
     
-    public static Double
+	public static Double
 	biomeBlendRadiusOptionGetValue(GameSettings settings)
 	{
 		double result = (double)settings.biomeBlendRadius;
@@ -290,11 +288,11 @@ public class BetterBiomeBlend
 				int genCacheIndex = 0;
 				
 				for (int z = -blendRadius;
-					z < BetterBiomeBlend.chunkDim + blendRadius;
+					z < 16 + blendRadius;
 					++z)
 				{
 					for (int x = -blendRadius;
-						x < BetterBiomeBlend.chunkDim + blendRadius;
+						x < 16 + blendRadius;
 						++x)
 					{
 						int posX = blockX + x;
@@ -385,7 +383,7 @@ public class BetterBiomeBlend
 		int blendDim = 2 * blendRadius + 1;
 		
 		int blendCount = blendDim * blendDim;
-		int genCacheDim = chunkDim + 2 * blendRadius;
+		int genCacheDim = 16 + 2 * blendRadius;
 		
 		int blockX = chunkX << 4;
 		int blockZ = chunkZ << 4;
