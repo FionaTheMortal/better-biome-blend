@@ -1,5 +1,6 @@
 package fionathemortal.betterbiomeblend;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -23,13 +24,14 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraft.world.IWorldReader;
-import net.minecraft.world.World;
 import net.minecraft.world.biome.BiomeColors;
 import net.minecraft.world.chunk.IChunk;
 import net.minecraftforge.client.event.GuiScreenEvent.InitGuiEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ExtensionPoint;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod(BetterBiomeBlend.MOD_ID)
@@ -68,6 +70,12 @@ public class BetterBiomeBlend
 	public
 	BetterBiomeBlend()
 	{
+        ModLoadingContext.get().registerExtensionPoint(
+    		ExtensionPoint.DISPLAYTEST, 
+    		() -> Pair.of(
+				() -> "client-only", 
+				(v, n) -> n));
+		
 		MinecraftForge.EVENT_BUS.register(BetterBiomeBlend.class);
 	}
 
