@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import fionathemortal.betterbiomeblend.mixin.AccessorChunkRenderCache;
 import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Stack;
 
@@ -81,7 +82,8 @@ public class BetterBiomeBlend
     		() -> 
 	    		() -> 
 	    		{
-	    			MinecraftForge.EVENT_BUS.register(BetterBiomeBlend.class); 
+	    			MinecraftForge.EVENT_BUS.register(BetterBiomeBlend.class);
+	    			overwriteOptifineGUIBlendRadiusOption();
 				}
     		);
 	}
@@ -160,6 +162,65 @@ public class BetterBiomeBlend
 		}
 	}
     
+	public static void
+	overwriteOptifineGUIBlendRadiusOption()
+	{
+		boolean success = false;
+
+		try
+		{
+			Class<?> guiDetailSettingsOFClass = Class.forName("net.optifine.gui.GuiDetailSettingsOF");
+			
+			try 
+			{
+				Field enumOptionsField = guiDetailSettingsOFClass.getDeclaredField("enumOptions");
+				
+				enumOptionsField.setAccessible(true);
+			
+				AbstractOption[] enumOptions = (AbstractOption[])enumOptionsField.get(null);
+				
+				boolean found = false;
+				
+				for (int index = 0;
+					index < enumOptions.length;
+					++index)
+				{
+					AbstractOption option = enumOptions[index];
+					
+					if (option == AbstractOption.BIOME_BLEND_RADIUS)
+					{
+						enumOptions[index] = BIOME_BLEND_RADIUS;
+						
+						found = true;
+						
+						break;
+					}
+				}
+				
+				if (found)
+				{
+					success = true;
+				}
+				else
+				{
+					LOGGER.warn("Optifine GUI option was not found.");
+				}
+			}
+			catch (Exception e) 
+			{
+				LOGGER.warn(e);
+			}
+		} 
+		catch (ClassNotFoundException e) 
+		{
+		}
+		
+		if (success)
+		{
+			LOGGER.info("Optifine GUI option was successfully replaced.");
+		}
+	}
+	
 	public static Double
 	biomeBlendRadiusOptionGetValue(GameSettings settings)
 	{
