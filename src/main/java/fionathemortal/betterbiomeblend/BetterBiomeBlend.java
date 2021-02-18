@@ -321,13 +321,13 @@ public class BetterBiomeBlend
 				double atZF64 = baseZF64;
 				
 				for (int indexZ = 0;
-					indexZ < BetterBiomeBlend.chunkDim + 2 * blendRadius;
+					indexZ < 16 + 2 * blendRadius;
 					++indexZ)
 				{
 					double atXF64 = baseXF64;
 					
 					for (int indexX = 0;
-						indexX < BetterBiomeBlend.chunkDim + 2 * blendRadius;
+						indexX < 16 + 2 * blendRadius;
 						++indexX)
 					{
 						int posX = baseX + indexX;
@@ -352,11 +352,11 @@ public class BetterBiomeBlend
 				int genCacheIndex = 0;
 				
 				for (int z = -blendRadius;
-					z < BetterBiomeBlend.chunkDim + blendRadius;
+					z < 16 + blendRadius;
 					++z)
 				{
 					for (int x = -blendRadius;
-						x < BetterBiomeBlend.chunkDim + blendRadius;
+						x < 16 + blendRadius;
 						++x)
 					{
 						int posX = blockX + x;
@@ -452,7 +452,7 @@ public class BetterBiomeBlend
 
 				++colorChunkIndex;
 				
-				if (x < chunkDim - 1)
+				if (x < 16 - 1)
 				{
 					int edgeIndex = genCacheIndex;
 					
@@ -492,7 +492,7 @@ public class BetterBiomeBlend
 				}
 			}
 			
-			if (z < chunkDim - 1)
+			if (z < 16 - 1)
 			{
 				int edgeIndex = cacheLine;
 				
