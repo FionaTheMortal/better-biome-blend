@@ -26,10 +26,12 @@ import net.minecraft.world.IBlockDisplayReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.biome.BiomeColors;
 import net.minecraft.world.chunk.IChunk;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.GuiScreenEvent.InitGuiEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -76,7 +78,14 @@ public class BetterBiomeBlend
 				() -> "client-only", 
 				(v, n) -> n));
 		
-		MinecraftForge.EVENT_BUS.register(BetterBiomeBlend.class);
+        DistExecutor.unsafeRunWhenOn(
+    		Dist.CLIENT, 
+    		() -> 
+	    		() -> 
+	    		{
+	    			MinecraftForge.EVENT_BUS.register(BetterBiomeBlend.class); 
+				}
+    		);
 	}
 
 	@SubscribeEvent
