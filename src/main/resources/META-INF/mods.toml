@@ -1,6 +1,6 @@
 modLoader="javafml"
 loaderVersion="[36,)"
-license="Creative Commons Zero v1.0 Universal"
+license="Public Domain"
 [[mods]]
 modId="betterbiomeblend"
 version="${version}"
