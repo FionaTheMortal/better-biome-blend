@@ -16,7 +16,7 @@ public class ColorChunk
 	{
 		this.data = new int[16 * 16];
 		
-		this.makeInvalid();
+		this.markAsInvalid();
 	}
 	
 	public int
@@ -34,7 +34,7 @@ public class ColorChunk
 	}
 	
 	public void
-	makeInvalid()
+	markAsInvalid()
 	{
 		key = Long.MIN_VALUE;
 	}

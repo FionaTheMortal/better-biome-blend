@@ -80,6 +80,8 @@ public class ColorChunkCache
 			if (chunk != null)
 			{
 				releaseChunkWithoutLock(chunk);
+				
+				chunk.markAsInvalid();
 			}
 		}
 	}
@@ -106,6 +108,8 @@ public class ColorChunkCache
 					if (chunk != null)
 					{
 						releaseChunkWithoutLock(chunk);
+						
+						chunk.markAsInvalid();
 					}
 				}
 			}	
@@ -122,6 +126,8 @@ public class ColorChunkCache
 			for (ColorChunk chunk : hash.values())
 			{
 				releaseChunkWithoutLock(chunk);
+				
+				chunk.markAsInvalid();
 			}
 			
 			hash.clear();	
@@ -173,6 +179,8 @@ public class ColorChunkCache
 				}
 				
 				releaseChunkWithoutLock(olderChunk);
+				
+				olderChunk.markAsInvalid();
 			}
 			else
 			{

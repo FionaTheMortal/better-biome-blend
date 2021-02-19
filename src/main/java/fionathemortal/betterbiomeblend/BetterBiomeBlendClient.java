@@ -292,7 +292,7 @@ public class BetterBiomeBlendClient
 		
 		long key = ColorChunkCache.getChunkKey(chunkX, chunkZ);
 		
-		if (local.key == key && local.refCount.get() > 1)
+		if (local.key == key)
 		{
 			result = local;
 		}
@@ -345,9 +345,6 @@ public class BetterBiomeBlendClient
 			} break;
 			case GRASS:
 			{
-				int blockX = chunkX * 16;
-				int blockZ = chunkZ * 16;
-				
 				double baseXF64 = (double)blockX;
 				double baseZF64 = (double)blockZ;
 				
@@ -380,9 +377,6 @@ public class BetterBiomeBlendClient
 			} break;
 			case FOLIAGE:
 			{
-				int blockX = chunkX * 16;
-				int blockZ = chunkZ * 16;
-				
 				for (int z = 0;
 					z < 16;
 					++z)
