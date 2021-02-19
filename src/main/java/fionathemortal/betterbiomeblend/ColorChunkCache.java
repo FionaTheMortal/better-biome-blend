@@ -1,55 +1,59 @@
 package fionathemortal.betterbiomeblend;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Stack;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 
-public class BlendedColorCache 
+public class ColorChunkCache 
 {
-	public Long2ObjectLinkedOpenHashMap<BlendedColorChunk> hash;
-	public List<BlendedColorChunk> freeList;
+	public Lock lock;
 	
-	public int chunkCount; 
-	public int invalidationCounter;
+	public Long2ObjectLinkedOpenHashMap<ColorChunk> hash;
+	public Stack<ColorChunk>                        freeStack;
+	
+	public int  invalidationCounter;
+	
+	public static long
+	getChunkKey(int chunkX, int chunkZ)
+	{
+		long result = 
+			((long)chunkZ << 32) | 
+			((long)chunkX & 0xFFFFFFFFL);
+		
+		return result;
+	}
 	
 	public
-	BlendedColorCache(int count)
+	ColorChunkCache(int count)
 	{
-		hash = new Long2ObjectLinkedOpenHashMap<BlendedColorChunk>(count);
-		freeList = new ArrayList<BlendedColorChunk>(count);
+		hash      = new Long2ObjectLinkedOpenHashMap<ColorChunk>(count);
+		freeStack = new Stack<ColorChunk>();
 		
 		for (int index = 0;
 			index < count;
 			++index)
 		{
-			freeList.add(new BlendedColorChunk());
+			freeStack.add(new ColorChunk());
 		}
-		
-		chunkCount = count;
-	}
-	
-	public static long
-	getChunkKey(int chunkX, int chunkZ)
-	{
-		long result = ((long)chunkZ << 32) | ((long)chunkX & 0xFFFFFFFFL);
-		
-		return result;
+
+		lock = new ReentrantLock();
 	}
 
 	public void
-	releaseChunkWithoutLock(BlendedColorChunk chunk)
+	releaseChunkWithoutLock(ColorChunk chunk)
 	{
 		int refCount = chunk.release();
 		
 		if (refCount == 0)
 		{
-			freeList.add(chunk);				
+			freeStack.push(chunk);				
 		}
 	}
-	
+
 	public void
-	releaseChunk(BlendedColorChunk chunk)
+	releaseChunk(ColorChunk chunk)
 	{
 		int refCount = chunk.release();
 		
@@ -57,7 +61,25 @@ public class BlendedColorCache
 		{
 			synchronized(this)
 			{
-				freeList.add(chunk);				
+				freeStack.push(chunk);				
+			}
+		}
+	}
+	
+	public void
+	invalidateChunk(int chunkX, int chunkZ)
+	{
+		synchronized(this)
+		{
+			++invalidationCounter;
+		
+			long key = getChunkKey(chunkX, chunkZ);
+			
+			ColorChunk chunk = hash.remove(key);
+			
+			if (chunk != null)
+			{
+				releaseChunkWithoutLock(chunk);
 			}
 		}
 	}
@@ -79,7 +101,7 @@ public class BlendedColorCache
 				{
 					long key = getChunkKey(chunkX + x, chunkZ + z);
 					
-					BlendedColorChunk chunk = hash.remove(key);
+					ColorChunk chunk = hash.remove(key);
 					
 					if (chunk != null)
 					{
@@ -97,7 +119,7 @@ public class BlendedColorCache
 		{
 			++invalidationCounter;
 			
-			for (BlendedColorChunk chunk : hash.values())
+			for (ColorChunk chunk : hash.values())
 			{
 				releaseChunkWithoutLock(chunk);
 			}
@@ -106,13 +128,13 @@ public class BlendedColorCache
 		}
 	}
 
-	public BlendedColorChunk
+	public ColorChunk
 	getChunk(int chunkX, int chunkZ)
 	{
+		ColorChunk result;
+		
 		long key = getChunkKey(chunkX, chunkZ);
 	
-		BlendedColorChunk result;
-		
 		synchronized(this)
 		{
 			result = hash.getAndMoveToFirst(key);
@@ -127,17 +149,17 @@ public class BlendedColorCache
 	}
 	
 	public void
-	putChunk(BlendedColorChunk chunk)
+	putChunk(ColorChunk chunk)
 	{
 		chunk.acquire();
 		
 		synchronized(this)
 		{
-			BlendedColorChunk prev = hash.getAndMoveToFirst(chunk.key);
+			ColorChunk prev = hash.getAndMoveToFirst(chunk.key);
 			
 			if (prev != null)
 			{
-				BlendedColorChunk olderChunk;
+				ColorChunk olderChunk;
 				
 				if (chunk.invalidationCounter >= prev.invalidationCounter)
 				{
@@ -159,18 +181,18 @@ public class BlendedColorCache
 		}
 	}
 	
-	public BlendedColorChunk
+	public ColorChunk
 	newChunk(int chunkX, int chunkZ)
 	{
-		BlendedColorChunk result = null;
+		ColorChunk result = null;
 		
 		long key = getChunkKey(chunkX, chunkZ);
 		
 		synchronized(this)
 		{
-			if (freeList.size() > 0)
+			if (!freeStack.empty())
 			{
-				result = freeList.remove(freeList.size() - 1);
+				result = freeStack.pop();
 			}
 			else
 			{

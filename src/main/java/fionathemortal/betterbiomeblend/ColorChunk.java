@@ -2,7 +2,7 @@ package fionathemortal.betterbiomeblend;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class BlendedColorChunk 
+public class ColorChunk 
 {
 	public int[] data;
 	
@@ -12,9 +12,10 @@ public class BlendedColorChunk
 	public AtomicInteger refCount = new AtomicInteger();
 	
 	public 
-	BlendedColorChunk()
+	ColorChunk()
 	{
 		this.data = new int[16 * 16];
+		
 		this.makeInvalid();
 	}
 	
@@ -44,7 +45,7 @@ public class BlendedColorChunk
 		int blockX = x & 15;
 		int blockZ = z & 15;
 		
-		int blockIndex = blockX | (blockZ << 4);
+		int blockIndex = (blockZ << 4) | blockX;
 		
 		int result = this.data[blockIndex];
 		

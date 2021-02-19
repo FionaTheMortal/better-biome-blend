@@ -4,6 +4,8 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Stack;
 
+import org.apache.logging.log4j.Logger;
+
 import fionathemortal.betterbiomeblend.mixin.AccessorChunkRenderCache;
 import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
 import net.minecraft.client.AbstractOption;
@@ -30,13 +32,17 @@ public class BetterBiomeBlendClient
 {	
 	public static final Stack<GenCache> freeGenCaches = new Stack<GenCache>();
 
-	public static final ThreadLocal<BlendedColorChunk> threadLocalWaterChunk   = ThreadLocal.withInitial(() -> { BlendedColorChunk chunk = new BlendedColorChunk(); chunk.acquire(); return chunk; });
-	public static final ThreadLocal<BlendedColorChunk> threadLocalGrassChunk   = ThreadLocal.withInitial(() -> { BlendedColorChunk chunk = new BlendedColorChunk(); chunk.acquire(); return chunk; });
-	public static final ThreadLocal<BlendedColorChunk> threadLocalFoliageChunk = ThreadLocal.withInitial(() -> { BlendedColorChunk chunk = new BlendedColorChunk(); chunk.acquire(); return chunk; });
+	public static final ThreadLocal<ColorChunk> threadLocalWaterChunk   = ThreadLocal.withInitial(() -> { ColorChunk chunk = new ColorChunk(); chunk.acquire(); return chunk; });
+	public static final ThreadLocal<ColorChunk> threadLocalGrassChunk   = ThreadLocal.withInitial(() -> { ColorChunk chunk = new ColorChunk(); chunk.acquire(); return chunk; });
+	public static final ThreadLocal<ColorChunk> threadLocalFoliageChunk = ThreadLocal.withInitial(() -> { ColorChunk chunk = new ColorChunk(); chunk.acquire(); return chunk; });
 	
-	public static final BlendedColorCache waterColorCache   = new BlendedColorCache(512);
-	public static final BlendedColorCache grassColorCache   = new BlendedColorCache(512);
-	public static final BlendedColorCache foliageColorCache = new BlendedColorCache(512);
+	public static final ColorChunkCache waterColorCache   = new ColorChunkCache(1024);
+	public static final ColorChunkCache grassColorCache   = new ColorChunkCache(1024);
+	public static final ColorChunkCache foliageColorCache = new ColorChunkCache(1024);
+	
+	public static final ColorChunkCache rawWaterColorCache   = new ColorChunkCache(256);
+	public static final ColorChunkCache rawGrassColorCache   = new ColorChunkCache(256);
+	public static final ColorChunkCache rawFoliageColorCache = new ColorChunkCache(256);
 	
 	public static final int BIOME_BLEND_RADIUS_MAX = 14;
 	public static final int BIOME_BLEND_RADIUS_MIN = 0;
@@ -48,8 +54,7 @@ public class BetterBiomeBlendClient
 		1.0F,
 		BetterBiomeBlendClient::biomeBlendRadiusOptionGetValue, 
 		BetterBiomeBlendClient::biomeBlendRadiusOptionSetValue,
-		BetterBiomeBlendClient::biomeBlendRadiusOptionGetDisplayText
-	);
+		BetterBiomeBlendClient::biomeBlendRadiusOptionGetDisplayText);
 
 	public static GameSettings gameSettings = Minecraft.getInstance().gameSettings;
 	
@@ -242,6 +247,8 @@ public class BetterBiomeBlendClient
 		waterColorCache.invalidateNeighbourhood(chunkX, chunkZ);
 		grassColorCache.invalidateNeighbourhood(chunkX, chunkZ);
 		foliageColorCache.invalidateNeighbourhood(chunkX, chunkZ);
+		
+		rawWaterColorCache.invalidateChunk(chunkX, chunkZ);
 	}
 	
 	public static GenCache
@@ -277,13 +284,13 @@ public class BetterBiomeBlendClient
 		}
 	}
 		
-	public static BlendedColorChunk
-	getThreadLocalChunk(ThreadLocal<BlendedColorChunk> threadLocal, int chunkX, int chunkZ)
+	public static ColorChunk
+	getThreadLocalChunk(ThreadLocal<ColorChunk> threadLocal, int chunkX, int chunkZ)
 	{
-		BlendedColorChunk result = null;
-		BlendedColorChunk local = threadLocal.get();
+		ColorChunk result = null;
+		ColorChunk local = threadLocal.get();
 		
-		long key = BlendedColorCache.getChunkKey(chunkX, chunkZ);
+		long key = ColorChunkCache.getChunkKey(chunkX, chunkZ);
 		
 		if (local.key == key && local.refCount.get() > 1)
 		{
@@ -294,9 +301,9 @@ public class BetterBiomeBlendClient
 	}
 	
 	public static void
-	setThreadLocalChunk(ThreadLocal<BlendedColorChunk> threadLocal, BlendedColorChunk chunk, BlendedColorCache cache)
+	setThreadLocalChunk(ThreadLocal<ColorChunk> threadLocal, ColorChunk chunk, ColorChunkCache cache)
 	{
-		BlendedColorChunk local = threadLocal.get();
+		ColorChunk local = threadLocal.get();
 		
 		cache.releaseChunk(local);
 		
@@ -304,22 +311,25 @@ public class BetterBiomeBlendClient
 	}
 	
 	public static void
-	gatherBiomeColors(BiomeColorType colorType, IWorldReader world, int[] result, int blockX, int blockZ, int blendRadius)
+	gatherRawBiomeColorsForChunk(BiomeColorType colorType, IWorldReader world, int[] result, int chunkX, int chunkZ)
 	{
+		BlockPos.Mutable blockPos = new BlockPos.Mutable();
+		
+		int genCacheIndex = 0;
+		
+		int blockX = chunkX * 16;
+		int blockZ = chunkZ * 16;
+		
 		switch(colorType)
 		{
 			case WATER:
 			{
-				BlockPos.Mutable blockPos = new BlockPos.Mutable();
-				
-				int genCacheIndex = 0;
-				
-				for (int z = -blendRadius;
-					z < 16 + blendRadius;
+				for (int z = 0;
+					z < 16;
 					++z)
 				{
-					for (int x = -blendRadius;
-						x < 16 + blendRadius;
+					for (int x = 0;
+						x < 16;
 						++x)
 					{
 						int posX = blockX + x;
@@ -335,30 +345,26 @@ public class BetterBiomeBlendClient
 			} break;
 			case GRASS:
 			{
-				BlockPos.Mutable blockPos = new BlockPos.Mutable();
+				int blockX = chunkX * 16;
+				int blockZ = chunkZ * 16;
 				
-				int genCacheIndex = 0;
-				
-				int baseX = blockX - blendRadius;
-				int baseZ = blockZ - blendRadius;
-				
-				double baseXF64 = (double)baseX;
-				double baseZF64 = (double)baseZ;
+				double baseXF64 = (double)blockX;
+				double baseZF64 = (double)blockZ;
 				
 				double atZF64 = baseZF64;
 				
 				for (int indexZ = 0;
-					indexZ < 16 + 2 * blendRadius;
+					indexZ < 16;
 					++indexZ)
 				{
 					double atXF64 = baseXF64;
 					
 					for (int indexX = 0;
-						indexX < 16 + 2 * blendRadius;
+						indexX < 16;
 						++indexX)
 					{
-						int posX = baseX + indexX;
-						int posZ = baseZ + indexZ;
+						int posX = blockX + indexX;
+						int posZ = blockZ + indexZ;
 						
 						blockPos.setPos(posX, 0, posZ);
 						
@@ -374,16 +380,15 @@ public class BetterBiomeBlendClient
 			} break;
 			case FOLIAGE:
 			{
-				BlockPos.Mutable blockPos = new BlockPos.Mutable();
+				int blockX = chunkX * 16;
+				int blockZ = chunkZ * 16;
 				
-				int genCacheIndex = 0;
-				
-				for (int z = -blendRadius;
-					z < 16 + blendRadius;
+				for (int z = 0;
+					z < 16;
 					++z)
 				{
-					for (int x = -blendRadius;
-						x < 16 + blendRadius;
+					for (int x = 0;
+						x < 16;
 						++x)
 					{
 						int posX = blockX + x;
@@ -401,22 +406,84 @@ public class BetterBiomeBlendClient
 	}
 	
 	public static void
-	generateBlendedColorChunk(IWorldReader world, int[] blendedColors, int chunkX, int chunkZ, BiomeColorType colorType)
+	gatherRawBiomeColors(IWorldReader world, int[] result, int chunkX, int chunkZ, int blendRadius, BiomeColorType colorType, ColorChunkCache rawCache)
+	{
+		for (int offsetZ = -1;
+			offsetZ <= 1;
+			++offsetZ)
+		{
+			for (int offsetX = -1;
+				offsetX <= 1;
+				++offsetX)
+			{
+				int rawChunkX = chunkX + offsetX;
+				int rawChunkZ = chunkZ + offsetZ;
+				
+				ColorChunk chunk = rawCache.getChunk(rawChunkX, rawChunkZ);
+				
+				if (chunk == null)
+				{
+					chunk = rawCache.newChunk(rawChunkX, rawChunkZ);
+					
+					gatherRawBiomeColorsForChunk(colorType, world, chunk.data, rawChunkX, rawChunkZ);
+					
+					rawCache.putChunk(chunk);
+				}
+				
+				int srcXMin = (offsetX == -1) ? 16 - blendRadius : 0;
+				int srcZMin = (offsetZ == -1) ? 16 - blendRadius : 0;
+				
+				int srcXMax = (offsetX <= 0) ? 16 : blendRadius;
+				int srcZMax = (offsetZ <= 0) ? 16 : blendRadius;
+				
+				int dstX = Math.max(0, offsetX * 16 + blendRadius);
+				int dstZ = Math.max(0, offsetZ * 16 + blendRadius);
+				
+				int resultDim = 16 + 2 * blendRadius;
+				
+				int dstLine = dstX + dstZ * resultDim;
+				int srcLine = srcXMin + srcZMin * 16;
+				
+				for (int z2 = srcZMin;
+					z2 < srcZMax;
+					++z2)
+				{
+					int dstIndex = dstLine;
+					int srcIndex = srcLine;
+					
+					for (int x2 = srcXMin;
+						x2 < srcXMax;
+						++x2)
+					{
+						result[dstIndex] = chunk.data[srcIndex];
+						
+						++dstIndex;
+						++srcIndex;
+					}
+					
+					dstLine += resultDim;
+					srcLine += 16;
+				}
+				
+				rawCache.releaseChunk(chunk);
+			}
+		}
+	}
+	
+	public static void
+	generateBlendedColorChunk(IWorldReader world, int[] result, int chunkX, int chunkZ, BiomeColorType colorType, ColorChunkCache rawCache)
 	{
 		GenCache cache = acquireGenCache();
-		
+
 		int[] rawColors = cache.colors;
 		int blendRadius = cache.blendRadius;
-		int blendDim = 2 * blendRadius + 1;
-		
-		int blendCount = blendDim * blendDim;
+
+		gatherRawBiomeColors(world, rawColors, chunkX, chunkZ, blendRadius, colorType , rawCache);
+
+		int blendDim    = 2 * blendRadius + 1;
+		int blendCount  = blendDim * blendDim;
 		int genCacheDim = 16 + 2 * blendRadius;
-		
-		int blockX = chunkX << 4;
-		int blockZ = chunkZ << 4;
-		
-		gatherBiomeColors(colorType, world, rawColors, blockX, blockZ, blendRadius);
-		
+
 		int accumulatedR = 0;
 		int accumulatedG = 0;
 		int accumulatedB = 0;		
@@ -474,7 +541,7 @@ public class BetterBiomeBlendClient
 						(colorG << 8)  |
 						(colorB);
 					
-					blendedColors[colorChunkIndex] = color;
+					result[colorChunkIndex] = color;
 				}
 
 				++colorChunkIndex;
@@ -581,10 +648,10 @@ public class BetterBiomeBlendClient
 		return result;
 	}
 	
-	public static BlendedColorChunk
-	getBlendedColorChunk(IBlockDisplayReader worldIn, int chunkX, int chunkZ, BlendedColorCache cache, BiomeColorType colorType)
+	public static ColorChunk
+	getBlendedColorChunk(IBlockDisplayReader worldIn, int chunkX, int chunkZ, ColorChunkCache cache, BiomeColorType colorType, ColorChunkCache rawCache)
 	{
-		BlendedColorChunk chunk = cache.getChunk(chunkX, chunkZ);
+		ColorChunk chunk = cache.getChunk(chunkX, chunkZ);
 		
 		if (chunk == null)
 		{
@@ -594,7 +661,7 @@ public class BetterBiomeBlendClient
 			{
 				chunk = cache.newChunk(chunkX, chunkZ);
 				
-				generateBlendedColorChunk(world, chunk.data, chunkX, chunkZ, colorType);
+				generateBlendedColorChunk(world, chunk.data, chunkX, chunkZ, colorType, rawCache);
 				
 				cache.putChunk(chunk);	
 			}
@@ -614,7 +681,7 @@ public class BetterBiomeBlendClient
 		int chunkX = x >> 4;
 		int chunkZ = z >> 4;
 		
-		BlendedColorChunk chunk = getThreadLocalChunk(threadLocalWaterChunk, chunkX, chunkZ);
+		ColorChunk chunk = getThreadLocalChunk(threadLocalWaterChunk, chunkX, chunkZ);
 	
 		if (chunk != null)
 		{
@@ -624,15 +691,12 @@ public class BetterBiomeBlendClient
 		}
 		else
 		{
-			chunk = getBlendedColorChunk(world, chunkX, chunkZ, waterColorCache, BiomeColorType.WATER);
+			chunk = getBlendedColorChunk(world, chunkX, chunkZ, waterColorCache, BiomeColorType.WATER, rawWaterColorCache);
 			
 			if (chunk != null)
 			{
 				setThreadLocalChunk(threadLocalWaterChunk, chunk, waterColorCache);				
-			}
-			
-			if (chunk != null)
-			{
+
 				result = chunk.getColor(x, z);
 			}
 			else
@@ -657,7 +721,7 @@ public class BetterBiomeBlendClient
 		int chunkX = x >> 4;
 		int chunkZ = z >> 4;
 		
-		BlendedColorChunk chunk = getThreadLocalChunk(threadLocalGrassChunk, chunkX, chunkZ);
+		ColorChunk chunk = getThreadLocalChunk(threadLocalGrassChunk, chunkX, chunkZ);
 	
 		if (chunk != null)
 		{
@@ -667,15 +731,12 @@ public class BetterBiomeBlendClient
 		}
 		else
 		{
-			chunk = getBlendedColorChunk(world, chunkX, chunkZ, grassColorCache, BiomeColorType.GRASS);
+			chunk = getBlendedColorChunk(world, chunkX, chunkZ, grassColorCache, BiomeColorType.GRASS, rawGrassColorCache);
 			
 			if (chunk != null)
 			{
-				setThreadLocalChunk(threadLocalGrassChunk, chunk, grassColorCache);				
-			}
-			
-			if (chunk != null)
-			{
+				setThreadLocalChunk(threadLocalGrassChunk, chunk, grassColorCache);
+				
 				result = chunk.getColor(x, z);
 			}
 			else
@@ -700,7 +761,7 @@ public class BetterBiomeBlendClient
 		int chunkX = x >> 4;
 		int chunkZ = z >> 4;
 		
-		BlendedColorChunk chunk = getThreadLocalChunk(threadLocalFoliageChunk, chunkX, chunkZ);
+		ColorChunk chunk = getThreadLocalChunk(threadLocalFoliageChunk, chunkX, chunkZ);
 	
 		if (chunk != null)
 		{
@@ -710,15 +771,12 @@ public class BetterBiomeBlendClient
 		}
 		else
 		{
-			chunk = getBlendedColorChunk(world, chunkX, chunkZ, foliageColorCache, BiomeColorType.FOLIAGE);
+			chunk = getBlendedColorChunk(world, chunkX, chunkZ, foliageColorCache, BiomeColorType.FOLIAGE, rawFoliageColorCache);
 			
 			if (chunk != null)
 			{
 				setThreadLocalChunk(threadLocalFoliageChunk, chunk, foliageColorCache);				
-			}
-			
-			if (chunk != null)
-			{
+
 				result = chunk.getColor(x, z);
 			}
 			else
