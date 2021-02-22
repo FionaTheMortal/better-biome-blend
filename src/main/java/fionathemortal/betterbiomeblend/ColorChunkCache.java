@@ -59,79 +59,83 @@ public class ColorChunkCache
 		
 		if (refCount == 0)
 		{
-			synchronized(this)
-			{
-				freeStack.push(chunk);				
-			}
+			lock.lock();
+			
+			freeStack.push(chunk);				
+			
+			lock.unlock();
 		}
 	}
 	
 	public void
 	invalidateChunk(int chunkX, int chunkZ)
 	{
-		synchronized(this)
-		{
-			++invalidationCounter;
+		lock.lock();
 		
-			long key = getChunkKey(chunkX, chunkZ);
+		++invalidationCounter;
+	
+		long key = getChunkKey(chunkX, chunkZ);
+		
+		ColorChunk chunk = hash.remove(key);
+		
+		if (chunk != null)
+		{
+			releaseChunkWithoutLock(chunk);
 			
-			ColorChunk chunk = hash.remove(key);
-			
-			if (chunk != null)
-			{
-				releaseChunkWithoutLock(chunk);
-				
-				chunk.markAsInvalid();
-			}
+			chunk.markAsInvalid();
 		}
+		
+		lock.unlock();
 	}
 	
 	public void
 	invalidateNeighbourhood(int chunkX, int chunkZ)
 	{
-		synchronized(this)
+		lock.lock();
+		
+		++invalidationCounter;
+		
+		for (int x = -1;
+			x <= 1;
+			++x)
 		{
-			++invalidationCounter;
-			
-			for (int x = -1;
-				x <= 1;
-				++x)
+			for (int z = -1;
+				z <= 1;
+				++z)
 			{
-				for (int z = -1;
-					z <= 1;
-					++z)
+				long key = getChunkKey(chunkX + x, chunkZ + z);
+				
+				ColorChunk chunk = hash.remove(key);
+				
+				if (chunk != null)
 				{
-					long key = getChunkKey(chunkX + x, chunkZ + z);
+					releaseChunkWithoutLock(chunk);
 					
-					ColorChunk chunk = hash.remove(key);
-					
-					if (chunk != null)
-					{
-						releaseChunkWithoutLock(chunk);
-						
-						chunk.markAsInvalid();
-					}
+					chunk.markAsInvalid();
 				}
-			}	
-		}
+			}
+		}	
+		
+		lock.unlock();
 	}
 	
 	public void
 	invalidateAll()
 	{
-		synchronized(this)
+		lock.lock();
+		
+		++invalidationCounter;
+		
+		for (ColorChunk chunk : hash.values())
 		{
-			++invalidationCounter;
+			releaseChunkWithoutLock(chunk);
 			
-			for (ColorChunk chunk : hash.values())
-			{
-				releaseChunkWithoutLock(chunk);
-				
-				chunk.markAsInvalid();
-			}
-			
-			hash.clear();	
+			chunk.markAsInvalid();
 		}
+		
+		hash.clear();
+		
+		lock.unlock();
 	}
 
 	public ColorChunk
@@ -141,15 +145,16 @@ public class ColorChunkCache
 		
 		long key = getChunkKey(chunkX, chunkZ);
 	
-		synchronized(this)
+		lock.lock();
+		
+		result = hash.getAndMoveToFirst(key);
+		
+		if (result != null)
 		{
-			result = hash.getAndMoveToFirst(key);
-			
-			if (result != null)
-			{
-				result.acquire();
-			}
+			result.acquire();
 		}
+		
+		lock.unlock();
 		
 		return result;
 	}
@@ -159,34 +164,35 @@ public class ColorChunkCache
 	{
 		chunk.acquire();
 		
-		synchronized(this)
+		lock.lock();
+		
+		ColorChunk prev = hash.getAndMoveToFirst(chunk.key);
+		
+		if (prev != null)
 		{
-			ColorChunk prev = hash.getAndMoveToFirst(chunk.key);
+			ColorChunk olderChunk;
 			
-			if (prev != null)
+			if (chunk.invalidationCounter >= prev.invalidationCounter)
 			{
-				ColorChunk olderChunk;
+				olderChunk = prev;
 				
-				if (chunk.invalidationCounter >= prev.invalidationCounter)
-				{
-					olderChunk = prev;
-					
-					hash.put(chunk.key, chunk);
-				}
-				else
-				{
-					olderChunk = chunk;
-				}
-				
-				releaseChunkWithoutLock(olderChunk);
-				
-				olderChunk.markAsInvalid();
+				hash.put(chunk.key, chunk);
 			}
 			else
 			{
-				hash.putAndMoveToFirst(chunk.key, chunk);
+				olderChunk = chunk;
 			}
+			
+			releaseChunkWithoutLock(olderChunk);
+			
+			olderChunk.markAsInvalid();
 		}
+		else
+		{
+			hash.putAndMoveToFirst(chunk.key, chunk);
+		}
+		
+		lock.unlock();
 	}
 	
 	public ColorChunk
@@ -196,26 +202,27 @@ public class ColorChunkCache
 		
 		long key = getChunkKey(chunkX, chunkZ);
 		
-		synchronized(this)
+		lock.lock();
+		
+		if (!freeStack.empty())
 		{
-			if (!freeStack.empty())
+			result = freeStack.pop();
+		}
+		else
+		{
+			for (;;)
 			{
-				result = freeStack.pop();
-			}
-			else
-			{
-				for (;;)
+				result = hash.removeLast();
+				
+				if (result.refCount.get() == 1)
 				{
-					result = hash.removeLast();
-					
-					if (result.refCount.get() == 1)
-					{
-						result.release();
-						break;
-					}
+					result.release();
+					break;
 				}
 			}
 		}
+		
+		lock.unlock();
 		
 		result.key = key;
 		result.invalidationCounter = invalidationCounter;
