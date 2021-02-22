@@ -4,8 +4,6 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Stack;
 
-import org.apache.logging.log4j.Logger;
-
 import fionathemortal.betterbiomeblend.mixin.AccessorChunkRenderCache;
 import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
 import net.minecraft.client.AbstractOption;
@@ -29,7 +27,7 @@ import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class BetterBiomeBlendClient
-{	
+{
 	public static final Stack<GenCache> freeGenCaches = new Stack<GenCache>();
 
 	public static final ThreadLocal<ColorChunk> threadLocalWaterChunk   = ThreadLocal.withInitial(() -> { ColorChunk chunk = new ColorChunk(); chunk.acquire(); return chunk; });

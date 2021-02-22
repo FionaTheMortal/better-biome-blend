@@ -19,13 +19,13 @@ public class BetterBiomeBlend
 	
 	public
 	BetterBiomeBlend()
-	{
+	{		
         ModLoadingContext.get().registerExtensionPoint(
     		ExtensionPoint.DISPLAYTEST, 
     		() -> Pair.of(
 				() -> "client-only", 
 				(v, n) -> n));
-		
+
         DistExecutor.unsafeRunWhenOn(
     		Dist.CLIENT, 
     		() -> 
