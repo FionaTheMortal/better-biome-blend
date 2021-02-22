@@ -655,7 +655,12 @@ public class BetterBiomeBlendClient
 				
 				generateBlendedColorChunk(world, chunk.data, chunkX, chunkZ, colorType, rawCache);
 				
-				cache.putChunk(chunk);	
+				cache.putChunk(chunk);
+			}
+			else
+			{
+				BetterBiomeBlend.LOGGER.warn("Someone is calling us with weird arguments! This is probably an incompatibility with another mod. If this happens a lot disable Better Biome Blend.");
+				BetterBiomeBlend.LOGGER.warn(Thread.currentThread().getStackTrace());
 			}
 		}
 		
