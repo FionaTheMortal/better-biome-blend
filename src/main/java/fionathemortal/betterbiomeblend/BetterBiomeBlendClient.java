@@ -247,6 +247,8 @@ public class BetterBiomeBlendClient
 		foliageColorCache.invalidateNeighbourhood(chunkX, chunkZ);
 		
 		rawWaterColorCache.invalidateChunk(chunkX, chunkZ);
+		rawGrassColorCache.invalidateChunk(chunkX, chunkZ);
+		rawFoliageColorCache.invalidateChunk(chunkX, chunkZ);
 	}
 	
 	public static GenCache
