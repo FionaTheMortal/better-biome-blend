@@ -3,8 +3,9 @@ package fionathemortal.betterbiomeblend;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Stack;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-import fionathemortal.betterbiomeblend.mixin.AccessorChunkRenderCache;
 import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
 import net.minecraft.client.AbstractOption;
 import net.minecraft.client.GameSettings;
@@ -18,30 +19,16 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.IBlockDisplayReader;
-import net.minecraft.world.IWorldReader;
-import net.minecraft.world.biome.BiomeColors;
-import net.minecraft.world.chunk.IChunk;
+import net.minecraft.world.World;
 import net.minecraftforge.client.event.GuiScreenEvent.InitGuiEvent;
-import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class BetterBiomeBlendClient
 {
+	public static final Lock lock = new ReentrantLock();
+	
 	public static final Stack<GenCache> freeGenCaches = new Stack<GenCache>();
 
-	public static final ThreadLocal<ColorChunk> threadLocalWaterChunk   = ThreadLocal.withInitial(() -> { ColorChunk chunk = new ColorChunk(); chunk.acquire(); return chunk; });
-	public static final ThreadLocal<ColorChunk> threadLocalGrassChunk   = ThreadLocal.withInitial(() -> { ColorChunk chunk = new ColorChunk(); chunk.acquire(); return chunk; });
-	public static final ThreadLocal<ColorChunk> threadLocalFoliageChunk = ThreadLocal.withInitial(() -> { ColorChunk chunk = new ColorChunk(); chunk.acquire(); return chunk; });
-	
-	public static final ColorChunkCache waterColorCache   = new ColorChunkCache(1024);
-	public static final ColorChunkCache grassColorCache   = new ColorChunkCache(1024);
-	public static final ColorChunkCache foliageColorCache = new ColorChunkCache(1024);
-	
-	public static final ColorChunkCache rawWaterColorCache   = new ColorChunkCache(256);
-	public static final ColorChunkCache rawGrassColorCache   = new ColorChunkCache(256);
-	public static final ColorChunkCache rawFoliageColorCache = new ColorChunkCache(256);
-	
 	public static final int BIOME_BLEND_RADIUS_MAX = 14;
 	public static final int BIOME_BLEND_RADIUS_MIN = 0;
 
@@ -206,10 +193,6 @@ public class BetterBiomeBlendClient
 				freeGenCaches.clear();
 			}
 			
-			waterColorCache.invalidateAll();
-			grassColorCache.invalidateAll();
-			foliageColorCache.invalidateAll();
-			
 			Minecraft.getInstance().worldRenderer.loadRenderers();
 		}
 	}
@@ -227,30 +210,7 @@ public class BetterBiomeBlendClient
 		
 		return result;
 	}
-	
 
-	@SubscribeEvent
-	public static void
-	chunkLoadedEvent(ChunkEvent.Load event)
-	{
-		chunkWasLoaded(event.getChunk());
-	}
-    
-	public static void
-	chunkWasLoaded(IChunk chunk)
-	{
-		int chunkX = chunk.getPos().x;
-		int chunkZ = chunk.getPos().z;
-		
-		waterColorCache.invalidateNeighbourhood(chunkX, chunkZ);
-		grassColorCache.invalidateNeighbourhood(chunkX, chunkZ);
-		foliageColorCache.invalidateNeighbourhood(chunkX, chunkZ);
-		
-		rawWaterColorCache.invalidateChunk(chunkX, chunkZ);
-		rawGrassColorCache.invalidateChunk(chunkX, chunkZ);
-		rawFoliageColorCache.invalidateChunk(chunkX, chunkZ);
-	}
-	
 	public static GenCache
 	acquireGenCache()
 	{
@@ -311,7 +271,7 @@ public class BetterBiomeBlendClient
 	}
 	
 	public static void
-	gatherRawBiomeColorsForChunk(BiomeColorType colorType, IWorldReader world, int[] result, int chunkX, int chunkZ)
+	gatherRawBiomeColorsForChunk(BiomeColorType colorType, World world, int[] result, int chunkX, int chunkZ)
 	{
 		BlockPos.Mutable blockPos = new BlockPos.Mutable();
 		
@@ -400,7 +360,7 @@ public class BetterBiomeBlendClient
 	}
 	
 	public static void
-	gatherRawBiomeColors(IWorldReader world, int[] result, int chunkX, int chunkZ, int blendRadius, BiomeColorType colorType, ColorChunkCache rawCache)
+	gatherRawBiomeColors(World world, int[] result, int chunkX, int chunkZ, int blendRadius, BiomeColorType colorType, ColorChunkCache rawCache)
 	{
 		for (int offsetZ = -1;
 			offsetZ <= 1;
@@ -465,7 +425,7 @@ public class BetterBiomeBlendClient
 	}
 	
 	public static void
-	generateBlendedColorChunk(IWorldReader world, int[] result, int chunkX, int chunkZ, BiomeColorType colorType, ColorChunkCache rawCache)
+	generateBlendedColorChunk(World world, int[] result, int chunkX, int chunkZ, BiomeColorType colorType, ColorChunkCache rawCache)
 	{
 		GenCache cache = acquireGenCache();
 
@@ -623,169 +583,20 @@ public class BetterBiomeBlendClient
 		releaseGenCache(cache);
 	}
 	
-	public static IWorldReader
-	getIWorldReader(IBlockDisplayReader blockDisplayReader)
-	{
-		IWorldReader result = null;
-		
-		if (blockDisplayReader instanceof AccessorChunkRenderCache)
-		{
-			AccessorChunkRenderCache accessor = (AccessorChunkRenderCache)blockDisplayReader; 
-			
-			result = accessor.getWorld();
-		}
-		else if (blockDisplayReader instanceof IWorldReader)
-		{
-			result = (IWorldReader)blockDisplayReader;
-		}
-		
-		return result;
-	}
-	
 	public static ColorChunk
-	getBlendedColorChunk(IBlockDisplayReader worldIn, int chunkX, int chunkZ, ColorChunkCache cache, BiomeColorType colorType, ColorChunkCache rawCache)
+	getBlendedColorChunk(World world, int chunkX, int chunkZ, ColorChunkCache cache, BiomeColorType colorType, ColorChunkCache rawCache)
 	{
 		ColorChunk chunk = cache.getChunk(chunkX, chunkZ);
 		
 		if (chunk == null)
 		{
-			IWorldReader world = getIWorldReader(worldIn);
+			chunk = cache.newChunk(chunkX, chunkZ);
 			
-			if (world != null)
-			{
-				chunk = cache.newChunk(chunkX, chunkZ);
-				
-				generateBlendedColorChunk(world, chunk.data, chunkX, chunkZ, colorType, rawCache);
-				
-				cache.putChunk(chunk);
-			}
-			else
-			{
-				BetterBiomeBlend.LOGGER.warn("Someone is calling us with weird arguments! This is probably an incompatibility with another mod. If this happens a lot disable Better Biome Blend.");
-				BetterBiomeBlend.LOGGER.warn(Thread.currentThread().getStackTrace());
-			}
+			generateBlendedColorChunk(world, chunk.data, chunkX, chunkZ, colorType, rawCache);
+			
+			cache.putChunk(chunk);
 		}
 		
 		return chunk;
-	}
-
-	public static int
-	getWaterColor(IBlockDisplayReader world, BlockPos blockPos)
-	{
-		int result;
-		
-		int x = blockPos.getX();
-		int z = blockPos.getZ();
-		
-		int chunkX = x >> 4;
-		int chunkZ = z >> 4;
-		
-		ColorChunk chunk = getThreadLocalChunk(threadLocalWaterChunk, chunkX, chunkZ);
-	
-		if (chunk != null)
-		{
-			// NOTE: This could be moved further down to reduce code duplication but this is the hot code path.
-			
-			result = chunk.getColor(x, z);
-		}
-		else
-		{
-			chunk = getBlendedColorChunk(world, chunkX, chunkZ, waterColorCache, BiomeColorType.WATER, rawWaterColorCache);
-			
-			if (chunk != null)
-			{
-				setThreadLocalChunk(threadLocalWaterChunk, chunk, waterColorCache);				
-
-				result = chunk.getColor(x, z);
-			}
-			else
-			{
-				// NOTE: Call the vanilla code path for compatibility
-				
-				result = world.getBlockColor(blockPos, BiomeColors.WATER_COLOR);
-			}
-		}
-	
-		return result;
-	}
-	
-	public static int
-	getGrassColor(IBlockDisplayReader world, BlockPos blockPos)
-	{
-		int result;
-		
-		int x = blockPos.getX();
-		int z = blockPos.getZ();
-		
-		int chunkX = x >> 4;
-		int chunkZ = z >> 4;
-		
-		ColorChunk chunk = getThreadLocalChunk(threadLocalGrassChunk, chunkX, chunkZ);
-	
-		if (chunk != null)
-		{
-			// NOTE: This could be moved further down to reduce code duplication but this is the hot code path.
-
-			result = chunk.getColor(x, z);
-		}
-		else
-		{
-			chunk = getBlendedColorChunk(world, chunkX, chunkZ, grassColorCache, BiomeColorType.GRASS, rawGrassColorCache);
-			
-			if (chunk != null)
-			{
-				setThreadLocalChunk(threadLocalGrassChunk, chunk, grassColorCache);
-				
-				result = chunk.getColor(x, z);
-			}
-			else
-			{
-				// NOTE: Call the vanilla code path for compatibility
-				
-				result = world.getBlockColor(blockPos, BiomeColors.GRASS_COLOR);
-			}
-		}
-	
-		return result;
-	}
-	
-	public static int
-	getFoliageColor(IBlockDisplayReader world, BlockPos blockPos)
-	{
-		int result;
-		
-		int x = blockPos.getX();
-		int z = blockPos.getZ();
-		
-		int chunkX = x >> 4;
-		int chunkZ = z >> 4;
-		
-		ColorChunk chunk = getThreadLocalChunk(threadLocalFoliageChunk, chunkX, chunkZ);
-	
-		if (chunk != null)
-		{
-			// NOTE: This could be moved further down to reduce code duplication but this is the hot code path.
-
-			result = chunk.getColor(x, z);
-		}
-		else
-		{
-			chunk = getBlendedColorChunk(world, chunkX, chunkZ, foliageColorCache, BiomeColorType.FOLIAGE, rawFoliageColorCache);
-			
-			if (chunk != null)
-			{
-				setThreadLocalChunk(threadLocalFoliageChunk, chunk, foliageColorCache);				
-
-				result = chunk.getColor(x, z);
-			}
-			else
-			{
-				// NOTE: Call the vanilla code path for compatibility
-				
-				result = world.getBlockColor(blockPos, BiomeColors.FOLIAGE_COLOR);
-			}
-		}
-	
-		return result;
 	}
 }

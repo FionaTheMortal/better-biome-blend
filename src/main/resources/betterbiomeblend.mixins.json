@@ -4,9 +4,8 @@
 	"compatibilityLevel": "JAVA_8",
 	"refmap": "betterbiomeblend.refmap.json",
 	"client": [
-		AccessorChunkRenderCache,
 		AccessorOptionSlider,
-		MixinBiomeColors
+		MixinClientWorld
 	],
 	"minVersion": "0.8"
 }
