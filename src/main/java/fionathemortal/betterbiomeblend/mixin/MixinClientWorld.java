@@ -8,7 +8,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import fionathemortal.betterbiomeblend.BetterBiomeBlend;
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
 import fionathemortal.betterbiomeblend.BiomeColorType;
 import fionathemortal.betterbiomeblend.ColorChunk;
@@ -75,7 +74,7 @@ public abstract class MixinClientWorld extends World
 		rawGrassColorCache.invalidateChunk(chunkX, chunkZ);
 		rawFoliageColorCache.invalidateChunk(chunkX, chunkZ);
 	}
-   
+
 	@Overwrite
 	public int 
 	getBlockColor(BlockPos blockPosIn, ColorResolver colorResolverIn)
