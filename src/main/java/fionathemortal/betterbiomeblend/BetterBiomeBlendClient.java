@@ -188,10 +188,11 @@ public class BetterBiomeBlendClient
 		{
 			settings.biomeBlendRadius = newSetting;
 			
-			synchronized (freeGenCaches)
-			{
-				freeGenCaches.clear();
-			}
+			lock.lock();
+			
+			freeGenCaches.clear();
+			
+			lock.unlock();
 			
 			Minecraft.getInstance().worldRenderer.loadRenderers();
 		}
@@ -216,13 +217,14 @@ public class BetterBiomeBlendClient
 	{
 		GenCache result = null;
 		
-		synchronized(freeGenCaches)
+		lock.lock();
+		
+		if (!freeGenCaches.empty())
 		{
-			if (!freeGenCaches.empty())
-			{
-				result = freeGenCaches.pop();				
-			}
+			result = freeGenCaches.pop();				
 		}
+		
+		lock.unlock();
 		
 		if (result == null)
 		{
@@ -235,13 +237,14 @@ public class BetterBiomeBlendClient
 	public static void
 	releaseGenCache(GenCache cache)
 	{
-		synchronized(freeGenCaches)
+		lock.lock();
+		
+		if (cache.blendRadius == gameSettings.biomeBlendRadius)
 		{
-			if (cache.blendRadius == gameSettings.biomeBlendRadius)
-			{
-				freeGenCaches.push(cache);
-			}
+			freeGenCaches.push(cache);
 		}
+			
+		lock.unlock();		
 	}
 		
 	public static ColorChunk
