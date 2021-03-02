@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "betterbiomeblend",
+  "version": "${version}",
+
+  "name": "Better Biome Blend",
+  "description": "This mod increases the biome color blending radius and replaces the original blending algorithm with a more efficient one.",
+  "authors": [
+    "FionaTheMortal"
+  ],
+  "contact": {
+    "sources": "https://github.com/FionaTheMortal/Better-Biome-Blend"
+  },
+
+  "license": "Public Domain",
+  "icon": "assets/betterbiomeblend/icon.png",
+
+  "environment": "client",
+  "entrypoints": {
+    "main": [
+      "fionathemortal.betterbiomeblend.BetterBiomeBlend"
+    ]
+  },
+  "mixins": [
+    "betterbiomeblend.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.7.4",
+    "fabric": "*",
+    "minecraft": "1.16.x"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}

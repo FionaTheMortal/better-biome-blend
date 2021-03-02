@@ -6,22 +6,22 @@ import java.util.Stack;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
-import net.minecraft.client.AbstractOption;
-import net.minecraft.client.GameSettings;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.IGuiEventListener;
+import fionathemortal.betterbiomeblend.mixin.AccessorDoubleOptionSliderWidget;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.VideoSettingsScreen;
-import net.minecraft.client.gui.widget.list.OptionsRowList;
-import net.minecraft.client.settings.SliderPercentageOption;
+import net.minecraft.client.gui.screen.VideoOptionsScreen;
+import net.minecraft.client.gui.screen.options.OptionsScreen;
+import net.minecraft.client.gui.widget.ButtonListWidget;
+import net.minecraft.client.gui.widget.OptionSliderWidget;
+import net.minecraft.client.options.DoubleOption;
+import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.options.Option;
+import net.minecraft.text.TranslatableText;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
-import net.minecraftforge.client.event.GuiScreenEvent.InitGuiEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class BetterBiomeBlendClient
 {
@@ -32,44 +32,40 @@ public class BetterBiomeBlendClient
 	public static final int BIOME_BLEND_RADIUS_MAX = 14;
 	public static final int BIOME_BLEND_RADIUS_MIN = 0;
 
-	public static final SliderPercentageOption BIOME_BLEND_RADIUS = new SliderPercentageOption(
+	public static final DoubleOption BIOME_BLEND_RADIUS = new DoubleOption(
 		"options.biomeBlendRadius", 
-		BIOME_BLEND_RADIUS_MIN, 
-		BIOME_BLEND_RADIUS_MAX, 
+		BIOME_BLEND_RADIUS_MIN,
+		BIOME_BLEND_RADIUS_MAX,
 		1.0F,
 		BetterBiomeBlendClient::biomeBlendRadiusOptionGetValue, 
 		BetterBiomeBlendClient::biomeBlendRadiusOptionSetValue,
 		BetterBiomeBlendClient::biomeBlendRadiusOptionGetDisplayText);
 
-	public static GameSettings gameSettings = Minecraft.getInstance().gameSettings;
+	public static GameOptions gameOptions = MinecraftClient.getInstance().options;
 	
-	@SubscribeEvent
 	public static void
-	postInitGUIEvent(InitGuiEvent.Post event)
+	postInitGUIEvent(MinecraftClient client, Screen screen, int scaledWidth, int scaledHeight)
 	{
-		Screen screen = event.getGui();
-		
-		if (screen instanceof VideoSettingsScreen)
+		if (screen instanceof VideoOptionsScreen)
 		{
-			VideoSettingsScreen videoSettingsScreen = (VideoSettingsScreen)screen;
+			VideoOptionsScreen optionsScreen = (VideoOptionsScreen)screen;
 			
-			replaceBiomeBlendRadiusOption(videoSettingsScreen);
+			replaceBiomeBlendRadiusOption(optionsScreen);
 		}
 	}
 
-	@SuppressWarnings("resource")
 	public static void
-	replaceBiomeBlendRadiusOption(VideoSettingsScreen screen)
+	replaceBiomeBlendRadiusOption(VideoOptionsScreen screen)
 	{
-		List<? extends IGuiEventListener> children = screen.getEventListeners();
+		List<? extends Element> children = screen.children();
 		
-		for (IGuiEventListener child : children)
+		for (Element child : children)
 		{
-			if (child instanceof OptionsRowList)
+			if (child instanceof ButtonListWidget)
 			{
-				OptionsRowList rowList = (OptionsRowList)child;
+				ButtonListWidget rowList = (ButtonListWidget)child;
 				
-				List<OptionsRowList.Row> rowListEntries = rowList.getEventListeners();
+				List<ButtonListWidget.ButtonEntry> rowListEntries = rowList.children();
 				
 				boolean replacedOption = false;
 				
@@ -77,21 +73,21 @@ public class BetterBiomeBlendClient
 					index < rowListEntries.size();
 					++index)
 				{
-					OptionsRowList.Row row = rowListEntries.get(index);
+					ButtonListWidget.ButtonEntry row = rowListEntries.get(index);
 					
-					List<? extends IGuiEventListener> rowChildren = row.getEventListeners();
+					List<? extends Element> rowChildren = row.children();
 					
-					for (IGuiEventListener rowChild : rowChildren)
+					for (Element rowChild : rowChildren)
 					{
-						if (rowChild instanceof AccessorOptionSlider)
+						if (rowChild instanceof AccessorDoubleOptionSliderWidget)
 						{
-							AccessorOptionSlider accessor = (AccessorOptionSlider)rowChild;
+							AccessorDoubleOptionSliderWidget accessor = (AccessorDoubleOptionSliderWidget)rowChild;
 							
-							if (accessor.getOption() == AbstractOption.BIOME_BLEND_RADIUS)
+							if (accessor.getOption() == Option.BIOME_BLEND_RADIUS)
 							{
-								OptionsRowList.Row newRow = OptionsRowList.Row.create(
-									screen.getMinecraft().gameSettings, 
-									screen.width, 
+								ButtonListWidget.ButtonEntry newRow = ButtonListWidget.ButtonEntry.create(
+									gameOptions, 
+									screen.width,
 									BIOME_BLEND_RADIUS);
 								
 								rowListEntries.set(index, newRow);
@@ -109,7 +105,50 @@ public class BetterBiomeBlendClient
 			}
 		}
 	}
-    
+	
+	public static Double
+	biomeBlendRadiusOptionGetValue(GameOptions settings)
+	{
+		double result = (double)settings.biomeBlendRadius;
+		
+		return result;
+	}
+	
+	@SuppressWarnings("resource")
+	public static void
+	biomeBlendRadiusOptionSetValue(GameOptions settings, Double optionValues)
+	{
+		int currentValue = (int)optionValues.doubleValue();
+		int newSetting   = MathHelper.clamp(currentValue, BIOME_BLEND_RADIUS_MIN, BIOME_BLEND_RADIUS_MAX);
+		
+		if (settings.biomeBlendRadius != newSetting)
+		{
+			settings.biomeBlendRadius = newSetting;
+			
+			lock.lock();
+			
+			freeGenCaches.clear();
+			
+			lock.unlock();
+			
+			MinecraftClient.getInstance().worldRenderer.reload();
+		}
+	}
+	
+	public static Text
+	biomeBlendRadiusOptionGetDisplayText(GameOptions settings, DoubleOption optionValues)
+	{
+		int currentValue  = (int)optionValues.get(settings);
+		int blendDiameter = 2 * currentValue + 1;
+		
+		Text result = new TranslatableText(
+			"options.generic_value",
+			new TranslatableText("options.biomeBlendRadius"), 
+			new TranslatableText("options.biomeBlendRadius." + blendDiameter));
+		
+		return result;
+	}
+	
 	public static void
 	overwriteOptifineGUIBlendRadiusOption()
 	{
@@ -124,8 +163,8 @@ public class BetterBiomeBlendClient
 				Field enumOptionsField = guiDetailSettingsOFClass.getDeclaredField("enumOptions");
 				
 				enumOptionsField.setAccessible(true);
-			
-				AbstractOption[] enumOptions = (AbstractOption[])enumOptionsField.get(null);
+
+				Option[] enumOptions = (Option[])enumOptionsField.get(null);
 				
 				boolean found = false;
 				
@@ -133,9 +172,9 @@ public class BetterBiomeBlendClient
 					index < enumOptions.length;
 					++index)
 				{
-					AbstractOption option = enumOptions[index];
+					Option option = enumOptions[index];
 					
-					if (option == AbstractOption.BIOME_BLEND_RADIUS)
+					if (option == Option.BIOME_BLEND_RADIUS)
 					{
 						enumOptions[index] = BIOME_BLEND_RADIUS;
 						
@@ -151,12 +190,12 @@ public class BetterBiomeBlendClient
 				}
 				else
 				{
-					BetterBiomeBlend.LOGGER.warn("Optifine GUI option was not found.");
+					// BetterBiomeBlend.LOGGER.warn("Optifine GUI option was not found.");
 				}
 			}
 			catch (Exception e) 
 			{
-				BetterBiomeBlend.LOGGER.warn(e);
+				// BetterBiomeBlend.LOGGER.warn(e);
 			}
 		} 
 		catch (ClassNotFoundException e) 
@@ -165,51 +204,8 @@ public class BetterBiomeBlendClient
 		
 		if (success)
 		{
-			BetterBiomeBlend.LOGGER.info("Optifine GUI option was successfully replaced.");
+			// BetterBiomeBlend.LOGGER.info("Optifine GUI option was successfully replaced.");
 		}
-	}
-	
-	public static Double
-	biomeBlendRadiusOptionGetValue(GameSettings settings)
-	{
-		double result = (double)settings.biomeBlendRadius;
-		
-		return result;
-	}
-	
-	@SuppressWarnings("resource")
-	public static void
-	biomeBlendRadiusOptionSetValue(GameSettings settings, Double optionValues)
-	{
-		int currentValue = (int)optionValues.doubleValue();
-		int newSetting   = MathHelper.clamp(currentValue, BIOME_BLEND_RADIUS_MIN, BIOME_BLEND_RADIUS_MAX);
-		
-		if (settings.biomeBlendRadius != newSetting)
-		{
-			settings.biomeBlendRadius = newSetting;
-			
-			lock.lock();
-			
-			freeGenCaches.clear();
-			
-			lock.unlock();
-			
-			Minecraft.getInstance().worldRenderer.loadRenderers();
-		}
-	}
-	
-	public static ITextComponent
-	biomeBlendRadiusOptionGetDisplayText(GameSettings settings, SliderPercentageOption optionValues)
-	{
-		int currentValue  = (int)optionValues.get(settings);
-		int blendDiameter = 2 * currentValue + 1;
-		
-		ITextComponent result = new TranslationTextComponent(
-			"options.generic_value",
-			new TranslationTextComponent("options.biomeBlendRadius"), 
-			new TranslationTextComponent("options.biomeBlendRadius." + blendDiameter));
-		
-		return result;
 	}
 
 	public static GenCache
@@ -228,7 +224,7 @@ public class BetterBiomeBlendClient
 		
 		if (result == null)
 		{
-			result = new GenCache(gameSettings.biomeBlendRadius);
+			result = new GenCache(gameOptions.biomeBlendRadius);
 		}
 		
 		return result;
@@ -239,7 +235,7 @@ public class BetterBiomeBlendClient
 	{
 		lock.lock();
 		
-		if (cache.blendRadius == gameSettings.biomeBlendRadius)
+		if (cache.blendRadius == gameOptions.biomeBlendRadius)
 		{
 			freeGenCaches.push(cache);
 		}
@@ -298,7 +294,7 @@ public class BetterBiomeBlendClient
 						int posX = blockX + x;
 						int posZ = blockZ + z;
 						
-						blockPos.setPos(posX, 0, posZ);
+						blockPos.set(posX, 0, posZ);
 						
 						result[genCacheIndex] = world.getBiome(blockPos).getWaterColor();
 						
@@ -326,9 +322,9 @@ public class BetterBiomeBlendClient
 						int posX = blockX + indexX;
 						int posZ = blockZ + indexZ;
 						
-						blockPos.setPos(posX, 0, posZ);
+						blockPos.set(posX, 0, posZ);
 						
-						result[genCacheIndex] = world.getBiome(blockPos).getGrassColor(atXF64, atZF64);
+						result[genCacheIndex] = world.getBiome(blockPos).getGrassColorAt(atXF64, atZF64);
 						
 						++genCacheIndex;
 						
@@ -351,7 +347,7 @@ public class BetterBiomeBlendClient
 						int posX = blockX + x;
 						int posZ = blockZ + z;
 						
-						blockPos.setPos(posX, 0, posZ);
+						blockPos.set(posX, 0, posZ);
 						
 						result[genCacheIndex] = world.getBiome(blockPos).getFoliageColor();
 						

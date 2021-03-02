@@ -4,9 +4,12 @@
 	"compatibilityLevel": "JAVA_8",
 	"refmap": "betterbiomeblend.refmap.json",
 	"client": [
-		AccessorOptionSlider,
-		MixinClientWorld
+		MixinClientWorld,
+		AccessorDoubleOptionSliderWidget
 	],
-	"minVersion": "0.8"
+	"minVersion": "0.8",
+	"injectors": {
+    	"defaultRequire": 1
+	}
 }
 
