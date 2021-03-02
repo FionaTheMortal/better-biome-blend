@@ -11,9 +11,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.VideoOptionsScreen;
-import net.minecraft.client.gui.screen.options.OptionsScreen;
 import net.minecraft.client.gui.widget.ButtonListWidget;
-import net.minecraft.client.gui.widget.OptionSliderWidget;
 import net.minecraft.client.options.DoubleOption;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.options.Option;
@@ -54,6 +52,7 @@ public class BetterBiomeBlendClient
 		}
 	}
 
+	@SuppressWarnings("resource")
 	public static void
 	replaceBiomeBlendRadiusOption(VideoOptionsScreen screen)
 	{
