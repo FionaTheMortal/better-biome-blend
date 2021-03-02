@@ -41,7 +41,7 @@ public class BetterBiomeBlendClient
 		BetterBiomeBlendClient::biomeBlendRadiusOptionSetValue,
 		BetterBiomeBlendClient::biomeBlendRadiusOptionGetDisplayText);
 
-	public static GameOptions gameOptions = MinecraftClient.getInstance().options;
+	public static GameOptions gameOptions;
 	
 	public static void
 	postInitGUIEvent(MinecraftClient client, Screen screen, int scaledWidth, int scaledHeight)
@@ -86,7 +86,7 @@ public class BetterBiomeBlendClient
 							if (accessor.getOption() == Option.BIOME_BLEND_RADIUS)
 							{
 								ButtonListWidget.ButtonEntry newRow = ButtonListWidget.ButtonEntry.create(
-									gameOptions, 
+									MinecraftClient.getInstance().options, 
 									screen.width,
 									BIOME_BLEND_RADIUS);
 								
@@ -208,6 +208,25 @@ public class BetterBiomeBlendClient
 		}
 	}
 
+	@SuppressWarnings("resource")
+	public static int
+	getBlendRadius()
+	{
+		int result = 0;
+		
+		if (gameOptions == null)
+		{
+			gameOptions = MinecraftClient.getInstance().options;
+		}
+		
+		if (gameOptions != null)
+		{
+			result = gameOptions.biomeBlendRadius;
+		}
+		
+		return result;
+	}
+	
 	public static GenCache
 	acquireGenCache()
 	{
@@ -224,7 +243,7 @@ public class BetterBiomeBlendClient
 		
 		if (result == null)
 		{
-			result = new GenCache(gameOptions.biomeBlendRadius);
+			result = new GenCache(getBlendRadius());
 		}
 		
 		return result;
@@ -235,7 +254,7 @@ public class BetterBiomeBlendClient
 	{
 		lock.lock();
 		
-		if (cache.blendRadius == gameOptions.biomeBlendRadius)
+		if (cache.blendRadius == getBlendRadius())
 		{
 			freeGenCaches.push(cache);
 		}
