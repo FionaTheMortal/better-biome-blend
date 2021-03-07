@@ -70,9 +70,9 @@ public abstract class MixinClientWorld extends World
 		grassColorCache.invalidateNeighbourhood(chunkX, chunkZ);
 		foliageColorCache.invalidateNeighbourhood(chunkX, chunkZ);
 		
-		rawWaterColorCache.invalidateNeighbourhood(chunkX, chunkZ);
-		rawGrassColorCache.invalidateNeighbourhood(chunkX, chunkZ);
-		rawFoliageColorCache.invalidateNeighbourhood(chunkX, chunkZ);
+		rawWaterColorCache.invalidateChunk(chunkX, chunkZ);
+		rawGrassColorCache.invalidateChunk(chunkX, chunkZ);
+		rawFoliageColorCache.invalidateChunk(chunkX, chunkZ);
 	}
 	
 	@Overwrite

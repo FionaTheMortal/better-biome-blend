@@ -226,7 +226,7 @@ public class ColorChunkCache
 		
 		result.key = key;
 		result.invalidationCounter = invalidationCounter;
-		
+
 		result.acquire();
 		
 		return result;
