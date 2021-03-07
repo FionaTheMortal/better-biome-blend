@@ -382,6 +382,8 @@ public class BetterBiomeBlendClient
 				{
 					chunk = rawCache.newChunk(rawChunkX, rawChunkZ);
 					
+					// TODO: This will get wrong results for outer edges
+					
 					gatherRawBiomeColorsForChunk(colorType, world, chunk.data, rawChunkX, rawChunkZ);
 					
 					rawCache.putChunk(chunk);
@@ -594,7 +596,7 @@ public class BetterBiomeBlendClient
 		if (chunk == null)
 		{
 			chunk = cache.newChunk(chunkX, chunkZ);
-			
+
 			generateBlendedColorChunk(world, chunk.data, chunkX, chunkZ, colorType, rawCache);
 			
 			cache.putChunk(chunk);

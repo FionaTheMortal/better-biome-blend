@@ -70,11 +70,11 @@ public abstract class MixinClientWorld extends World
 		grassColorCache.invalidateNeighbourhood(chunkX, chunkZ);
 		foliageColorCache.invalidateNeighbourhood(chunkX, chunkZ);
 		
-		rawWaterColorCache.invalidateChunk(chunkX, chunkZ);
-		rawGrassColorCache.invalidateChunk(chunkX, chunkZ);
-		rawFoliageColorCache.invalidateChunk(chunkX, chunkZ);
+		rawWaterColorCache.invalidateNeighbourhood(chunkX, chunkZ);
+		rawGrassColorCache.invalidateNeighbourhood(chunkX, chunkZ);
+		rawFoliageColorCache.invalidateNeighbourhood(chunkX, chunkZ);
 	}
-
+	
 	@Overwrite
 	public int 
 	getBlockColor(BlockPos blockPosIn, ColorResolver colorResolverIn)
@@ -154,7 +154,7 @@ public abstract class MixinClientWorld extends World
 				result = 0;
 			}
 		}
-		
+
 		return result;
 	}
 }
