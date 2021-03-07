@@ -1,6 +1,7 @@
 package fionathemortal.betterbiomeblend;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.locks.Lock;
@@ -54,7 +55,7 @@ public class BetterBiomeBlendClient
 
 	@SuppressWarnings("resource")
 	public static void
-	replaceBiomeBlendRadiusOption(VideoOptionsScreen screen)
+	replaceBiomeBlendRadiusOption(Screen screen)
 	{
 		List<? extends Element> children = screen.children();
 		
@@ -286,91 +287,151 @@ public class BetterBiomeBlendClient
 		
 		threadLocal.set(chunk);
 	}
-	
+
 	public static void
-	gatherRawBiomeColorsForChunk(BiomeColorType colorType, World world, int[] result, int chunkX, int chunkZ)
+	gatherRawBiomeColorsForChunk(
+		BiomeColorType colorType, 
+		World          world, 
+		int[]          blended,
+		int[]          raw, 
+		int            chunkX, 
+		int            chunkZ, 
+		int            offsetX, 
+		int            offsetZ, 
+		int            blendRadius)
 	{
 		BlockPos.Mutable blockPos = new BlockPos.Mutable();
 		
-		int genCacheIndex = 0;
+		int srcXMin = (offsetX == -1) ? 16 - blendRadius : 0;
+		int srcZMin = (offsetZ == -1) ? 16 - blendRadius : 0;
 		
+		int srcXMax = (offsetX <= 0) ? 16 : blendRadius;
+		int srcZMax = (offsetZ <= 0) ? 16 : blendRadius;
+		
+		int dstX = Math.max(0, offsetX * 16 + blendRadius);
+		int dstZ = Math.max(0, offsetZ * 16 + blendRadius);				
+
 		int blockX = chunkX * 16;
 		int blockZ = chunkZ * 16;
+
+		int resultDim = 16 + 2 * blendRadius;
+		
+		int dstLine = dstX + dstZ * resultDim;
+		int srcLine = srcXMin + srcZMin * 16;
 		
 		switch(colorType)
 		{
 			case WATER:
 			{
-				for (int z = 0;
-					z < 16;
-					++z)
+				for (int z2 = srcZMin;
+					z2 < srcZMax;
+					++z2)
 				{
-					for (int x = 0;
-						x < 16;
-						++x)
+					int dstIndex = dstLine;
+					int srcIndex = srcLine;
+					
+					for (int x2 = srcXMin;
+						x2 < srcXMax;
+						++x2)
 					{
-						int posX = blockX + x;
-						int posZ = blockZ + z;
+						int color = raw[srcIndex];
 						
-						blockPos.set(posX, 0, posZ);
+						if (color == -1)
+						{
+							blockPos.set(blockX + x2, 0, blockZ + z2);
+							
+							color = world.getBiome(blockPos).getWaterColor();
+							
+							raw[srcIndex] = color;
+						}
 						
-						result[genCacheIndex] = world.getBiome(blockPos).getWaterColor();
+						blended[dstIndex] = color;
 						
-						++genCacheIndex;
+						++dstIndex;
+						++srcIndex;
 					}
+					
+					dstLine += resultDim;
+					srcLine += 16;
 				}
 			} break;
 			case GRASS:
 			{
-				double baseXF64 = (double)blockX;
-				double baseZF64 = (double)blockZ;
+				double baseXF64 = (double)(blockX + srcXMin);
+				double baseZF64 = (double)(blockZ + srcZMin);
 				
 				double atZF64 = baseZF64;
 				
-				for (int indexZ = 0;
-					indexZ < 16;
-					++indexZ)
+				for (int z2 = srcZMin;
+					z2 < srcZMax;
+					++z2)
 				{
 					double atXF64 = baseXF64;
 					
-					for (int indexX = 0;
-						indexX < 16;
-						++indexX)
+					int dstIndex = dstLine;
+					int srcIndex = srcLine;
+					
+					for (int x2 = srcXMin;
+						x2 < srcXMax;
+						++x2)
 					{
-						int posX = blockX + indexX;
-						int posZ = blockZ + indexZ;
+						int color = raw[srcIndex];
 						
-						blockPos.set(posX, 0, posZ);
+						if (color == -1)
+						{
+							blockPos.set(blockX + x2, 0, blockZ + z2);
+							
+							color = world.getBiome(blockPos).getGrassColorAt(atXF64, atZF64);
+							
+							raw[srcIndex] = color;
+						}
 						
-						result[genCacheIndex] = world.getBiome(blockPos).getGrassColorAt(atXF64, atZF64);
+						blended[dstIndex] = color;
 						
-						++genCacheIndex;
+						++dstIndex;
+						++srcIndex;
 						
 						atXF64 += 1.0;
 					}
+					
+					dstLine += resultDim;
+					srcLine += 16;
 					
 					atZF64 += 1.0;
 				}
 			} break;
 			case FOLIAGE:
 			{
-				for (int z = 0;
-					z < 16;
-					++z)
+				for (int z2 = srcZMin;
+					z2 < srcZMax;
+					++z2)
 				{
-					for (int x = 0;
-						x < 16;
-						++x)
+					int dstIndex = dstLine;
+					int srcIndex = srcLine;
+					
+					for (int x2 = srcXMin;
+						x2 < srcXMax;
+						++x2)
 					{
-						int posX = blockX + x;
-						int posZ = blockZ + z;
+						int color = raw[srcIndex];
 						
-						blockPos.set(posX, 0, posZ);
+						if (color == -1)
+						{
+							blockPos.set(blockX + x2, 0, blockZ + z2);
+							
+							color = world.getBiome(blockPos).getFoliageColor();
+							
+							raw[srcIndex] = color;
+						}
 						
-						result[genCacheIndex] = world.getBiome(blockPos).getFoliageColor();
+						blended[dstIndex] = color;
 						
-						++genCacheIndex;
+						++dstIndex;
+						++srcIndex;
 					}
+					
+					dstLine += resultDim;
+					srcLine += 16;
 				}
 			} break;
 		}
@@ -396,45 +457,12 @@ public class BetterBiomeBlendClient
 				{
 					chunk = rawCache.newChunk(rawChunkX, rawChunkZ);
 					
-					gatherRawBiomeColorsForChunk(colorType, world, chunk.data, rawChunkX, rawChunkZ);
+					Arrays.fill(chunk.data, -1);
 					
 					rawCache.putChunk(chunk);
 				}
 				
-				int srcXMin = (offsetX == -1) ? 16 - blendRadius : 0;
-				int srcZMin = (offsetZ == -1) ? 16 - blendRadius : 0;
-				
-				int srcXMax = (offsetX <= 0) ? 16 : blendRadius;
-				int srcZMax = (offsetZ <= 0) ? 16 : blendRadius;
-				
-				int dstX = Math.max(0, offsetX * 16 + blendRadius);
-				int dstZ = Math.max(0, offsetZ * 16 + blendRadius);
-				
-				int resultDim = 16 + 2 * blendRadius;
-				
-				int dstLine = dstX + dstZ * resultDim;
-				int srcLine = srcXMin + srcZMin * 16;
-				
-				for (int z2 = srcZMin;
-					z2 < srcZMax;
-					++z2)
-				{
-					int dstIndex = dstLine;
-					int srcIndex = srcLine;
-					
-					for (int x2 = srcXMin;
-						x2 < srcXMax;
-						++x2)
-					{
-						result[dstIndex] = chunk.data[srcIndex];
-						
-						++dstIndex;
-						++srcIndex;
-					}
-					
-					dstLine += resultDim;
-					srcLine += 16;
-				}
+				gatherRawBiomeColorsForChunk(colorType, world, result, chunk.data, rawChunkX, rawChunkZ, offsetX, offsetZ, blendRadius);
 				
 				rawCache.releaseChunk(chunk);
 			}
