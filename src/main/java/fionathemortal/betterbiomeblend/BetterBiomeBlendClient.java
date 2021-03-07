@@ -279,7 +279,7 @@ public class BetterBiomeBlendClient
 		BiomeColorType colorType, 
 		World          world, 
 		int[]          blended,
-		int[]          result, 
+		int[]          raw, 
 		int            chunkX, 
 		int            chunkZ, 
 		int            offsetX, 
@@ -320,7 +320,7 @@ public class BetterBiomeBlendClient
 						x2 < srcXMax;
 						++x2)
 					{
-						int color = result[srcIndex];
+						int color = raw[srcIndex];
 						
 						if (color == -1)
 						{
@@ -328,7 +328,7 @@ public class BetterBiomeBlendClient
 							
 							color = world.getBiome(blockPos).getWaterColor();
 							
-							result[srcIndex] = color;
+							raw[srcIndex] = color;
 						}
 						
 						blended[dstIndex] = color;
@@ -361,7 +361,7 @@ public class BetterBiomeBlendClient
 						x2 < srcXMax;
 						++x2)
 					{
-						int color = result[srcIndex];
+						int color = raw[srcIndex];
 						
 						if (color == -1)
 						{
@@ -369,7 +369,7 @@ public class BetterBiomeBlendClient
 							
 							color = world.getBiome(blockPos).getGrassColor(atXF64, atZF64);
 							
-							result[srcIndex] = color;
+							raw[srcIndex] = color;
 						}
 						
 						blended[dstIndex] = color;
@@ -399,7 +399,7 @@ public class BetterBiomeBlendClient
 						x2 < srcXMax;
 						++x2)
 					{
-						int color = result[srcIndex];
+						int color = raw[srcIndex];
 						
 						if (color == -1)
 						{
@@ -407,7 +407,7 @@ public class BetterBiomeBlendClient
 							
 							color = world.getBiome(blockPos).getFoliageColor();
 							
-							result[srcIndex] = color;
+							raw[srcIndex] = color;
 						}
 						
 						blended[dstIndex] = color;
