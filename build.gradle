@@ -15,7 +15,7 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = "${mc_version}-${mod_version}"
+version = "${mc_version_name}-${mod_version}-forge"
 group = "fionathemortal.${modid}"
 archivesBaseName = "${modid}"
 

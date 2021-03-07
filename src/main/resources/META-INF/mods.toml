@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[36,)"
+loaderVersion="[32,)"
 license="Public Domain"
 [[mods]]
 modId="betterbiomeblend"
@@ -11,13 +11,6 @@ description="    This mod increases the biome color blending radius and replaces
 [[dependencies.betterbiomeblend]]
     modId="forge"
     mandatory=true
-    versionRange="[36,)"
-    ordering="NONE"
-    side="BOTH"
-
-[[dependencies.betterbiomeblend]]
-    modId="minecraft"
-    mandatory=true
-    versionRange="[1.16.5]"
+    versionRange="[32,)"
     ordering="NONE"
     side="BOTH"
