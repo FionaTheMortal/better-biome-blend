@@ -8,12 +8,12 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 
 public class ColorChunkCache 
 {
-	public Lock lock;
+	public final Lock lock;
 	
-	public Long2ObjectLinkedOpenHashMap<ColorChunk> hash;
-	public Stack<ColorChunk>                        freeStack;
+	public final Long2ObjectLinkedOpenHashMap<ColorChunk> hash;
+	public final Stack<ColorChunk>                        freeStack;
 	
-	public int  invalidationCounter;
+	public int invalidationCounter;
 	
 	public static long
 	getChunkKey(int chunkX, int chunkZ)
@@ -28,6 +28,8 @@ public class ColorChunkCache
 	public
 	ColorChunkCache(int count)
 	{
+		lock = new ReentrantLock();
+		
 		hash      = new Long2ObjectLinkedOpenHashMap<ColorChunk>(count);
 		freeStack = new Stack<ColorChunk>();
 		
@@ -37,8 +39,6 @@ public class ColorChunkCache
 		{
 			freeStack.add(new ColorChunk());
 		}
-
-		lock = new ReentrantLock();
 	}
 
 	public void

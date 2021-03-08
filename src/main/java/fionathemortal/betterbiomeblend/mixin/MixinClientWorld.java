@@ -4,6 +4,7 @@ import java.util.function.Supplier;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -12,6 +13,8 @@ import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
 import fionathemortal.betterbiomeblend.BiomeColorType;
 import fionathemortal.betterbiomeblend.ColorChunk;
 import fionathemortal.betterbiomeblend.ColorChunkCache;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import net.minecraft.client.renderer.color.ColorCache;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.profiler.IProfiler;
 import net.minecraft.util.RegistryKey;
@@ -22,7 +25,7 @@ import net.minecraft.world.biome.BiomeColors;
 import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.storage.ISpawnWorldInfo;
 
-@Mixin(ClientWorld.class)
+@Mixin(value = ClientWorld.class, priority = 0)
 public abstract class MixinClientWorld extends World
 {
 	protected MixinClientWorld(
@@ -49,6 +52,36 @@ public abstract class MixinClientWorld extends World
 	private final ThreadLocal<ColorChunk> threadLocalGrassChunk   = ThreadLocal.withInitial(() -> { ColorChunk chunk = new ColorChunk(); chunk.acquire(); return chunk; });
 	private final ThreadLocal<ColorChunk> threadLocalFoliageChunk = ThreadLocal.withInitial(() -> { ColorChunk chunk = new ColorChunk(); chunk.acquire(); return chunk; });
 	
+	@Shadow
+	private Object2ObjectArrayMap<ColorResolver, ColorCache> colorCaches = null;
+	
+	@Overwrite
+   	public void
+   	clearColorCaches()
+   	{
+		waterColorCache.invalidateAll();
+		grassColorCache.invalidateAll();
+		foliageColorCache.invalidateAll();
+		
+		rawWaterColorCache.invalidateAll();
+		rawGrassColorCache.invalidateAll();
+		rawFoliageColorCache.invalidateAll();
+   	}
+	
+	@Overwrite
+	public void 
+	onChunkLoaded(int chunkX, int chunkZ)
+	{
+		waterColorCache.invalidateNeighbourhood(chunkX, chunkZ);
+		grassColorCache.invalidateNeighbourhood(chunkX, chunkZ);
+		foliageColorCache.invalidateNeighbourhood(chunkX, chunkZ);
+		
+		rawWaterColorCache.invalidateChunk(chunkX, chunkZ);
+		rawGrassColorCache.invalidateChunk(chunkX, chunkZ);
+		rawFoliageColorCache.invalidateChunk(chunkX, chunkZ);
+	}
+	
+	/*
 	@Inject(method = "clearColorCaches", at = @At("HEAD"))
    	public void
    	onClearColorCaches(CallbackInfo ci)
@@ -74,6 +107,7 @@ public abstract class MixinClientWorld extends World
 		rawGrassColorCache.invalidateChunk(chunkX, chunkZ);
 		rawFoliageColorCache.invalidateChunk(chunkX, chunkZ);
 	}
+	*/
 	
 	@Overwrite
 	public int 
