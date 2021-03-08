@@ -25,7 +25,7 @@ import net.minecraft.world.biome.BiomeColors;
 import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.storage.ISpawnWorldInfo;
 
-@Mixin(value = ClientWorld.class, priority = 0)
+@Mixin(value = ClientWorld.class)
 public abstract class MixinClientWorld extends World
 {
 	protected MixinClientWorld(
@@ -40,6 +40,9 @@ public abstract class MixinClientWorld extends World
 		super(worldInfo, dimension, dimensionType, profiler, isRemote, isDebug, seed);
 	}
 
+	@Shadow
+	private Object2ObjectArrayMap<ColorResolver, ColorCache> colorCaches = new Object2ObjectArrayMap<ColorResolver, ColorCache>();
+	
 	private final ColorChunkCache waterColorCache   = new ColorChunkCache(1024);
 	private final ColorChunkCache grassColorCache   = new ColorChunkCache(1024);
 	private final ColorChunkCache foliageColorCache = new ColorChunkCache(1024);
@@ -52,36 +55,6 @@ public abstract class MixinClientWorld extends World
 	private final ThreadLocal<ColorChunk> threadLocalGrassChunk   = ThreadLocal.withInitial(() -> { ColorChunk chunk = new ColorChunk(); chunk.acquire(); return chunk; });
 	private final ThreadLocal<ColorChunk> threadLocalFoliageChunk = ThreadLocal.withInitial(() -> { ColorChunk chunk = new ColorChunk(); chunk.acquire(); return chunk; });
 	
-	@Shadow
-	private Object2ObjectArrayMap<ColorResolver, ColorCache> colorCaches = null;
-	
-	@Overwrite
-   	public void
-   	clearColorCaches()
-   	{
-		waterColorCache.invalidateAll();
-		grassColorCache.invalidateAll();
-		foliageColorCache.invalidateAll();
-		
-		rawWaterColorCache.invalidateAll();
-		rawGrassColorCache.invalidateAll();
-		rawFoliageColorCache.invalidateAll();
-   	}
-	
-	@Overwrite
-	public void 
-	onChunkLoaded(int chunkX, int chunkZ)
-	{
-		waterColorCache.invalidateNeighbourhood(chunkX, chunkZ);
-		grassColorCache.invalidateNeighbourhood(chunkX, chunkZ);
-		foliageColorCache.invalidateNeighbourhood(chunkX, chunkZ);
-		
-		rawWaterColorCache.invalidateChunk(chunkX, chunkZ);
-		rawGrassColorCache.invalidateChunk(chunkX, chunkZ);
-		rawFoliageColorCache.invalidateChunk(chunkX, chunkZ);
-	}
-	
-	/*
 	@Inject(method = "clearColorCaches", at = @At("HEAD"))
    	public void
    	onClearColorCaches(CallbackInfo ci)
@@ -99,15 +72,23 @@ public abstract class MixinClientWorld extends World
 	public void 
 	onOnChunkLoaded(int chunkX, int chunkZ, CallbackInfo ci)
 	{
-		waterColorCache.invalidateNeighbourhood(chunkX, chunkZ);
-		grassColorCache.invalidateNeighbourhood(chunkX, chunkZ);
-		foliageColorCache.invalidateNeighbourhood(chunkX, chunkZ);
+		if (BetterBiomeBlendClient.gameSettings.biomeBlendRadius > 0)
+		{
+			waterColorCache.invalidateNeighbourhood(chunkX, chunkZ);
+			grassColorCache.invalidateNeighbourhood(chunkX, chunkZ);
+			foliageColorCache.invalidateNeighbourhood(chunkX, chunkZ);
+		}
+		else
+		{
+			waterColorCache.invalidateChunk(chunkX, chunkZ);
+			grassColorCache.invalidateChunk(chunkX, chunkZ);
+			foliageColorCache.invalidateChunk(chunkX, chunkZ);
+		}
 		
 		rawWaterColorCache.invalidateChunk(chunkX, chunkZ);
 		rawGrassColorCache.invalidateChunk(chunkX, chunkZ);
 		rawFoliageColorCache.invalidateChunk(chunkX, chunkZ);
 	}
-	*/
 	
 	@Overwrite
 	public int 
@@ -116,7 +97,7 @@ public abstract class MixinClientWorld extends World
 		int result;
 		
 		ThreadLocal<ColorChunk> threadLocalChunk;
-
+		
 		if (colorResolverIn == BiomeColors.GRASS_COLOR)
 		{
 			threadLocalChunk = threadLocalGrassChunk;
@@ -127,8 +108,6 @@ public abstract class MixinClientWorld extends World
 		}
 		else
 		{
-			assert(colorResolverIn == BiomeColors.FOLIAGE_COLOR);
-			
 			threadLocalChunk = threadLocalFoliageChunk;
 		}
 	
@@ -141,7 +120,7 @@ public abstract class MixinClientWorld extends World
 		ColorChunk chunk = BetterBiomeBlendClient.getThreadLocalChunk(threadLocalChunk, chunkX, chunkZ);
 
 		if (chunk != null)
-		{
+		{	
 			result = chunk.getColor(x, z);
 		}
 		else
@@ -167,8 +146,6 @@ public abstract class MixinClientWorld extends World
 			}
 			else
 			{
-				assert(colorResolverIn == BiomeColors.FOLIAGE_COLOR);
-				
 				colorType     = BiomeColorType.FOLIAGE;
 				
 				colorCache    = foliageColorCache;
@@ -177,16 +154,9 @@ public abstract class MixinClientWorld extends World
 			
 			chunk = BetterBiomeBlendClient.getBlendedColorChunk(this, chunkX, chunkZ, colorCache, colorType, rawColorCache);
 			
-			if (chunk != null)
-			{
-				BetterBiomeBlendClient.setThreadLocalChunk(threadLocalChunk, chunk, colorCache);
-				
-				result = chunk.getColor(x, z);
-			}
-			else
-			{
-				result = 0;
-			}
+			BetterBiomeBlendClient.setThreadLocalChunk(threadLocalChunk, chunk, colorCache);
+			
+			result = chunk.getColor(x, z);
 		}
 
 		return result;

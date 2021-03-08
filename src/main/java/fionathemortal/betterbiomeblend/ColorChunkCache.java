@@ -212,12 +212,18 @@ public class ColorChunkCache
 		{
 			for (;;)
 			{
+				long lastKey = hash.lastLongKey();
+				
 				result = hash.removeLast();
 				
 				if (result.refCount.get() == 1)
 				{
-					result.release();
+					result.release();	
 					break;
+				}
+				else
+				{
+					hash.putAndMoveToFirst(lastKey, result);
 				}
 			}
 		}
