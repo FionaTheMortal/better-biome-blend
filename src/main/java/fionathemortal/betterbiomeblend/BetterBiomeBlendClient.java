@@ -504,35 +504,47 @@ public class BetterBiomeBlendClient
 		}
 	}
 	
+	public static final int[]
+	offsetForIndex = 
+	{
+		-1, -1,
+		-1,  0,
+		-1,  1,
+		 0, -1,
+		 0,  0,
+		 0,  1,
+		 1, -1,
+		 1,  0,
+		 1,  1
+	};
+	
 	public static void
 	gatherRawColorsToCache(World world, int[] result, int chunkX, int chunkZ, int blendRadius, BiomeColorType colorType, ColorChunkCache rawCache)
 	{
-		for (int offsetZ = -1;
-			offsetZ <= 1;
-			++offsetZ)
+		for (int index = 0;
+			index < 9;
+			++index)
 		{
-			for (int offsetX = -1;
-				offsetX <= 1;
-				++offsetX)
+			int offsetX = offsetForIndex[2 * index + 0];
+			int offsetZ = offsetForIndex[2 * index + 1];
+
+			int rawChunkX = chunkX + offsetX;
+			int rawChunkZ = chunkZ + offsetZ;
+			
+			ColorChunk chunk = rawCache.getChunk(rawChunkX, rawChunkZ);
+			
+			if (chunk == null)
 			{
-				int rawChunkX = chunkX + offsetX;
-				int rawChunkZ = chunkZ + offsetZ;
+				chunk = rawCache.newChunk(rawChunkX, rawChunkZ);
 				
-				ColorChunk chunk = rawCache.getChunk(rawChunkX, rawChunkZ);
+				Arrays.fill(chunk.data, -1);
 				
-				if (chunk == null)
-				{
-					chunk = rawCache.newChunk(rawChunkX, rawChunkZ);
-					
-					Arrays.fill(chunk.data, -1);
-					
-					rawCache.putChunk(chunk);
-				}
-				
-				gatherRawColorsForChunkWithCache(colorType, world, result, chunk.data, rawChunkX, rawChunkZ, offsetX, offsetZ, blendRadius);
-				
-				rawCache.releaseChunk(chunk);
+				rawCache.putChunk(chunk);
 			}
+			
+			gatherRawColorsForChunkWithCache(colorType, world, result, chunk.data, rawChunkX, rawChunkZ, offsetX, offsetZ, blendRadius);
+			
+			rawCache.releaseChunk(chunk);
 		}
 	}
 	
@@ -648,15 +660,13 @@ public class BetterBiomeBlendClient
 		{
 			GenCache cache = acquireGenCache();
 			
-			gatherRawColorsToCache(world, cache.colors, chunkX, chunkZ, cache.blendRadius, colorType , rawCache);
-			
 			// NOTE: Temporary timing code
 			
 			long time1 = System.nanoTime();
 			
 			//
 			
-			blendColorsForChunk(world, result, cache);
+			gatherRawColorsToCache(world, cache.colors, chunkX, chunkZ, cache.blendRadius, colorType , rawCache);
 			
 			// NOTE: Temporary timing code
 			
@@ -675,6 +685,8 @@ public class BetterBiomeBlendClient
 			}
 			
 			//
+			
+			blendColorsForChunk(world, result, cache);
 			
 			releaseGenCache(cache);
 		}
