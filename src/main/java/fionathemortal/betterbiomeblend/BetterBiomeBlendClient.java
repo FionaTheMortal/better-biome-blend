@@ -557,8 +557,8 @@ public class BetterBiomeBlendClient
 		int[] B = genCache.B;
 		
 		int blendDim    = 2 * blendRadius + 1;
-		int blendCount  = blendDim * blendDim;
 		int genCacheDim = 16 + 2 * blendRadius;
+		int blendCount  = blendDim * blendDim;
 
 		for (int x = 0;
 			x < genCacheDim;
@@ -617,16 +617,13 @@ public class BetterBiomeBlendClient
 					(colorG << 8)  |
 					(colorB);
 
-				result[(z << 4) + x] = color;
+				result[16 * z + x] = color;
 				
 				if (x < 15)
 				{
-					accumulatedR -= R[x];
-					accumulatedR += R[x + blendDim];
-					accumulatedG -= G[x];
-					accumulatedG += G[x + blendDim];
-					accumulatedB -= B[x];
-					accumulatedB += B[x + blendDim];
+					accumulatedR += R[x + blendDim] - R[x];
+					accumulatedG += G[x + blendDim] - G[x];
+					accumulatedB += B[x + blendDim] - B[x];
 				}
 			}
 			
@@ -639,14 +636,9 @@ public class BetterBiomeBlendClient
 					int color1 = rawColors[(genCacheDim * (z           ) + x)];
 					int color2 = rawColors[(genCacheDim * (z + blendDim) + x)];
 					
-					R[x] -= 255 & (color1 >> 16);
-					R[x] += 255 & (color2 >> 16);
-					
-					G[x] -= 255 & (color1 >> 8);
-					G[x] += 255 & (color2 >> 8);
-					
-					B[x] -= 255 &  color1;
-					B[x] += 255 &  color2;
+					R[x] += 255 & ((color2 >> 16) - (color1 >> 16));
+					G[x] += 255 & ((color2 >> 8 ) - (color1 >> 8));
+					B[x] += 255 &  (color2 -         color1);
 				}
 			}
 		}
