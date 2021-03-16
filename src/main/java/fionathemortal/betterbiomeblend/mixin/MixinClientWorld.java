@@ -94,8 +94,6 @@ public abstract class MixinClientWorld extends World
 	public int 
 	getBlockColor(BlockPos blockPosIn, ColorResolver colorResolverIn)
 	{
-		int result;
-		
 		ThreadLocal<ColorChunk> threadLocalChunk;
 		
 		if (colorResolverIn == BiomeColors.GRASS_COLOR)
@@ -119,11 +117,7 @@ public abstract class MixinClientWorld extends World
 		
 		ColorChunk chunk = BetterBiomeBlendClient.getThreadLocalChunk(threadLocalChunk, chunkX, chunkZ);
 
-		if (chunk != null)
-		{	
-			result = chunk.getColor(x, z);
-		}
-		else
+		if (chunk == null)
 		{
 			BiomeColorType  colorType;
 			
@@ -155,9 +149,9 @@ public abstract class MixinClientWorld extends World
 			chunk = BetterBiomeBlendClient.getBlendedColorChunk(this, chunkX, chunkZ, colorCache, colorType, rawColorCache);
 			
 			BetterBiomeBlendClient.setThreadLocalChunk(threadLocalChunk, chunk, colorCache);
-			
-			result = chunk.getColor(x, z);
 		}
+		
+		int result = chunk.getColor(x, z);
 
 		return result;
 	}
