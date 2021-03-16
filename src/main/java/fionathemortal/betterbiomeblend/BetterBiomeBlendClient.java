@@ -544,10 +544,7 @@ public class BetterBiomeBlendClient
 	//
 	
 	public static void
-	blendColorsForChunk(
-		World    world, 
-		int[]    result, 
-		GenCache genCache)
+	blendColorsForChunk(World world, int[] result, GenCache genCache)
 	{
 		int[] rawColors   = genCache.colors;
 		int   blendRadius = genCache.blendRadius;
