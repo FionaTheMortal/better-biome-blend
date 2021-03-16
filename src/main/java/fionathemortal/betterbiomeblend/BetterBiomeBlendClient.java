@@ -408,7 +408,7 @@ public class BetterBiomeBlendClient
 							blockPos.setPos(blockX + x2, 0, blockZ + z2);
 							
 							color = world.getBiome(blockPos).getWaterColor();
-							
+
 							cache[srcIndex] = color;
 						}
 						
@@ -447,7 +447,7 @@ public class BetterBiomeBlendClient
 						if (color == -1)
 						{
 							blockPos.setPos(blockX + x2, 0, blockZ + z2);
-							
+														
 							color = world.getBiome(blockPos).getGrassColor(atXF64, atZF64);
 							
 							cache[srcIndex] = color;
@@ -536,20 +536,25 @@ public class BetterBiomeBlendClient
 		}
 	}
 	
-	static AtomicLong totalCall = new AtomicLong();
-	static AtomicLong totalTime = new AtomicLong();
+	// NOTE: Temporary timing code
+	
+	static AtomicLong accumulatedTime = new AtomicLong();
+	static AtomicLong accumulatedCallCount = new AtomicLong();
+	
+	//
 	
 	public static void
-	blendColorsForChunk(World world, int[] result, GenCache cache, int chunkX, int chunkZ, BiomeColorType colorType, ColorChunkCache rawCache)
+	blendColorsForChunk(
+		World    world, 
+		int[]    result, 
+		GenCache genCache)
 	{
-		long time1 = System.nanoTime();
-		
-		int   blendRadius = cache.blendRadius;
-		int[] rawColors   = cache.colors;
+		int[] rawColors   = genCache.colors;
+		int   blendRadius = genCache.blendRadius;
 
-		int[] R = cache.R;
-		int[] G = cache.G;
-		int[] B = cache.B;
+		int[] R = genCache.R;
+		int[] G = genCache.G;
+		int[] B = genCache.B;
 		
 		int blendDim    = 2 * blendRadius + 1;
 		int blendCount  = blendDim * blendDim;
@@ -645,20 +650,6 @@ public class BetterBiomeBlendClient
 				}
 			}
 		}
-		
-		long time2 = System.nanoTime();
-		long timeD = time2 - time1;
-		
-		long time = totalTime.addAndGet(timeD);
-		long call = totalCall.addAndGet(1);
-		
-		if ((call & (1024 - 1)) == 0)
-		{
-			BetterBiomeBlend.LOGGER.info((double)time / (double)call);
-			
-			call = 0;
-			time = 0;
-		}
 	}
 
 	public static void
@@ -670,7 +661,31 @@ public class BetterBiomeBlendClient
 			
 			gatherRawColorsToCache(world, cache.colors, chunkX, chunkZ, cache.blendRadius, colorType , rawCache);
 			
-			blendColorsForChunk(world, result, cache, chunkX, chunkZ, colorType, rawCache);
+			// NOTE: Temporary timing code
+			
+			long time1 = System.nanoTime();
+			
+			//
+			
+			blendColorsForChunk(world, result, cache);
+			
+			// NOTE: Temporary timing code
+			
+			long time2 = System.nanoTime();
+			long timeD = time2 - time1;
+			
+			long time = accumulatedTime.addAndGet(timeD);
+			long callCount = accumulatedCallCount.addAndGet(1);
+			
+			if ((callCount & (1024 - 1)) == 0)
+			{
+				BetterBiomeBlend.LOGGER.info((double)time / (double)callCount);
+
+				accumulatedTime.set(0);
+				accumulatedCallCount.set(0);
+			}
+			
+			//
 			
 			releaseGenCache(cache);
 		}
@@ -688,7 +703,7 @@ public class BetterBiomeBlendClient
 		if (chunk == null)
 		{
 			chunk = cache.newChunk(chunkX, chunkZ);
-
+			
 			generateBlendedColorChunk(world, chunk.data, chunkX, chunkZ, colorType, rawCache);
 			
 			cache.putChunk(chunk);
