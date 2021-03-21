@@ -627,13 +627,12 @@ public class BetterBiomeBlendClient
 	public static void
 	gatherRawColorsToCaches(
 		World           world, 
-		int[]           result, 
+		byte[]          result2, 
 		int             chunkX, 
 		int             chunkZ, 
 		int             blendRadius, 
 		BiomeColorType  colorType, 
-		ColorChunkCache rawCache,
-		byte[] result2)
+		ColorChunkCache rawCache)
 	{
 		int[] regionMasks = blendRadius > 8 ? bigBlendRadiusRegionMasks : smallBlendRadiusRegionMasks;
 		
@@ -686,14 +685,14 @@ public class BetterBiomeBlendClient
 					rawChunkZ, 
 					missingRegions, 
 					blendRadius, 
-					chunk.data2);
+					chunk.data);
 				
 				currentRegions = chunk.regionMask.get();
 				
 				chunk.regionMask.set(currentRegions | requiredRegions);
 			}
 			
-			copyRawCacheToGenCache(chunk.data2, result, index, blendRadius, result2);
+			copyRawCacheToGenCache(chunk.data, result2, index, blendRadius);
 		
 			rawCache.releaseChunk(chunk);
 		}
@@ -702,10 +701,9 @@ public class BetterBiomeBlendClient
 	public static void
 	copyRawCacheToGenCache(
 		byte[] rawCache,
-		int[]  result,
+		byte[] result,
 		int    chunkIndex,
-		int    blendRadius,
-		byte[] result2)
+		int    blendRadius)
 	{
 		int LUTIndex = 6 * chunkIndex;
 		
@@ -734,9 +732,9 @@ public class BetterBiomeBlendClient
 				x < srcMaxX;
 				++x)
 			{
-				result2[3 * dstIndex + 0] = rawCache[srcIndex + 0];
-				result2[3 * dstIndex + 1] = rawCache[srcIndex + 1];
-				result2[3 * dstIndex + 2] = rawCache[srcIndex + 2];
+				result[3 * dstIndex + 0] = rawCache[srcIndex + 0];
+				result[3 * dstIndex + 1] = rawCache[srcIndex + 1];
+				result[3 * dstIndex + 2] = rawCache[srcIndex + 2];
 				
 				dstIndex++;
 				srcIndex += 3;
@@ -757,7 +755,6 @@ public class BetterBiomeBlendClient
 	public static void
 	blendCachedColorsForChunk(World world, byte[] result, GenCache genCache)
 	{
-		int[] rawColors   = genCache.colors;
 		int   blendRadius = genCache.blendRadius;
 
 		int[] R = genCache.R;
@@ -772,11 +769,9 @@ public class BetterBiomeBlendClient
 			x < genCacheDim;
 			++x)
 		{
-			int color = rawColors[x];
-			
-			R[x] = 0xFF & genCache.color2[3 * x + 0];
-			G[x] = 0xFF & genCache.color2[3 * x + 1];
-			B[x] = 0xFF & genCache.color2[3 * x + 2];
+			R[x] = 0xFF & genCache.color[3 * x + 0];
+			G[x] = 0xFF & genCache.color[3 * x + 1];
+			B[x] = 0xFF & genCache.color[3 * x + 2];
 		}
 		
 		for (int z = 1;
@@ -787,11 +782,9 @@ public class BetterBiomeBlendClient
 				x < genCacheDim;
 				++x)
 			{
-				int color = rawColors[(genCacheDim * z + x)];
-				
-				R[x] += 0xFF & genCache.color2[3 * (genCacheDim * z + x) + 0];
-				G[x] += 0xFF & genCache.color2[3 * (genCacheDim * z + x) + 1];
-				B[x] += 0xFF & genCache.color2[3 * (genCacheDim * z + x) + 2];
+				R[x] += 0xFF & genCache.color[3 * (genCacheDim * z + x) + 0];
+				G[x] += 0xFF & genCache.color[3 * (genCacheDim * z + x) + 1];
+				B[x] += 0xFF & genCache.color[3 * (genCacheDim * z + x) + 2];
 			}
 		}
 		
@@ -841,9 +834,9 @@ public class BetterBiomeBlendClient
 					int index1 = 3 * (genCacheDim * (z           ) + x);
 					int index2 = 3 * (genCacheDim * (z + blendDim) + x);
 					
-					R[x] += (0xFF & genCache.color2[index2 + 0]) - (0xFF & genCache.color2[index1 + 0]);
-					G[x] += (0xFF & genCache.color2[index2 + 1]) - (0xFF & genCache.color2[index1 + 1]);
-					B[x] += (0xFF & genCache.color2[index2 + 2]) - (0xFF & genCache.color2[index1 + 2]);
+					R[x] += (0xFF & genCache.color[index2 + 0]) - (0xFF & genCache.color[index1 + 0]);
+					G[x] += (0xFF & genCache.color[index2 + 1]) - (0xFF & genCache.color[index1 + 1]);
+					B[x] += (0xFF & genCache.color[index2 + 2]) - (0xFF & genCache.color[index1 + 2]);
 				}
 			}
 		}
@@ -863,7 +856,7 @@ public class BetterBiomeBlendClient
 		{
 			GenCache cache = acquireGenCache();
 			
-			gatherRawColorsToCaches(world, cache.colors, chunkX, chunkZ, cache.blendRadius, colorType , rawCache, cache.color2);
+			gatherRawColorsToCaches(world, cache.color, chunkX, chunkZ, cache.blendRadius, colorType , rawCache);
 			
 			blendCachedColorsForChunk(world, result, cache);
 			
@@ -896,7 +889,7 @@ public class BetterBiomeBlendClient
 			
 			//
 			
-			generateBlendedColorChunk(world, colorType, chunkX, chunkZ, rawCache, chunk.data2);
+			generateBlendedColorChunk(world, colorType, chunkX, chunkZ, rawCache, chunk.data);
 			
 			// NOTE: Temporary timing code
 			
