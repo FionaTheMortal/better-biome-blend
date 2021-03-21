@@ -326,12 +326,12 @@ public final class BetterBiomeBlendClient
 	}
 		
 	public static ColorChunk
-	getThreadLocalChunk(ThreadLocal<ColorChunk> threadLocal, int chunkX, int chunkZ)
+	getThreadLocalChunk(ThreadLocal<ColorChunk> threadLocal, int chunkX, int chunkZ, int colorType)
 	{
 		ColorChunk result = null;
 		ColorChunk local = threadLocal.get();
 		
-		long key = ColorChunkCache.getChunkKey(chunkX, chunkZ);
+		long key = ColorChunkCache.getChunkKey(chunkX, chunkZ, colorType);
 		
 		if (local.key == key)
 		{
@@ -649,11 +649,11 @@ public final class BetterBiomeBlendClient
 			int rawChunkX = chunkX + offsetX;
 			int rawChunkZ = chunkZ + offsetZ;
 			
-			ColorChunk chunk = rawCache.getChunk(rawChunkX, rawChunkZ);
+			ColorChunk chunk = rawCache.getChunk(rawChunkX, rawChunkZ, colorType);
 			
 			if (chunk == null)
 			{
-				chunk = rawCache.newChunk(rawChunkX, rawChunkZ);
+				chunk = rawCache.newChunk(rawChunkX, rawChunkZ, colorType);
 				
 				chunk.regionMask.set(0);
 				
@@ -866,11 +866,11 @@ public final class BetterBiomeBlendClient
 		ColorChunkCache cache, 
 		ColorChunkCache rawCache)
 	{
-		ColorChunk chunk = cache.getChunk(chunkX, chunkZ);
+		ColorChunk chunk = cache.getChunk(chunkX, chunkZ, colorType);
 		
 		if (chunk == null)
 		{
-			chunk = cache.newChunk(chunkX, chunkZ);
+			chunk = cache.newChunk(chunkX, chunkZ, colorType);
 			
 			// NOTE: Temporary timing code
 			
