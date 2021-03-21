@@ -19,13 +19,20 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.VideoSettingsScreen;
 import net.minecraft.client.gui.widget.list.OptionsRowList;
 import net.minecraft.client.settings.SliderPercentageOption;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.chunk.ChunkStatus;
+import net.minecraft.world.chunk.IChunk;
 import net.minecraftforge.client.event.GuiScreenEvent.InitGuiEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.RegistryObject;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.ForgeRegistry;
 
 public final class BetterBiomeBlendClient
 {
@@ -565,6 +572,63 @@ public final class BetterBiomeBlendClient
 		}
 	}
 	
+	public static final RegistryObject<Biome> PLAINS = RegistryObject.of(
+		new ResourceLocation("minecraft:plains"), ForgeRegistries.BIOMES);
+
+	public static void
+	fillWithDefaultColor(		
+		World  world,
+		int    colorType,
+		int    chunkX,
+		int    chunkZ,
+		int    minX,
+		int    maxX,
+		int    minZ,
+		int    maxZ,
+		byte[] result)
+	{
+		int color = 0;
+		
+		Biome plains = PLAINS.get();
+		
+		if (plains != null)
+		{
+			switch(colorType)
+			{
+				case BiomeColorType.GRASS:
+				{
+					color = plains.getGrassColor(0, 0);
+				} break;
+				case BiomeColorType.WATER:
+				{
+					color = plains.getWaterColor();
+				} break;
+				case BiomeColorType.FOLIAGE:
+				{
+					color = plains.getFoliageColor();
+				} break;
+			}
+		}
+		
+		int colorR = Color.RGBAGetR(color);
+		int colorG = Color.RGBAGetG(color);
+		int colorB = Color.RGBAGetB(color);
+		
+		for (int z = minZ;
+			z < maxZ;
+			++z)
+		{
+			for (int x = minX;
+				x < maxX;
+				++x)
+			{
+				result[3 * (16 * z + x) + 0] = (byte)colorR;
+				result[3 * (16 * z + x) + 1] = (byte)colorG;
+				result[3 * (16 * z + x) + 2] = (byte)colorB;
+			}
+		}
+	}
+	
 	public static void
 	gatherRawColorsForRegions(
 		World  world,
@@ -587,6 +651,8 @@ public final class BetterBiomeBlendClient
 		}
 		
 		int centerRegionW = 16 - 2 * cornerRegionD;
+		
+		IChunk chunk = world.getChunk(chunkX, chunkZ, ChunkStatus.BIOMES, false);
 		
 		for (int index = 0;
 			index < 9;
@@ -615,16 +681,32 @@ public final class BetterBiomeBlendClient
 				int maxX = minX + dimX;
 				int maxZ = minZ + dimZ;
 				
-				gatherRawColorsForArea(	
-					world,
-					colorType,
-					chunkX,
-					chunkZ,
-					minX,
-					maxX,
-					minZ,
-					maxZ,
-					result);
+				if (chunk != null)
+				{
+					gatherRawColorsForArea(	
+						world,
+						colorType,
+						chunkX,
+						chunkZ,
+						minX,
+						maxX,
+						minZ,
+						maxZ,
+						result);	
+				}
+				else
+				{
+					fillWithDefaultColor(
+						world,
+						colorType,
+						chunkX,
+						chunkZ,
+						minX,
+						maxX,
+						minZ,
+						maxZ,
+						result);
+				}
 			}
 		}
 	}

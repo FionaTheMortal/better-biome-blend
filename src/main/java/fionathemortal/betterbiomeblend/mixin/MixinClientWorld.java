@@ -86,16 +86,8 @@ public abstract class MixinClientWorld extends World
 	public void 
 	onOnChunkLoaded(int chunkX, int chunkZ, CallbackInfo ci)
 	{
-		if (BetterBiomeBlendClient.gameSettings.biomeBlendRadius > 0)
-		{
-			colorCache.invalidateNeighbourhood(chunkX, chunkZ);
-		}
-		else
-		{
-			colorCache.invalidateChunk(chunkX, chunkZ);
-		}
-		
-		rawColorCache.invalidateChunk(chunkX, chunkZ);
+		colorCache.invalidateNeighbourhood(chunkX, chunkZ);
+		rawColorCache.invalidateNeighbourhood(chunkX, chunkZ);
 	}
 	
 	@Overwrite
