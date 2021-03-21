@@ -624,6 +624,9 @@ public class BetterBiomeBlendClient
 		}
 	}
 	
+	public static AtomicLong missRate = new AtomicLong();
+	public static AtomicLong hitRate = new AtomicLong();
+	
 	public static void
 	gatherRawColorsToCaches(
 		World           world, 
@@ -659,7 +662,7 @@ public class BetterBiomeBlendClient
 			
 			int requiredRegions = regionMasks[index];
 
-			int currentRegions = chunk.getValidRegions();
+			int currentRegions = chunk.regionMask.get();
 			int missingRegions = requiredRegions & ~currentRegions; 
 			
 			if (missingRegions != 0)
@@ -673,7 +676,9 @@ public class BetterBiomeBlendClient
 					blendRadius, 
 					chunk.data);
 				
-				chunk.addToValidRegions(missingRegions);
+				currentRegions = chunk.regionMask.get();
+				
+				chunk.regionMask.set(currentRegions | requiredRegions);
 			}
 			
 			copyRawCacheToGenCache(chunk.data, result2, index, blendRadius);
