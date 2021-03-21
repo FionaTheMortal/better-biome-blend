@@ -2,7 +2,7 @@ package fionathemortal.betterbiomeblend;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ColorChunk 
+public final class ColorChunk 
 {
 	public byte[] data;
 	

@@ -1,6 +1,6 @@
 package fionathemortal.betterbiomeblend;
 
-public class BiomeColorType
+public final class BiomeColorType
 {
 	public static final int GRASS   = 0;
 	public static final int WATER   = 1;

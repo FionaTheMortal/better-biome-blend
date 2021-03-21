@@ -12,7 +12,7 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod(BetterBiomeBlend.MOD_ID)
-public class BetterBiomeBlend 
+public final class BetterBiomeBlend 
 {
 	public static final String MOD_ID = "betterbiomeblend";
 	

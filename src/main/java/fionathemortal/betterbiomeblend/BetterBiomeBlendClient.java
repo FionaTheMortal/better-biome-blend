@@ -27,7 +27,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.client.event.GuiScreenEvent.InitGuiEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
-public class BetterBiomeBlendClient
+public final class BetterBiomeBlendClient
 {
 	public static final Logger LOGGER = LogManager.getLogger(BetterBiomeBlend.MOD_ID);
 	

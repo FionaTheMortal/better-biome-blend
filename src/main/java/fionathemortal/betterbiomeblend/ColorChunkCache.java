@@ -6,7 +6,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 
-public class ColorChunkCache 
+public final class ColorChunkCache 
 {
 	public final Lock lock;
 	

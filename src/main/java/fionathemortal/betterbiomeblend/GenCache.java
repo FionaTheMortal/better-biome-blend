@@ -1,6 +1,6 @@
 package fionathemortal.betterbiomeblend;
 
-public class GenCache 
+public final class GenCache 
 {
 	int    blendRadius;
 	byte[] color;
