@@ -364,7 +364,7 @@ public class BetterBiomeBlendClient
 	}
 	
 	public static void
-	gatherRawColorsForChunk(World world, byte[] result, int chunkX, int chunkZ, BiomeColorType colorType)
+	gatherRawColorsForChunk(World world, byte[] result, int chunkX, int chunkZ, int colorType)
 	{
 		BlockPos.Mutable blockPos = new BlockPos.Mutable();
 
@@ -375,7 +375,7 @@ public class BetterBiomeBlendClient
 		
 		switch(colorType)
 		{
-			case GRASS:
+			case BiomeColorType.GRASS:
 			{
 				double baseXF64 = (double)blockX;
 				double baseZF64 = (double)blockZ;
@@ -412,7 +412,7 @@ public class BetterBiomeBlendClient
 					zF64 += 1.0;
 				}
 			} break;
-			case WATER:
+			case BiomeColorType.WATER:
 			{
 				for (int z = 0;
 					z < 16;
@@ -438,7 +438,7 @@ public class BetterBiomeBlendClient
 					}
 				}
 			} break;
-			case FOLIAGE:
+			case BiomeColorType.FOLIAGE:
 			{
 				for (int z = 0;
 					z < 16;
@@ -470,7 +470,7 @@ public class BetterBiomeBlendClient
 	public static void
 	gatherRawColorsForArea(
 		World          world,
-		BiomeColorType colorType,
+		int            colorType,
 		int            chunkX,
 		int            chunkZ,
 		int            minX,
@@ -486,7 +486,7 @@ public class BetterBiomeBlendClient
 		
 		switch(colorType)
 		{
-			case GRASS:
+			case BiomeColorType.GRASS:
 			{
 				double baseXF64 = (double)(blockX + minX);
 				double baseZF64 = (double)(blockZ + minZ);
@@ -521,7 +521,7 @@ public class BetterBiomeBlendClient
 					zF64 += 1.0;
 				}
 			} break;
-			case WATER:
+			case BiomeColorType.WATER:
 			{
 				for (int z = minZ;
 					z < maxZ;
@@ -545,7 +545,7 @@ public class BetterBiomeBlendClient
 					}
 				}
 			} break;
-			case FOLIAGE:
+			case BiomeColorType.FOLIAGE:
 			{
 				for (int z = minZ;
 					z < maxZ;
@@ -574,13 +574,13 @@ public class BetterBiomeBlendClient
 	
 	public static void
 	gatherRawColorsForRegions(
-		World          world,
-		BiomeColorType colorType,
-		int            chunkX,
-		int            chunkZ,
-		int            regions,
-		int            blendRadius,
-		byte[]         result)
+		World  world,
+		int    colorType,
+		int    chunkX,
+		int    chunkZ,
+		int    regions,
+		int    blendRadius,
+		byte[] result)
 	{
 		int cornerRegionD;
 
@@ -646,7 +646,7 @@ public class BetterBiomeBlendClient
 		int             chunkX, 
 		int             chunkZ, 
 		int             blendRadius, 
-		BiomeColorType  colorType, 
+		int             colorType, 
 		ColorChunkCache rawCache)
 	{
 		int[] regionMasks = blendRadius > 8 ? bigBlendRadiusRegionMasks : smallBlendRadiusRegionMasks;
@@ -860,7 +860,7 @@ public class BetterBiomeBlendClient
 	public static void
 	generateBlendedColorChunk(
 		World           world,
-		BiomeColorType  colorType,
+		int             colorType,
 		int             chunkX, 
 		int             chunkZ, 
 		ColorChunkCache rawCache,
@@ -886,7 +886,7 @@ public class BetterBiomeBlendClient
 	public static ColorChunk
 	getBlendedColorChunk(
 		World           world, 
-		BiomeColorType  colorType,
+		int             colorType,
 		int             chunkX, 
 		int             chunkZ, 
 		ColorChunkCache cache, 
@@ -916,7 +916,7 @@ public class BetterBiomeBlendClient
 			
 			if ((callCount & (1024 - 1)) == 0)
 			{
-				logInfo((double)time / (double)callCount);
+				LOGGER.info((double)time / (double)callCount);
 
 				accumulatedTime.set(0);
 				accumulatedCallCount.set(0);

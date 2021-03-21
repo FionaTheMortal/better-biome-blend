@@ -12,7 +12,6 @@ public class ColorChunk
 	public AtomicInteger refCount   = new AtomicInteger();
 	public AtomicInteger regionMask = new AtomicInteger();
 
-	
 	public 
 	ColorChunk()
 	{

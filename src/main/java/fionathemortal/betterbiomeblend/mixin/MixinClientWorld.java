@@ -120,7 +120,7 @@ public abstract class MixinClientWorld extends World
 
 		if (chunk == null)
 		{
-			BiomeColorType  colorType;
+			int colorType;
 			
 			ColorChunkCache colorCache;
 			ColorChunkCache rawColorCache;
@@ -128,21 +128,18 @@ public abstract class MixinClientWorld extends World
 			if (colorResolverIn == BiomeColors.GRASS_COLOR)
 			{
 				colorType     = BiomeColorType.GRASS;
-				
 				colorCache    = grassColorCache;
 				rawColorCache = rawGrassColorCache;
 			}
 			else if (colorResolverIn == BiomeColors.WATER_COLOR)
 			{
 				colorType     = BiomeColorType.WATER;
-				
 				colorCache    = waterColorCache;
 				rawColorCache = rawWaterColorCache;
 			}
 			else
 			{
 				colorType     = BiomeColorType.FOLIAGE;
-				
 				colorCache    = foliageColorCache;
 				rawColorCache = rawFoliageColorCache;
 			}
