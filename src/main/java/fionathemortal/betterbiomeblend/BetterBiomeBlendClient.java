@@ -3,10 +3,12 @@ package fionathemortal.betterbiomeblend;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Stack;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
 import net.minecraft.client.AbstractOption;
@@ -27,9 +29,10 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class BetterBiomeBlendClient
 {
-	public static final Lock lock = new ReentrantLock();
+	public static final Logger LOGGER = LogManager.getLogger(BetterBiomeBlend.MOD_ID);
 	
-	public static final Stack<GenCache> freeGenCaches = new Stack<GenCache>();
+	public static final Lock            freeGenCacheslock = new ReentrantLock();
+	public static final Stack<GenCache> freeGenCaches     = new Stack<GenCache>();
 
 	public static final int BIOME_BLEND_RADIUS_MAX = 14;
 	public static final int BIOME_BLEND_RADIUS_MIN = 0;
@@ -44,6 +47,18 @@ public class BetterBiomeBlendClient
 		BetterBiomeBlendClient::biomeBlendRadiusOptionGetDisplayText);
 
 	public static final GameSettings gameSettings = Minecraft.getInstance().gameSettings;
+	
+	public static void 
+	logInfo(Object... params)
+	{
+		LOGGER.info(params);
+	}
+	
+	public static void
+	logWarning(Object... params)
+	{
+		LOGGER.warn(params);
+	}
 	
 	public static final byte[]
 	chunkOffsets = 
@@ -223,12 +238,12 @@ public class BetterBiomeBlendClient
 				}
 				else
 				{
-					BetterBiomeBlend.LOGGER.warn("Optifine GUI option was not found.");
+					logWarning("Optifine GUI option was not found.");
 				}
 			}
 			catch (Exception e) 
 			{
-				BetterBiomeBlend.LOGGER.warn(e);
+				logWarning(e);
 			}
 		} 
 		catch (ClassNotFoundException e) 
@@ -237,7 +252,7 @@ public class BetterBiomeBlendClient
 		
 		if (success)
 		{
-			BetterBiomeBlend.LOGGER.info("Optifine GUI option was successfully replaced.");
+			logInfo("Optifine GUI option was successfully replaced.");
 		}
 	}
 	
@@ -263,11 +278,11 @@ public class BetterBiomeBlendClient
 		{
 			settings.biomeBlendRadius = newSetting;
 			
-			lock.lock();
+			freeGenCacheslock.lock();
 			
 			freeGenCaches.clear();
 			
-			lock.unlock();
+			freeGenCacheslock.unlock();
 			
 			Minecraft.getInstance().worldRenderer.loadRenderers();
 		}
@@ -292,14 +307,14 @@ public class BetterBiomeBlendClient
 	{
 		GenCache result = null;
 		
-		lock.lock();
+		freeGenCacheslock.lock();
 		
 		if (!freeGenCaches.empty())
 		{
 			result = freeGenCaches.pop();				
 		}
 		
-		lock.unlock();
+		freeGenCacheslock.unlock();
 		
 		if (result == null)
 		{
@@ -312,14 +327,14 @@ public class BetterBiomeBlendClient
 	public static void
 	releaseGenCache(GenCache cache)
 	{
-		lock.lock();
+		freeGenCacheslock.lock();
 		
 		if (cache.blendRadius == gameSettings.biomeBlendRadius)
 		{
 			freeGenCaches.push(cache);
 		}
 			
-		lock.unlock();		
+		freeGenCacheslock.unlock();		
 	}
 		
 	public static ColorChunk
@@ -664,7 +679,7 @@ public class BetterBiomeBlendClient
 				
 				if ((val & (1024 - 1)) == 0)
 				{
-					BetterBiomeBlend.LOGGER.info((double)val / (double)(missRate.get() + val));
+					logInfo((double)val / (double)(missRate.get() + val));
 					
 					hitRate.set(0);
 					missRate.set(0);
@@ -901,7 +916,7 @@ public class BetterBiomeBlendClient
 			
 			if ((callCount & (1024 - 1)) == 0)
 			{
-				BetterBiomeBlend.LOGGER.info((double)time / (double)callCount);
+				logInfo((double)time / (double)callCount);
 
 				accumulatedTime.set(0);
 				accumulatedCallCount.set(0);

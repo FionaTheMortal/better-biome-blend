@@ -15,7 +15,6 @@ import net.minecraftforge.fml.common.Mod;
 public class BetterBiomeBlend 
 {
 	public static final String MOD_ID = "betterbiomeblend";
-	public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
 	
 	public
 	BetterBiomeBlend()
