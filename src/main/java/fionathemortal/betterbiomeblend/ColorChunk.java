@@ -70,18 +70,14 @@ public final class ColorChunk
 		int blockX = x & 15;
 		int blockZ = z & 15;
 		
-		int blockIndex = (blockZ << 4) | blockX;
+		int index = 3 * ((blockZ << 4) | blockX);
 		
-		int colorR = 0xFF & this.data[3 * blockIndex + 0];
-		int colorG = 0xFF & this.data[3 * blockIndex + 1];
-		int colorB = 0xFF & this.data[3 * blockIndex + 2];
+		byte colorR = this.data[index + 0];
+		byte colorG = this.data[index + 1];
+		byte colorB = this.data[index + 2];
 		
-		int color = 
-			(colorR <<  0) |
-			(colorG <<  8) |
-			(colorB << 16) |
-			0xFF000000;
-
-		return color;
+		int result = Color.makeRGBAWithFullAlpha(colorR, colorG, colorB);
+		
+		return result;
 	}
 }

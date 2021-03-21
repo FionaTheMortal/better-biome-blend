@@ -41,7 +41,8 @@ public abstract class MixinClientWorld extends World
 	}
 
 	@Shadow
-	private Object2ObjectArrayMap<ColorResolver, ColorCache> colorCaches = new Object2ObjectArrayMap<ColorResolver, ColorCache>();
+	private Object2ObjectArrayMap<ColorResolver, ColorCache> colorCaches = 
+		new Object2ObjectArrayMap<ColorResolver, ColorCache>();
 
 	private final ColorChunkCache colorCache    = new ColorChunkCache(2048);
 	private final ColorChunkCache rawColorCache = new ColorChunkCache(512);
