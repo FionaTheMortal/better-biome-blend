@@ -659,7 +659,7 @@ public class BetterBiomeBlendClient
 			
 			int requiredRegions = regionMasks[index];
 
-			int currentRegions = chunk.getRegionMask();
+			int currentRegions = chunk.getValidRegions();
 			int missingRegions = requiredRegions & ~currentRegions; 
 			
 			if (missingRegions != 0)
@@ -673,7 +673,7 @@ public class BetterBiomeBlendClient
 					blendRadius, 
 					chunk.data);
 				
-				chunk.addToRegionMask(missingRegions);
+				chunk.addToValidRegions(missingRegions);
 			}
 			
 			copyRawCacheToGenCache(chunk.data, result2, index, blendRadius);

@@ -21,7 +21,7 @@ public class ColorChunk
 	}
 	
 	public int
-	getRegionMask()
+	getValidRegions()
 	{
 		int result = regionMask.get();
 		
@@ -29,7 +29,7 @@ public class ColorChunk
 	}
 	
 	public void
-	addToRegionMask(int value)
+	addToValidRegions(int value)
 	{
 		int mask = regionMask.get();
 		
