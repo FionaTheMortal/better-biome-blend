@@ -48,18 +48,6 @@ public class BetterBiomeBlendClient
 
 	public static final GameSettings gameSettings = Minecraft.getInstance().gameSettings;
 	
-	public static void 
-	logInfo(Object... params)
-	{
-		LOGGER.info(params);
-	}
-	
-	public static void
-	logWarning(Object... params)
-	{
-		LOGGER.warn(params);
-	}
-	
 	public static final byte[]
 	chunkOffsets = 
 	{
@@ -238,12 +226,12 @@ public class BetterBiomeBlendClient
 				}
 				else
 				{
-					logWarning("Optifine GUI option was not found.");
+					LOGGER.warn("Optifine GUI option was not found.");
 				}
 			}
 			catch (Exception e) 
 			{
-				logWarning(e);
+				LOGGER.warn(e);
 			}
 		} 
 		catch (ClassNotFoundException e) 
@@ -252,7 +240,7 @@ public class BetterBiomeBlendClient
 		
 		if (success)
 		{
-			logInfo("Optifine GUI option was successfully replaced.");
+			LOGGER.info("Optifine GUI option was successfully replaced.");
 		}
 	}
 	
@@ -679,7 +667,7 @@ public class BetterBiomeBlendClient
 				
 				if ((val & (1024 - 1)) == 0)
 				{
-					logInfo((double)val / (double)(missRate.get() + val));
+					LOGGER.info((double)val / (double)(missRate.get() + val));
 					
 					hitRate.set(0);
 					missRate.set(0);
