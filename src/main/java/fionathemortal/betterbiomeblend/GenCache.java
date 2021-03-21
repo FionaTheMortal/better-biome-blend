@@ -9,6 +9,8 @@ public class GenCache
 	int[] G;
 	int[] B;
 	
+	byte[] color2;
+	
 	public GenCache(int blendRadius)
 	{
 		int genCacheDim = 16 + 2 * blendRadius;
@@ -19,5 +21,7 @@ public class GenCache
 		this.R = new int[genCacheDim];
 		this.G = new int[genCacheDim];
 		this.B = new int[genCacheDim];
+		
+		this.color2 = new byte[3 * genCacheDim * genCacheDim];
 	}
 }

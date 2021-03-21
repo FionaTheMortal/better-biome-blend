@@ -9,7 +9,14 @@ public class ColorChunk
 	public long key;
 	public int  invalidationCounter;
 	
-	public AtomicInteger refCount = new AtomicInteger();
+	public AtomicInteger refCount   = new AtomicInteger();
+	public AtomicInteger regionMask = new AtomicInteger();
+	
+	//
+	
+	public byte[] data2;
+
+	//
 	
 	public 
 	ColorChunk()
@@ -17,6 +24,8 @@ public class ColorChunk
 		this.data = new int[16 * 16];
 		
 		this.markAsInvalid();
+		
+		this.data2 = new byte[16 * 16 * 3];
 	}
 	
 	public int
@@ -47,8 +56,16 @@ public class ColorChunk
 		
 		int blockIndex = (blockZ << 4) | blockX;
 		
-		int result = this.data[blockIndex];
+		int colorR = 0xFF & this.data2[3 * blockIndex + 0];
+		int colorG = 0xFF & this.data2[3 * blockIndex + 1];
+		int colorB = 0xFF & this.data2[3 * blockIndex + 2];
 		
-		return result;
+		int color = 
+			(colorR <<  0) |
+			(colorG <<  8) |
+			(colorB << 16) |
+			0xFF000000;
+
+		return color;
 	}
 }

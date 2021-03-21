@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import fionathemortal.betterbiomeblend.BetterBiomeBlend;
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
 import fionathemortal.betterbiomeblend.BiomeColorType;
 import fionathemortal.betterbiomeblend.ColorChunk;
@@ -42,7 +43,7 @@ public abstract class MixinClientWorld extends World
 
 	@Shadow
 	private Object2ObjectArrayMap<ColorResolver, ColorCache> colorCaches = new Object2ObjectArrayMap<ColorResolver, ColorCache>();
-	
+
 	private final ColorChunkCache waterColorCache   = new ColorChunkCache(1024);
 	private final ColorChunkCache grassColorCache   = new ColorChunkCache(1024);
 	private final ColorChunkCache foliageColorCache = new ColorChunkCache(1024);
@@ -146,13 +147,13 @@ public abstract class MixinClientWorld extends World
 				rawColorCache = rawFoliageColorCache;
 			}
 			
-			chunk = BetterBiomeBlendClient.getBlendedColorChunk(this, chunkX, chunkZ, colorCache, colorType, rawColorCache);
+			chunk = BetterBiomeBlendClient.getBlendedColorChunk(this, colorType, chunkX, chunkZ, colorCache, rawColorCache);
 			
 			BetterBiomeBlendClient.setThreadLocalChunk(threadLocalChunk, chunk, colorCache);
 		}
 		
 		int result = chunk.getColor(x, z);
-
+		
 		return result;
 	}
 }
