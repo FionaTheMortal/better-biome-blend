@@ -558,7 +558,7 @@ public final class BetterBiomeBlendClient
 						blockPos.setPos(blockX + x, 0, blockZ + z);
 						
 						int color = world.getBiome(blockPos).getFoliageColor();
-						
+
 						int colorR = Color.RGBAGetR(color);
 						int colorG = Color.RGBAGetG(color);
 						int colorB = Color.RGBAGetB(color);
