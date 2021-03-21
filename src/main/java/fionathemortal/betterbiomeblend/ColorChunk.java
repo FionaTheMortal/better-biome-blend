@@ -21,6 +21,30 @@ public class ColorChunk
 	}
 	
 	public int
+	getRegionMask()
+	{
+		int result = regionMask.get();
+		
+		return result;
+	}
+	
+	public void
+	addToRegionMask(int value)
+	{
+		int mask = regionMask.get();
+		
+		regionMask.set(mask | value);
+	}
+	
+	public int
+	getReferenceCount()
+	{
+		int result = refCount.get();
+		
+		return result;
+	}
+	
+	public int
 	release()
 	{
 		int result = refCount.decrementAndGet();

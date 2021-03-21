@@ -216,7 +216,7 @@ public class ColorChunkCache
 				
 				result = hash.removeLast();
 				
-				if (result.refCount.get() == 1)
+				if (result.getReferenceCount() == 1)
 				{
 					result.release();	
 					break;
