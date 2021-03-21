@@ -48,9 +48,9 @@ public abstract class MixinClientWorld extends World
 	private final ColorChunkCache grassColorCache   = new ColorChunkCache(1024);
 	private final ColorChunkCache foliageColorCache = new ColorChunkCache(1024);
 	
-	private final ColorChunkCache rawWaterColorCache   = new ColorChunkCache(256);
-	private final ColorChunkCache rawGrassColorCache   = new ColorChunkCache(256);
-	private final ColorChunkCache rawFoliageColorCache = new ColorChunkCache(256);
+	private final ColorChunkCache rawWaterColorCache   = new ColorChunkCache(128);
+	private final ColorChunkCache rawGrassColorCache   = new ColorChunkCache(128);
+	private final ColorChunkCache rawFoliageColorCache = new ColorChunkCache(128);
 	
 	private final ThreadLocal<ColorChunk> threadLocalWaterChunk   = ThreadLocal.withInitial(() -> { ColorChunk chunk = new ColorChunk(); chunk.acquire(); return chunk; });
 	private final ThreadLocal<ColorChunk> threadLocalGrassChunk   = ThreadLocal.withInitial(() -> { ColorChunk chunk = new ColorChunk(); chunk.acquire(); return chunk; });
