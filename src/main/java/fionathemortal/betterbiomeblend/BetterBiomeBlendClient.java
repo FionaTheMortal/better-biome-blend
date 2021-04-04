@@ -1,6 +1,7 @@
 package fionathemortal.betterbiomeblend;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicLong;
@@ -503,18 +504,27 @@ public final class BetterBiomeBlendClient
 						x < maxX;
 						++x)
 					{
-						blockPos.setPos(blockX + x, 0, blockZ + z);
-							
-						int color = world.getBiome(blockPos).getGrassColor(xF64, zF64);
-						
-						int colorR = Color.RGBAGetR(color);
-						int colorG = Color.RGBAGetG(color);
-						int colorB = Color.RGBAGetB(color);
-						
-						result[3 * (16 * z + x) + 0] = (byte)colorR;
-						result[3 * (16 * z + x) + 1] = (byte)colorG;
-						result[3 * (16 * z + x) + 2] = (byte)colorB;
+						int currentR = 0xFF & result[3 * (16 * z + x) + 0];
+						int currentG = 0xFF & result[3 * (16 * z + x) + 1];
+						int currentB = 0xFF & result[3 * (16 * z + x) + 2];
 
+						int commonBits = currentR & currentG & currentB;
+						
+						if (commonBits == 0xFF)
+						{
+							blockPos.setPos(blockX + x, 0, blockZ + z);
+							
+							int color = world.getBiome(blockPos).getGrassColor(xF64, zF64);
+							
+							int colorR = Color.RGBAGetR(color);
+							int colorG = Color.RGBAGetG(color);
+							int colorB = Color.RGBAGetB(color);
+							
+							result[3 * (16 * z + x) + 0] = (byte)colorR;
+							result[3 * (16 * z + x) + 1] = (byte)colorG;
+							result[3 * (16 * z + x) + 2] = (byte)colorB;
+						}
+						
 						xF64 += 1.0;
 					}
 					
@@ -531,17 +541,26 @@ public final class BetterBiomeBlendClient
 						x < maxX;
 						++x)
 					{
-						blockPos.setPos(blockX + x, 0, blockZ + z);
+						int currentR = 0xFF & result[3 * (16 * z + x) + 0];
+						int currentG = 0xFF & result[3 * (16 * z + x) + 1];
+						int currentB = 0xFF & result[3 * (16 * z + x) + 2];
+
+						int commonBits = currentR & currentG & currentB;
 						
-						int color = world.getBiome(blockPos).getWaterColor();
-						
-						int colorR = Color.RGBAGetR(color);
-						int colorG = Color.RGBAGetG(color);
-						int colorB = Color.RGBAGetB(color);
-						
-						result[3 * (16 * z + x) + 0] = (byte)colorR;
-						result[3 * (16 * z + x) + 1] = (byte)colorG;
-						result[3 * (16 * z + x) + 2] = (byte)colorB;
+						if (commonBits == 0xFF)
+						{
+							blockPos.setPos(blockX + x, 0, blockZ + z);
+							
+							int color = world.getBiome(blockPos).getWaterColor();
+							
+							int colorR = Color.RGBAGetR(color);
+							int colorG = Color.RGBAGetG(color);
+							int colorB = Color.RGBAGetB(color);
+							
+							result[3 * (16 * z + x) + 0] = (byte)colorR;
+							result[3 * (16 * z + x) + 1] = (byte)colorG;
+							result[3 * (16 * z + x) + 2] = (byte)colorB;
+						}
 					}
 				}
 			} break;
@@ -555,17 +574,26 @@ public final class BetterBiomeBlendClient
 						x < maxX;
 						++x)
 					{
-						blockPos.setPos(blockX + x, 0, blockZ + z);
-						
-						int color = world.getBiome(blockPos).getFoliageColor();
+						int currentR = 0xFF & result[3 * (16 * z + x) + 0];
+						int currentG = 0xFF & result[3 * (16 * z + x) + 1];
+						int currentB = 0xFF & result[3 * (16 * z + x) + 2];
 
-						int colorR = Color.RGBAGetR(color);
-						int colorG = Color.RGBAGetG(color);
-						int colorB = Color.RGBAGetB(color);
+						int commonBits = currentR & currentG & currentB;
 						
-						result[3 * (16 * z + x) + 0] = (byte)colorR;
-						result[3 * (16 * z + x) + 1] = (byte)colorG;
-						result[3 * (16 * z + x) + 2] = (byte)colorB;
+						if (commonBits == 0xFF)
+						{
+							blockPos.setPos(blockX + x, 0, blockZ + z);
+							
+							int color = world.getBiome(blockPos).getFoliageColor();
+	
+							int colorR = Color.RGBAGetR(color);
+							int colorG = Color.RGBAGetG(color);
+							int colorB = Color.RGBAGetB(color);
+							
+							result[3 * (16 * z + x) + 0] = (byte)colorR;
+							result[3 * (16 * z + x) + 1] = (byte)colorG;
+							result[3 * (16 * z + x) + 2] = (byte)colorB;
+						}
 					}
 				}
 			} break;
@@ -630,84 +658,50 @@ public final class BetterBiomeBlendClient
 	}
 	
 	public static void
-	gatherRawColorsForRegions(
+	gatherRawColorsToRawCache(
 		World  world,
 		int    colorType,
 		int    chunkX,
 		int    chunkZ,
-		int    regions,
 		int    blendRadius,
-		byte[] result)
+		byte[] result,
+		int    chunkIndex)
 	{
-		int cornerRegionD;
-
-		if (blendRadius <= 16 / 2)
-		{
-			cornerRegionD = blendRadius;
-		}
-		else
-		{
-			cornerRegionD = 16 - blendRadius; 
-		}
+		int rectParamsOffset = 6 * chunkIndex;
 		
-		int centerRegionW = 16 - 2 * cornerRegionD;
+		int minX = copyRectParams[rectParamsOffset + 0] * (16 - blendRadius);
+		int minZ = copyRectParams[rectParamsOffset + 1] * (16 - blendRadius);
+		
+		int maxX = copyRectParams[rectParamsOffset + 2] * (blendRadius - 16) + 16;
+		int maxZ = copyRectParams[rectParamsOffset + 3] * (blendRadius - 16) + 16;
 		
 		IChunk chunk = world.getChunk(chunkX, chunkZ, ChunkStatus.BIOMES, false);
 		
-		for (int index = 0;
-			index < 9;
-			++index)
+		if (chunk != null)
 		{
-			if ((regions & (1 << index)) != 0)
-			{
-				int arrayOffset = 8 * index;
-				
-				int minX = 
-					(cornerRegionD & regionRectParams[arrayOffset + 0]) + 
-					(centerRegionW & regionRectParams[arrayOffset + 1]);
-				
-				int minZ = 
-					(cornerRegionD & regionRectParams[arrayOffset + 2]) + 
-					(centerRegionW & regionRectParams[arrayOffset + 3]);
-				
-				int dimX = 
-					(cornerRegionD & regionRectParams[arrayOffset + 4]) + 
-					(centerRegionW & regionRectParams[arrayOffset + 5]);
-				
-				int dimZ = 
-					(cornerRegionD & regionRectParams[arrayOffset + 6]) + 
-					(centerRegionW & regionRectParams[arrayOffset + 7]);
-				
-				int maxX = minX + dimX;
-				int maxZ = minZ + dimZ;
-				
-				if (chunk != null)
-				{
-					gatherRawColorsForArea(	
-						world,
-						colorType,
-						chunkX,
-						chunkZ,
-						minX,
-						maxX,
-						minZ,
-						maxZ,
-						result);	
-				}
-				else
-				{
-					fillWithDefaultColor(
-						world,
-						colorType,
-						chunkX,
-						chunkZ,
-						minX,
-						maxX,
-						minZ,
-						maxZ,
-						result);
-				}
-			}
+			gatherRawColorsForArea(	
+				world,
+				colorType,
+				chunkX,
+				chunkZ,
+				minX,
+				maxX,
+				minZ,
+				maxZ,
+				result);	
+		}
+		else
+		{
+			fillWithDefaultColor(
+				world,
+				colorType,
+				chunkX,
+				chunkZ,
+				minX,
+				maxX,
+				minZ,
+				maxZ,
+				result);
 		}
 	}
 	
@@ -721,8 +715,6 @@ public final class BetterBiomeBlendClient
 		ColorChunkCache rawCache,
 		byte[]          result)
 	{
-		int[] regionMasks = blendRadius > 8 ? bigBlendRadiusRegionMasks : smallBlendRadiusRegionMasks;
-		
 		for (int index = 0;
 			index < 9;
 			++index)
@@ -739,29 +731,18 @@ public final class BetterBiomeBlendClient
 			{
 				rawChunk = rawCache.newChunk(rawChunkX, rawChunkZ, colorType);
 				
-				rawChunk.regionMask.set(0);
+				Arrays.fill(rawChunk.data, (byte)-1);
 				
 				rawCache.putChunk(rawChunk);
 			}
 			
-			int requiredRegions = regionMasks[index];
-
-			int currentRegions = rawChunk.getValidRegions();
-			int missingRegions = requiredRegions & ~currentRegions; 
-			
-			if (missingRegions != 0)
-			{
-				gatherRawColorsForRegions(
-					world, 
-					colorType, 
-					rawChunkX, 
-					rawChunkZ, 
-					missingRegions, 
-					blendRadius, 
-					rawChunk.data);
-				
-				rawChunk.addToValidRegions(requiredRegions);
-			}
+			gatherRawColorsToRawCache(
+				world,
+				colorType, 
+				rawChunkX, 
+				rawChunkZ, 
+				blendRadius, 
+				rawChunk.data, index);
 			
 			copyRawCacheToGenCache(rawChunk.data, result, index, blendRadius);
 		
