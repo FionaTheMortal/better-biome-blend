@@ -3,12 +3,12 @@ package fionathemortal.betterbiomeblend;
 public final class Color 
 {
 	public static int
-	makeRGBAWithFullAlpha(byte R, byte G, byte B)
+	makeRGBAWithFullAlpha(int R, int G, int B)
 	{
 		int result = 
-			((0xFF & (int)R) << 0)  |
-			((0xFF & (int)G) << 8)  |
-			((0xFF & (int)B) << 16) |
+			((0xFF & R) << 0)  |
+			((0xFF & G) << 8)  |
+			((0xFF & B) << 16) |
 			0xFF000000;
 		
 		return result;
