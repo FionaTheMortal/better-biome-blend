@@ -14,9 +14,9 @@ public final class ColorChunk
 	public 
 	ColorChunk()
 	{
-		this.markAsInvalid();
-		
 		this.data = new byte[16 * 16 * 3];
+		
+		this.markAsInvalid();
 	}
 
 	public int
@@ -53,11 +53,11 @@ public final class ColorChunk
 		int blockX = x & 15;
 		int blockZ = z & 15;
 		
-		int index = 3 * ((blockZ << 4) | blockX);
+		int offset = 3 * ((blockZ << 4) | blockX);
 		
-		int colorR = this.data[index + 0];
-		int colorG = this.data[index + 1];
-		int colorB = this.data[index + 2];
+		int colorR = this.data[offset + 0];
+		int colorG = this.data[offset + 1];
+		int colorB = this.data[offset + 2];
 		
 		int result = Color.makeRGBAWithFullAlpha(colorR, colorG, colorB);
 		
