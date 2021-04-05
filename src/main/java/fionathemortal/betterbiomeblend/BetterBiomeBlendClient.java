@@ -29,6 +29,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.IChunk;
+import net.minecraft.world.level.ColorResolver;
 import net.minecraftforge.client.event.GuiScreenEvent.InitGuiEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.RegistryObject;
@@ -365,7 +366,7 @@ public final class BetterBiomeBlendClient
 	}
 	
 	public static void
-	gatherRawColorsForChunk(World world, byte[] result, int chunkX, int chunkZ, int colorType)
+	gatherRawColorsForChunk(World world, byte[] result, int chunkX, int chunkZ, int colorType, ColorResolver colorResolver)
 	{
 		BlockPos.Mutable blockPos = new BlockPos.Mutable();
 
@@ -395,7 +396,9 @@ public final class BetterBiomeBlendClient
 					{
 						blockPos.setPos(blockX + x, 0, blockZ + z);
 						
-						int color =  world.getBiome(blockPos).getGrassColor(xF64, zF64);
+						int color = colorResolver.getColor(world.getBiome(blockPos), xF64, zF64);
+						
+						// int color =  world.getBiome(blockPos).getGrassColor(xF64, zF64);
 						
 						int colorR = Color.RGBAGetR(color);
 						int colorG = Color.RGBAGetG(color);
@@ -415,17 +418,26 @@ public final class BetterBiomeBlendClient
 			} break;
 			case BiomeColorType.WATER:
 			{
+				double baseXF64 = (double)blockX;
+				double baseZF64 = (double)blockZ;
+				
+				double zF64 = baseZF64;
+				
 				for (int z = 0;
 					z < 16;
 					++z)
 				{
+					double xF64 = baseXF64;
+					
 					for (int x = 0;
 						x < 16;
 						++x)
 					{
 						blockPos.setPos(blockX + x, 0, blockZ + z);
 						
-						int color = world.getBiome(blockPos).getWaterColor();
+						int color = colorResolver.getColor(world.getBiome(blockPos), xF64, zF64);
+						
+						// int color =  world.getBiome(blockPos).getGrassColor(xF64, zF64);
 						
 						int colorR = Color.RGBAGetR(color);
 						int colorG = Color.RGBAGetG(color);
@@ -434,24 +446,37 @@ public final class BetterBiomeBlendClient
 						result[3 * dstIndex + 0] = (byte)colorR;
 						result[3 * dstIndex + 1] = (byte)colorG;
 						result[3 * dstIndex + 2] = (byte)colorB;
-
+	
 						++dstIndex;
+	
+						xF64 += 1.0;
 					}
+					
+					zF64 += 1.0;
 				}
 			} break;
 			case BiomeColorType.FOLIAGE:
 			{
+				double baseXF64 = (double)blockX;
+				double baseZF64 = (double)blockZ;
+				
+				double zF64 = baseZF64;
+				
 				for (int z = 0;
 					z < 16;
 					++z)
 				{
+					double xF64 = baseXF64;
+					
 					for (int x = 0;
 						x < 16;
 						++x)
 					{
 						blockPos.setPos(blockX + x, 0, blockZ + z);
 						
-						int color = world.getBiome(blockPos).getFoliageColor();
+						int color = colorResolver.getColor(world.getBiome(blockPos), xF64, zF64);
+						
+						// int color =  world.getBiome(blockPos).getGrassColor(xF64, zF64);
 						
 						int colorR = Color.RGBAGetR(color);
 						int colorG = Color.RGBAGetG(color);
@@ -460,9 +485,13 @@ public final class BetterBiomeBlendClient
 						result[3 * dstIndex + 0] = (byte)colorR;
 						result[3 * dstIndex + 1] = (byte)colorG;
 						result[3 * dstIndex + 2] = (byte)colorB;
-
+	
 						++dstIndex;
+	
+						xF64 += 1.0;
 					}
+					
+					zF64 += 1.0;
 				}
 			} break;
 		}
@@ -478,7 +507,8 @@ public final class BetterBiomeBlendClient
 		int    maxX,
 		int    minZ,
 		int    maxZ,
-		byte[] result)
+		byte[] result, 
+		ColorResolver colorResolver)
 	{
 		BlockPos.Mutable blockPos = new BlockPos.Mutable();
 
@@ -514,7 +544,7 @@ public final class BetterBiomeBlendClient
 						{
 							blockPos.setPos(blockX + x, 0, blockZ + z);
 							
-							int color = world.getBiome(blockPos).getGrassColor(xF64, zF64);
+							int color = colorResolver.getColor(world.getBiome(blockPos), xF64, zF64);
 							
 							int colorR = Color.RGBAGetR(color);
 							int colorG = Color.RGBAGetG(color);
@@ -533,10 +563,17 @@ public final class BetterBiomeBlendClient
 			} break;
 			case BiomeColorType.WATER:
 			{
+				double baseXF64 = (double)(blockX + minX);
+				double baseZF64 = (double)(blockZ + minZ);
+				
+				double zF64 = baseZF64;
+				
 				for (int z = minZ;
 					z < maxZ;
 					++z)
 				{
+					double xF64 = baseXF64;
+
 					for (int x = minX;
 						x < maxX;
 						++x)
@@ -551,7 +588,7 @@ public final class BetterBiomeBlendClient
 						{
 							blockPos.setPos(blockX + x, 0, blockZ + z);
 							
-							int color = world.getBiome(blockPos).getWaterColor();
+							int color = colorResolver.getColor(world.getBiome(blockPos), xF64, zF64);
 							
 							int colorR = Color.RGBAGetR(color);
 							int colorG = Color.RGBAGetG(color);
@@ -561,15 +598,26 @@ public final class BetterBiomeBlendClient
 							result[3 * (16 * z + x) + 1] = (byte)colorG;
 							result[3 * (16 * z + x) + 2] = (byte)colorB;
 						}
+						
+						xF64 += 1.0;
 					}
+					
+					zF64 += 1.0;
 				}
 			} break;
 			case BiomeColorType.FOLIAGE:
 			{
+				double baseXF64 = (double)(blockX + minX);
+				double baseZF64 = (double)(blockZ + minZ);
+				
+				double zF64 = baseZF64;
+				
 				for (int z = minZ;
 					z < maxZ;
 					++z)
 				{
+					double xF64 = baseXF64;
+
 					for (int x = minX;
 						x < maxX;
 						++x)
@@ -584,8 +632,8 @@ public final class BetterBiomeBlendClient
 						{
 							blockPos.setPos(blockX + x, 0, blockZ + z);
 							
-							int color = world.getBiome(blockPos).getFoliageColor();
-	
+							int color = colorResolver.getColor(world.getBiome(blockPos), xF64, zF64);
+							
 							int colorR = Color.RGBAGetR(color);
 							int colorG = Color.RGBAGetG(color);
 							int colorB = Color.RGBAGetB(color);
@@ -594,7 +642,11 @@ public final class BetterBiomeBlendClient
 							result[3 * (16 * z + x) + 1] = (byte)colorG;
 							result[3 * (16 * z + x) + 2] = (byte)colorB;
 						}
+						
+						xF64 += 1.0;
 					}
+					
+					zF64 += 1.0;
 				}
 			} break;
 		}
@@ -665,7 +717,8 @@ public final class BetterBiomeBlendClient
 		int    chunkZ,
 		int    blendRadius,
 		byte[] result,
-		int    chunkIndex)
+		int    chunkIndex,
+		ColorResolver colorResolver)
 	{
 		int rectParamsOffset = 6 * chunkIndex;
 		
@@ -688,7 +741,8 @@ public final class BetterBiomeBlendClient
 				maxX,
 				minZ,
 				maxZ,
-				result);	
+				result, 
+				colorResolver);	
 		}
 		else
 		{
@@ -713,7 +767,8 @@ public final class BetterBiomeBlendClient
 		int             chunkZ, 
 		int             blendRadius, 
 		ColorChunkCache rawCache,
-		byte[]          result)
+		byte[]          result,
+		ColorResolver   colorResolver)
 	{
 		for (int index = 0;
 			index < 9;
@@ -742,7 +797,7 @@ public final class BetterBiomeBlendClient
 				rawChunkX, 
 				rawChunkZ, 
 				blendRadius, 
-				rawChunk.data, index);
+				rawChunk.data, index, colorResolver);
 			
 			copyRawCacheToGenCache(rawChunk.data, result, index, blendRadius);
 		
@@ -897,14 +952,15 @@ public final class BetterBiomeBlendClient
 		int             chunkX, 
 		int             chunkZ, 
 		ColorChunkCache rawCache,
-		byte[]          result)
+		byte[]          result,
+		ColorResolver   colorResolverIn)
 	{
 		if (gameSettings.biomeBlendRadius > 0 && 
 			gameSettings.biomeBlendRadius <= BIOME_BLEND_RADIUS_MAX)
 		{
 			GenCache cache = acquireGenCache();
 			
-			gatherRawColorsToCaches(world, colorType, chunkX, chunkZ, cache.blendRadius, rawCache, cache.color);
+			gatherRawColorsToCaches(world, colorType, chunkX, chunkZ, cache.blendRadius, rawCache, cache.color, colorResolverIn);
 			
 			blendCachedColorsForChunk(world, result, cache);
 			
@@ -912,7 +968,7 @@ public final class BetterBiomeBlendClient
 		}
 		else
 		{
-			gatherRawColorsForChunk(world, result, chunkX, chunkZ, colorType);
+			gatherRawColorsForChunk(world, result, chunkX, chunkZ, colorType, colorResolverIn);
 		}
 	}
 	
@@ -923,7 +979,8 @@ public final class BetterBiomeBlendClient
 		int             chunkX, 
 		int             chunkZ, 
 		ColorChunkCache cache, 
-		ColorChunkCache rawCache)
+		ColorChunkCache rawCache,
+		ColorResolver   colorResolverIn)
 	{
 		ColorChunk chunk = cache.getChunk(chunkX, chunkZ, colorType);
 		
@@ -937,7 +994,7 @@ public final class BetterBiomeBlendClient
 			
 			//
 			
-			generateBlendedColorChunk(world, colorType, chunkX, chunkZ, rawCache, chunk.data);
+			generateBlendedColorChunk(world, colorType, chunkX, chunkZ, rawCache, chunk.data, colorResolverIn);
 			
 			// NOTE: Temporary timing code
 			

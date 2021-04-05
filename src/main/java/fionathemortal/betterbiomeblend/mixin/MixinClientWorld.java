@@ -126,7 +126,7 @@ public abstract class MixinClientWorld extends World
 		
 		if (chunk == null)
 		{
-			chunk = BetterBiomeBlendClient.getBlendedColorChunk(this, colorType, chunkX, chunkZ, colorCache, rawColorCache);
+			chunk = BetterBiomeBlendClient.getBlendedColorChunk(this, colorType, chunkX, chunkZ, colorCache, rawColorCache, colorResolverIn);
 			
 			BetterBiomeBlendClient.setThreadLocalChunk(threadLocalChunk, chunk, colorCache);
 		}
