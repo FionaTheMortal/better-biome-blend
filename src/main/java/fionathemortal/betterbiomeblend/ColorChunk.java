@@ -10,7 +10,6 @@ public final class ColorChunk
 	public int  invalidationCounter;
 	
 	public AtomicInteger refCount   = new AtomicInteger();
-	public AtomicInteger regionMask = new AtomicInteger();
 
 	public 
 	ColorChunk()
@@ -19,23 +18,7 @@ public final class ColorChunk
 		
 		this.data = new byte[16 * 16 * 3];
 	}
-	
-	public int
-	getValidRegions()
-	{
-		int result = regionMask.get();
-		
-		return result;
-	}
-	
-	public void
-	addToValidRegions(int value)
-	{
-		int mask = regionMask.get();
-		
-		regionMask.set(mask | value);
-	}
-	
+
 	public int
 	getReferenceCount()
 	{
