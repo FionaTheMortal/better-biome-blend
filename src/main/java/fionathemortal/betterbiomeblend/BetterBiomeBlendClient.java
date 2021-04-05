@@ -265,7 +265,7 @@ public final class BetterBiomeBlendClient
 	public static void
 	biomeBlendRadiusOptionSetValue(GameSettings settings, Double optionValues)
 	{
-		/* BUG: Concurrent modification exception with structure generation
+		/* NOTE: Concurrent modification exception with structure generation
 		 * But this code is a 1 to 1 copy of vanilla code so it might just be an unlikely bug on their end */
 		
 		int currentValue = (int)optionValues.doubleValue();
