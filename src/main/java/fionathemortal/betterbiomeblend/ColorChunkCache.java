@@ -143,32 +143,32 @@ public final class ColorChunkCache
 		
 		++invalidationCounter;
 		
-		for (int index = 0;
-			index < 9;
-			++index)
+		for (int chunkIndex = 0;
+			chunkIndex < 9;
+			++chunkIndex)
 		{
-			int x = BetterBiomeBlendClient.chunkOffsets[2 * index + 0];
-			int z = BetterBiomeBlendClient.chunkOffsets[2 * index + 1];
-
-			if (x != 0 || z != 0)
+			if (chunkIndex != 4)
 			{
+				int offsetX = BiomeColor.getNeighbourOffsetX(chunkIndex);
+				int offsetZ = BiomeColor.getNeighbourOffsetZ(chunkIndex);
+				
 				for (int colorType = BiomeColorType.FIRST;
 					colorType <= BiomeColorType.LAST;
 					++colorType)
 				{
-					long key = getChunkKey(chunkX + x, chunkZ + z, colorType);
+					long key = getChunkKey(chunkX + offsetX, chunkZ + offsetZ, colorType);
 					
 					ColorChunk chunk = hash.get(key);
 					
 					if (chunk != null)
 					{
-						int rectParamsOffset = 6 * index;
+						int rectParamsOffset = 6 * chunkIndex;
 						
-						int minX = BetterBiomeBlendClient.copyRectParams[rectParamsOffset + 0] * (16 - 2);
-						int minZ = BetterBiomeBlendClient.copyRectParams[rectParamsOffset + 1] * (16 - 2);
+						int minX = BiomeColor.neighbourRectParams[rectParamsOffset + 0] * (16 - 2);
+						int minZ = BiomeColor.neighbourRectParams[rectParamsOffset + 1] * (16 - 2);
 						
-						int maxX = BetterBiomeBlendClient.copyRectParams[rectParamsOffset + 2] * (2 - 16) + 16;
-						int maxZ = BetterBiomeBlendClient.copyRectParams[rectParamsOffset + 3] * (2 - 16) + 16;
+						int maxX = BiomeColor.neighbourRectParams[rectParamsOffset + 2] * (2 - 16) + 16;
+						int maxZ = BiomeColor.neighbourRectParams[rectParamsOffset + 3] * (2 - 16) + 16;
 
 						for (int z1 = minZ;
 							z1 < maxZ;

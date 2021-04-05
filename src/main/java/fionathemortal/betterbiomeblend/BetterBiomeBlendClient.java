@@ -1,15 +1,7 @@
 package fionathemortal.betterbiomeblend;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Stack;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
 import net.minecraft.client.AbstractOption;
@@ -21,20 +13,14 @@ import net.minecraft.client.gui.screen.VideoSettingsScreen;
 import net.minecraft.client.gui.widget.list.OptionsRowList;
 import net.minecraft.client.settings.SliderPercentageOption;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.chunk.ChunkStatus;
-import net.minecraft.world.chunk.IChunk;
-import net.minecraft.world.level.ColorResolver;
 import net.minecraftforge.client.event.GuiScreenEvent.InitGuiEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.ForgeRegistry;
 
 public final class BetterBiomeBlendClient
 {
@@ -51,6 +37,9 @@ public final class BetterBiomeBlendClient
 		BetterBiomeBlendClient::biomeBlendRadiusOptionGetDisplayText);
 
 	public static final GameSettings gameSettings = Minecraft.getInstance().gameSettings;
+
+	public static final RegistryObject<Biome> PLAINS = RegistryObject.of(
+		new ResourceLocation("minecraft:plains"), ForgeRegistries.BIOMES);
 	
 	@SubscribeEvent
 	public static void
