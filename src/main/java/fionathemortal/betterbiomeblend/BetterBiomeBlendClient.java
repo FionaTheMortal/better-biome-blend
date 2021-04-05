@@ -40,8 +40,8 @@ public final class BetterBiomeBlendClient
 {
 	public static final Logger LOGGER = LogManager.getLogger(BetterBiomeBlend.MOD_ID);
 	
-	public static final Lock            freeGenCacheslock = new ReentrantLock();
-	public static final Stack<GenCache> freeGenCaches     = new Stack<GenCache>();
+	public static final Lock                   freeBlendCacheslock = new ReentrantLock();
+	public static final Stack<ColorBlendCache> freeBlendCaches     = new Stack<ColorBlendCache>();
 
 	public static final int BIOME_BLEND_RADIUS_MAX = 14;
 	public static final int BIOME_BLEND_RADIUS_MIN = 0;
@@ -275,11 +275,11 @@ public final class BetterBiomeBlendClient
 		{
 			settings.biomeBlendRadius = newSetting;
 			
-			freeGenCacheslock.lock();
+			freeBlendCacheslock.lock();
 			
-			freeGenCaches.clear();
+			freeBlendCaches.clear();
 			
-			freeGenCacheslock.unlock();
+			freeBlendCacheslock.unlock();
 			
 			Minecraft.getInstance().worldRenderer.loadRenderers();
 		}
@@ -299,16 +299,16 @@ public final class BetterBiomeBlendClient
 		return result;
 	}
 
-	public static GenCache
-	acquireGenCache()
+	public static ColorBlendCache
+	acquireBlendCache()
 	{
-		GenCache result = null;
+		ColorBlendCache result = null;
 		
-		freeGenCacheslock.lock();
+		freeBlendCacheslock.lock();
 		
-		while (!freeGenCaches.empty())
+		while (!freeBlendCaches.empty())
 		{
-			result = freeGenCaches.pop();
+			result = freeBlendCaches.pop();
 			
 			if (result.blendRadius == gameSettings.biomeBlendRadius)
 			{
@@ -316,27 +316,27 @@ public final class BetterBiomeBlendClient
 			}
 		}
 				
-		freeGenCacheslock.unlock();
+		freeBlendCacheslock.unlock();
 		
 		if (result == null)
 		{
-			result = new GenCache(gameSettings.biomeBlendRadius);
+			result = new ColorBlendCache(gameSettings.biomeBlendRadius);
 		}
 		
 		return result;
 	}
 	
 	public static void
-	releaseGenCache(GenCache cache)
+	releaseBlendCache(ColorBlendCache cache)
 	{
-		freeGenCacheslock.lock();
+		freeBlendCacheslock.lock();
 		
 		if (cache.blendRadius == gameSettings.biomeBlendRadius)
 		{
-			freeGenCaches.push(cache);
+			freeBlendCaches.push(cache);
 		}
 			
-		freeGenCacheslock.unlock();		
+		freeBlendCacheslock.unlock();		
 	}
 		
 	public static ColorChunk
@@ -799,14 +799,14 @@ public final class BetterBiomeBlendClient
 				blendRadius, 
 				rawChunk.data, index, colorResolver);
 			
-			copyRawCacheToGenCache(rawChunk.data, result, index, blendRadius);
+			copyRawCacheToBlendCache(rawChunk.data, result, index, blendRadius);
 		
 			rawCache.releaseChunk(rawChunk);
 		}
 	}
 	
 	public static void
-	copyRawCacheToGenCache(byte[] rawCache, byte[] result, int chunkIndex, int blendRadius)
+	copyRawCacheToBlendCache(byte[] rawCache, byte[] result, int chunkIndex, int blendRadius)
 	{
 		int rectParamsOffset = 6 * chunkIndex;
 		
@@ -856,25 +856,25 @@ public final class BetterBiomeBlendClient
 	//
 	
 	public static void
-	blendCachedColorsForChunk(World world, byte[] result, GenCache genCache)
+	blendCachedColorsForChunk(World world, byte[] result, ColorBlendCache blendCache)
 	{
-		int   blendRadius = genCache.blendRadius;
+		int   blendRadius = blendCache.blendRadius;
 
-		int[] R = genCache.R;
-		int[] G = genCache.G;
-		int[] B = genCache.B;
+		int[] R = blendCache.R;
+		int[] G = blendCache.G;
+		int[] B = blendCache.B;
 		
 		int blendDim    = 2 * blendRadius + 1;
-		int genCacheDim = 16 + 2 * blendRadius;
+		int blendCacheDim = 16 + 2 * blendRadius;
 		int blendCount  = blendDim * blendDim;
 
 		for (int x = 0;
-			x < genCacheDim;
+			x < blendCacheDim;
 			++x)
 		{
-			R[x] = 0xFF & genCache.color[3 * x + 0];
-			G[x] = 0xFF & genCache.color[3 * x + 1];
-			B[x] = 0xFF & genCache.color[3 * x + 2];
+			R[x] = 0xFF & blendCache.color[3 * x + 0];
+			G[x] = 0xFF & blendCache.color[3 * x + 1];
+			B[x] = 0xFF & blendCache.color[3 * x + 2];
 		}
 		
 		for (int z = 1;
@@ -882,12 +882,12 @@ public final class BetterBiomeBlendClient
 			++z)
 		{
 			for (int x = 0;
-				x < genCacheDim;
+				x < blendCacheDim;
 				++x)
 			{
-				R[x] += 0xFF & genCache.color[3 * (genCacheDim * z + x) + 0];
-				G[x] += 0xFF & genCache.color[3 * (genCacheDim * z + x) + 1];
-				B[x] += 0xFF & genCache.color[3 * (genCacheDim * z + x) + 2];
+				R[x] += 0xFF & blendCache.color[3 * (blendCacheDim * z + x) + 0];
+				G[x] += 0xFF & blendCache.color[3 * (blendCacheDim * z + x) + 1];
+				B[x] += 0xFF & blendCache.color[3 * (blendCacheDim * z + x) + 2];
 			}
 		}
 		
@@ -931,15 +931,15 @@ public final class BetterBiomeBlendClient
 			if (z < 15)
 			{
 				for (int x = 0;
-					x < genCacheDim;
+					x < blendCacheDim;
 					++x)
 				{
-					int index1 = 3 * (genCacheDim * (z           ) + x);
-					int index2 = 3 * (genCacheDim * (z + blendDim) + x);
+					int index1 = 3 * (blendCacheDim * (z           ) + x);
+					int index2 = 3 * (blendCacheDim * (z + blendDim) + x);
 					
-					R[x] += (0xFF & genCache.color[index2 + 0]) - (0xFF & genCache.color[index1 + 0]);
-					G[x] += (0xFF & genCache.color[index2 + 1]) - (0xFF & genCache.color[index1 + 1]);
-					B[x] += (0xFF & genCache.color[index2 + 2]) - (0xFF & genCache.color[index1 + 2]);
+					R[x] += (0xFF & blendCache.color[index2 + 0]) - (0xFF & blendCache.color[index1 + 0]);
+					G[x] += (0xFF & blendCache.color[index2 + 1]) - (0xFF & blendCache.color[index1 + 1]);
+					B[x] += (0xFF & blendCache.color[index2 + 2]) - (0xFF & blendCache.color[index1 + 2]);
 				}
 			}
 		}
@@ -958,13 +958,13 @@ public final class BetterBiomeBlendClient
 		if (gameSettings.biomeBlendRadius > 0 && 
 			gameSettings.biomeBlendRadius <= BIOME_BLEND_RADIUS_MAX)
 		{
-			GenCache cache = acquireGenCache();
+			ColorBlendCache cache = acquireBlendCache();
 			
 			gatherRawColorsToCaches(world, colorType, chunkX, chunkZ, cache.blendRadius, rawCache, cache.color, colorResolverIn);
 			
 			blendCachedColorsForChunk(world, result, cache);
 			
-			releaseGenCache(cache);
+			releaseBlendCache(cache);
 		}
 		else
 		{

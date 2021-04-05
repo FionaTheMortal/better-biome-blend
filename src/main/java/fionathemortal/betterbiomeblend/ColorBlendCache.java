@@ -1,6 +1,6 @@
 package fionathemortal.betterbiomeblend;
 
-public final class GenCache 
+public final class ColorBlendCache 
 {
 	int    blendRadius;
 	byte[] color;
@@ -9,7 +9,7 @@ public final class GenCache
 	int[] G;
 	int[] B;
 	
-	public GenCache(int blendRadius)
+	public ColorBlendCache(int blendRadius)
 	{
 		int genCacheDim = 16 + 2 * blendRadius;
 		
