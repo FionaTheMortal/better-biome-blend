@@ -87,7 +87,8 @@ public abstract class MixinClientWorld extends World
 	onOnChunkLoaded(int chunkX, int chunkZ, CallbackInfo ci)
 	{
 		colorCache.invalidateNeighbourhood(chunkX, chunkZ);
-		rawColorCache.invalidateNeighbourhood(chunkX, chunkZ);
+		
+		rawColorCache.invalidateNeighbourhood2(chunkX, chunkZ);
 	}
 	
 	@Overwrite

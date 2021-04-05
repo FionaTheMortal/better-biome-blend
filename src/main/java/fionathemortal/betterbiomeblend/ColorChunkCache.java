@@ -137,6 +137,77 @@ public final class ColorChunkCache
 	}
 	
 	public void
+	invalidateNeighbourhood2(int chunkX, int chunkZ)
+	{
+		lock.lock();
+		
+		++invalidationCounter;
+		
+		for (int index = 0;
+			index < 9;
+			++index)
+		{
+			int x = BetterBiomeBlendClient.chunkOffsets[2 * index + 0];
+			int z = BetterBiomeBlendClient.chunkOffsets[2 * index + 1];
+
+			if (x != 0 || z != 0)
+			{
+				for (int colorType = BiomeColorType.FIRST;
+					colorType <= BiomeColorType.LAST;
+					++colorType)
+				{
+					long key = getChunkKey(chunkX + x, chunkZ + z, colorType);
+					
+					ColorChunk chunk = hash.get(key);
+					
+					if (chunk != null)
+					{
+						int rectParamsOffset = 6 * index;
+						
+						int minX = BetterBiomeBlendClient.copyRectParams[rectParamsOffset + 0] * (16 - 2);
+						int minZ = BetterBiomeBlendClient.copyRectParams[rectParamsOffset + 1] * (16 - 2);
+						
+						int maxX = BetterBiomeBlendClient.copyRectParams[rectParamsOffset + 2] * (2 - 16) + 16;
+						int maxZ = BetterBiomeBlendClient.copyRectParams[rectParamsOffset + 3] * (2 - 16) + 16;
+
+						for (int z1 = minZ;
+							z1 < maxZ;
+							++z1)
+						{
+							for (int x1 = minX;
+								x1 < maxX;
+								++x1)
+							{
+								chunk.data[3 * (16 * z1 + x1) + 0] = (byte)-1;
+								chunk.data[3 * (16 * z1 + x1) + 1] = (byte)-1;
+								chunk.data[3 * (16 * z1 + x1) + 2] = (byte)-1;
+							}
+						}
+					}
+				}
+			}
+		}	
+		
+		for (int colorType = BiomeColorType.FIRST;
+			colorType <= BiomeColorType.LAST;
+			++colorType)
+		{
+			long key = getChunkKey(chunkX, chunkZ, colorType);
+			
+			ColorChunk chunk = hash.remove(key);
+			
+			if (chunk != null)
+			{
+				releaseChunkWithoutLock(chunk);
+				
+				chunk.markAsInvalid();
+			}
+		}
+		
+		lock.unlock();
+	}
+	
+	public void
 	invalidateAll()
 	{
 		lock.lock();
