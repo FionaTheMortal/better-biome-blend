@@ -101,6 +101,25 @@ public class BiomeColor
 		return result;
 	}
 	
+	public static int
+	getNeighbourRectBlendCacheMinX(int chunkIndex, int radius)
+	{
+		int offset = 6 * chunkIndex;
+		int result = Math.max((neighbourRectParams[offset + 4] << 4) + radius, 0);
+	
+		return result;
+	}
+	
+	public static int
+	getNeighbourRectBlendCacheMinZ(int chunkIndex, int radius)
+	{
+		int offset = 6 * chunkIndex;
+		int result = Math.max((neighbourRectParams[offset + 5] << 4) + radius, 0);
+
+		return result;
+	}
+	
+	
 	public static void
 	clearGenCaches()
 	{
@@ -411,16 +430,12 @@ public class BiomeColor
 	public static void
 	copyRawCacheToBlendCache(byte[] rawCache, byte[] result, int chunkIndex, int blendRadius)
 	{
-		int rectParamsOffset = 6 * chunkIndex;
-		
-		int srcMinX = neighbourRectParams[rectParamsOffset + 0] * (16 - blendRadius);
-		int srcMinZ = neighbourRectParams[rectParamsOffset + 1] * (16 - blendRadius);
-		
-		int srcMaxX = neighbourRectParams[rectParamsOffset + 2] * (blendRadius - 16) + 16;
-		int srcMaxZ = neighbourRectParams[rectParamsOffset + 3] * (blendRadius - 16) + 16;
-		
-		int dstMinX = Math.max((neighbourRectParams[rectParamsOffset + 4] << 4) + blendRadius, 0);
-		int dstMinZ = Math.max((neighbourRectParams[rectParamsOffset + 5] << 4) + blendRadius, 0);
+		int srcMinX = getNeighbourRectMinX(chunkIndex, blendRadius);
+		int srcMinZ = getNeighbourRectMinZ(chunkIndex, blendRadius);
+		int srcMaxX = getNeighbourRectMaxX(chunkIndex, blendRadius);
+		int srcMaxZ = getNeighbourRectMaxZ(chunkIndex, blendRadius);
+		int dstMinX = getNeighbourRectBlendCacheMinX(chunkIndex, blendRadius);
+		int dstMinZ = getNeighbourRectBlendCacheMinZ(chunkIndex, blendRadius);
 	
 		int dstDim = 16 + 2 * blendRadius;
 		

@@ -163,14 +163,11 @@ public final class ColorChunkCache
 					
 					if (chunk != null)
 					{
-						int rectParamsOffset = 6 * chunkIndex;
+						int minX = BiomeColor.getNeighbourRectMinX(chunkIndex, 2);
+						int minZ = BiomeColor.getNeighbourRectMinZ(chunkIndex, 2);
+						int maxX = BiomeColor.getNeighbourRectMaxX(chunkIndex, 2);
+						int maxZ = BiomeColor.getNeighbourRectMaxZ(chunkIndex, 2);
 						
-						int minX = BiomeColor.neighbourRectParams[rectParamsOffset + 0] * (16 - 2);
-						int minZ = BiomeColor.neighbourRectParams[rectParamsOffset + 1] * (16 - 2);
-						
-						int maxX = BiomeColor.neighbourRectParams[rectParamsOffset + 2] * (2 - 16) + 16;
-						int maxZ = BiomeColor.neighbourRectParams[rectParamsOffset + 3] * (2 - 16) + 16;
-
 						for (int z1 = minZ;
 							z1 < maxZ;
 							++z1)
