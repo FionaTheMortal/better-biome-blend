@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
+import fionathemortal.betterbiomeblend.BiomeColor;
 import fionathemortal.betterbiomeblend.BiomeColorType;
 import fionathemortal.betterbiomeblend.ColorChunk;
 import fionathemortal.betterbiomeblend.ColorChunkCache;
@@ -120,15 +121,15 @@ public abstract class MixinClientWorld extends World
 		int chunkX = x >> 4;
 		int chunkZ = z >> 4;
 		
-		ColorChunk chunk = BetterBiomeBlendClient.getThreadLocalChunk(threadLocalChunk, chunkX, chunkZ, colorType);
+		ColorChunk chunk = BiomeColor.getThreadLocalChunk(threadLocalChunk, chunkX, chunkZ, colorType);
 
 		// TODO: Jump table all of this?
 		
 		if (chunk == null)
 		{
-			chunk = BetterBiomeBlendClient.getBlendedColorChunk(this, colorType, chunkX, chunkZ, colorCache, rawColorCache, colorResolverIn);
+			chunk = BiomeColor.getBlendedColorChunk(this, colorType, chunkX, chunkZ, colorCache, rawColorCache, colorResolverIn);
 			
-			BetterBiomeBlendClient.setThreadLocalChunk(threadLocalChunk, chunk, colorCache);
+			BiomeColor.setThreadLocalChunk(threadLocalChunk, chunk, colorCache);
 		}
 		
 		int result = 0;
