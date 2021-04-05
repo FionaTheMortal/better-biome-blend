@@ -1,5 +1,6 @@
 package fionathemortal.betterbiomeblend;
 
+import java.util.Arrays;
 import java.util.Stack;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -323,6 +324,23 @@ public final class ColorChunkCache
 
 		result.acquire();
 
+		return result;
+	}
+	
+	public ColorChunk
+	getOrDefaultInitChunk(int chunkX, int chunkZ, int colorType)
+	{
+		ColorChunk result = getChunk(chunkX, chunkZ, colorType);
+		
+		if (result == null)
+		{
+			result = newChunk(chunkX, chunkZ, colorType);
+			
+			Arrays.fill(result.data, (byte)-1);
+			
+			putChunk(result);
+		}
+		
 		return result;
 	}
 }

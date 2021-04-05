@@ -381,26 +381,17 @@ public class BiomeColor
 		byte[]          result,
 		ColorResolver   colorResolver)
 	{
-		for (int index = 0;
-			index < 9;
-			++index)
+		for (int chunkIndex = 0;
+			chunkIndex < 9;
+			++chunkIndex)
 		{
-			int offsetX = getNeighbourOffsetX(index);
-			int offsetZ = getNeighbourOffsetZ(index);
+			int offsetX = getNeighbourOffsetX(chunkIndex);
+			int offsetZ = getNeighbourOffsetZ(chunkIndex);
 
 			int rawChunkX = chunkX + offsetX;
 			int rawChunkZ = chunkZ + offsetZ;
 			
-			ColorChunk rawChunk = rawCache.getChunk(rawChunkX, rawChunkZ, colorType);
-			
-			if (rawChunk == null)
-			{
-				rawChunk = rawCache.newChunk(rawChunkX, rawChunkZ, colorType);
-				
-				Arrays.fill(rawChunk.data, (byte)-1);
-				
-				rawCache.putChunk(rawChunk);
-			}
+			ColorChunk rawChunk = rawCache.getOrDefaultInitChunk(rawChunkX, rawChunkZ, colorType);
 			
 			gatherRawColorsToCache(
 				world,
@@ -408,10 +399,10 @@ public class BiomeColor
 				rawChunkZ,
 				blendRadius,
 				rawChunk.data,
-				index,
+				chunkIndex,
 				colorResolver);
 			
-			copyRawCacheToBlendCache(rawChunk.data, result, index, blendRadius);
+			copyRawCacheToBlendCache(rawChunk.data, result, chunkIndex, blendRadius);
 		
 			rawCache.releaseChunk(rawChunk);
 		}
