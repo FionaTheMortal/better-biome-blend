@@ -366,7 +366,7 @@ public final class BetterBiomeBlendClient
 	}
 	
 	public static void
-	gatherRawColorsForChunk(World world, byte[] result, int chunkX, int chunkZ, int colorType, ColorResolver colorResolver)
+	gatherRawColorsForChunk(World world, byte[] result, int chunkX, int chunkZ, ColorResolver colorResolver)
 	{
 		BlockPos.Mutable blockPos = new BlockPos.Mutable();
 
@@ -374,133 +374,46 @@ public final class BetterBiomeBlendClient
 		int blockZ = chunkZ * 16;
 
 		int dstIndex = 0;
+
+		double baseXF64 = (double)blockX;
+		double baseZF64 = (double)blockZ;
 		
-		switch(colorType)
+		double zF64 = baseZF64;
+		
+		for (int z = 0;
+			z < 16;
+			++z)
 		{
-			case BiomeColorType.GRASS:
+			double xF64 = baseXF64;
+			
+			for (int x = 0;
+				x < 16;
+				++x)
 			{
-				double baseXF64 = (double)blockX;
-				double baseZF64 = (double)blockZ;
+				blockPos.setPos(blockX + x, 0, blockZ + z);
 				
-				double zF64 = baseZF64;
+				int color = colorResolver.getColor(world.getBiome(blockPos), xF64, zF64);
 				
-				for (int z = 0;
-					z < 16;
-					++z)
-				{
-					double xF64 = baseXF64;
-					
-					for (int x = 0;
-						x < 16;
-						++x)
-					{
-						blockPos.setPos(blockX + x, 0, blockZ + z);
-						
-						int color = colorResolver.getColor(world.getBiome(blockPos), xF64, zF64);
-						
-						// int color =  world.getBiome(blockPos).getGrassColor(xF64, zF64);
-						
-						int colorR = Color.RGBAGetR(color);
-						int colorG = Color.RGBAGetG(color);
-						int colorB = Color.RGBAGetB(color);
-						
-						result[3 * dstIndex + 0] = (byte)colorR;
-						result[3 * dstIndex + 1] = (byte)colorG;
-						result[3 * dstIndex + 2] = (byte)colorB;
-	
-						++dstIndex;
-	
-						xF64 += 1.0;
-					}
-					
-					zF64 += 1.0;
-				}
-			} break;
-			case BiomeColorType.WATER:
-			{
-				double baseXF64 = (double)blockX;
-				double baseZF64 = (double)blockZ;
+				int colorR = Color.RGBAGetR(color);
+				int colorG = Color.RGBAGetG(color);
+				int colorB = Color.RGBAGetB(color);
 				
-				double zF64 = baseZF64;
-				
-				for (int z = 0;
-					z < 16;
-					++z)
-				{
-					double xF64 = baseXF64;
-					
-					for (int x = 0;
-						x < 16;
-						++x)
-					{
-						blockPos.setPos(blockX + x, 0, blockZ + z);
-						
-						int color = colorResolver.getColor(world.getBiome(blockPos), xF64, zF64);
-						
-						// int color =  world.getBiome(blockPos).getGrassColor(xF64, zF64);
-						
-						int colorR = Color.RGBAGetR(color);
-						int colorG = Color.RGBAGetG(color);
-						int colorB = Color.RGBAGetB(color);
-						
-						result[3 * dstIndex + 0] = (byte)colorR;
-						result[3 * dstIndex + 1] = (byte)colorG;
-						result[3 * dstIndex + 2] = (byte)colorB;
-	
-						++dstIndex;
-	
-						xF64 += 1.0;
-					}
-					
-					zF64 += 1.0;
-				}
-			} break;
-			case BiomeColorType.FOLIAGE:
-			{
-				double baseXF64 = (double)blockX;
-				double baseZF64 = (double)blockZ;
-				
-				double zF64 = baseZF64;
-				
-				for (int z = 0;
-					z < 16;
-					++z)
-				{
-					double xF64 = baseXF64;
-					
-					for (int x = 0;
-						x < 16;
-						++x)
-					{
-						blockPos.setPos(blockX + x, 0, blockZ + z);
-						
-						int color = colorResolver.getColor(world.getBiome(blockPos), xF64, zF64);
-						
-						// int color =  world.getBiome(blockPos).getGrassColor(xF64, zF64);
-						
-						int colorR = Color.RGBAGetR(color);
-						int colorG = Color.RGBAGetG(color);
-						int colorB = Color.RGBAGetB(color);
-						
-						result[3 * dstIndex + 0] = (byte)colorR;
-						result[3 * dstIndex + 1] = (byte)colorG;
-						result[3 * dstIndex + 2] = (byte)colorB;
-	
-						++dstIndex;
-	
-						xF64 += 1.0;
-					}
-					
-					zF64 += 1.0;
-				}
-			} break;
+				result[3 * dstIndex + 0] = (byte)colorR;
+				result[3 * dstIndex + 1] = (byte)colorG;
+				result[3 * dstIndex + 2] = (byte)colorB;
+
+				++dstIndex;
+
+				xF64 += 1.0;
+			}
+			
+			zF64 += 1.0;
 		}
 	}
 	
 	public static void
 	gatherRawColorsForArea(
 		World  world,
-		int    colorType,
 		int    chunkX,
 		int    chunkZ,
 		int    minX,
@@ -514,141 +427,47 @@ public final class BetterBiomeBlendClient
 
 		int blockX = 16 * chunkX;
 		int blockZ = 16 * chunkZ;
+
+		double baseXF64 = (double)(blockX + minX);
+		double baseZF64 = (double)(blockZ + minZ);
 		
-		switch(colorType)
+		double zF64 = baseZF64;
+		
+		for (int z = minZ;
+			z < maxZ;
+			++z)
 		{
-			case BiomeColorType.GRASS:
+			double xF64 = baseXF64;
+
+			for (int x = minX;
+				x < maxX;
+				++x)
 			{
-				double baseXF64 = (double)(blockX + minX);
-				double baseZF64 = (double)(blockZ + minZ);
+				int currentR = 0xFF & result[3 * (16 * z + x) + 0];
+				int currentG = 0xFF & result[3 * (16 * z + x) + 1];
+				int currentB = 0xFF & result[3 * (16 * z + x) + 2];
+
+				int commonBits = currentR & currentG & currentB;
 				
-				double zF64 = baseZF64;
-				
-				for (int z = minZ;
-					z < maxZ;
-					++z)
+				if (commonBits == 0xFF)
 				{
-					double xF64 = baseXF64;
-
-					for (int x = minX;
-						x < maxX;
-						++x)
-					{
-						int currentR = 0xFF & result[3 * (16 * z + x) + 0];
-						int currentG = 0xFF & result[3 * (16 * z + x) + 1];
-						int currentB = 0xFF & result[3 * (16 * z + x) + 2];
-
-						int commonBits = currentR & currentG & currentB;
-						
-						if (commonBits == 0xFF)
-						{
-							blockPos.setPos(blockX + x, 0, blockZ + z);
-							
-							int color = colorResolver.getColor(world.getBiome(blockPos), xF64, zF64);
-							
-							int colorR = Color.RGBAGetR(color);
-							int colorG = Color.RGBAGetG(color);
-							int colorB = Color.RGBAGetB(color);
-							
-							result[3 * (16 * z + x) + 0] = (byte)colorR;
-							result[3 * (16 * z + x) + 1] = (byte)colorG;
-							result[3 * (16 * z + x) + 2] = (byte)colorB;
-						}
-						
-						xF64 += 1.0;
-					}
+					blockPos.setPos(blockX + x, 0, blockZ + z);
 					
-					zF64 += 1.0;
-				}
-			} break;
-			case BiomeColorType.WATER:
-			{
-				double baseXF64 = (double)(blockX + minX);
-				double baseZF64 = (double)(blockZ + minZ);
-				
-				double zF64 = baseZF64;
-				
-				for (int z = minZ;
-					z < maxZ;
-					++z)
-				{
-					double xF64 = baseXF64;
-
-					for (int x = minX;
-						x < maxX;
-						++x)
-					{
-						int currentR = 0xFF & result[3 * (16 * z + x) + 0];
-						int currentG = 0xFF & result[3 * (16 * z + x) + 1];
-						int currentB = 0xFF & result[3 * (16 * z + x) + 2];
-
-						int commonBits = currentR & currentG & currentB;
-						
-						if (commonBits == 0xFF)
-						{
-							blockPos.setPos(blockX + x, 0, blockZ + z);
-							
-							int color = colorResolver.getColor(world.getBiome(blockPos), xF64, zF64);
-							
-							int colorR = Color.RGBAGetR(color);
-							int colorG = Color.RGBAGetG(color);
-							int colorB = Color.RGBAGetB(color);
-							
-							result[3 * (16 * z + x) + 0] = (byte)colorR;
-							result[3 * (16 * z + x) + 1] = (byte)colorG;
-							result[3 * (16 * z + x) + 2] = (byte)colorB;
-						}
-						
-						xF64 += 1.0;
-					}
+					int color = colorResolver.getColor(world.getBiome(blockPos), xF64, zF64);
 					
-					zF64 += 1.0;
-				}
-			} break;
-			case BiomeColorType.FOLIAGE:
-			{
-				double baseXF64 = (double)(blockX + minX);
-				double baseZF64 = (double)(blockZ + minZ);
-				
-				double zF64 = baseZF64;
-				
-				for (int z = minZ;
-					z < maxZ;
-					++z)
-				{
-					double xF64 = baseXF64;
-
-					for (int x = minX;
-						x < maxX;
-						++x)
-					{
-						int currentR = 0xFF & result[3 * (16 * z + x) + 0];
-						int currentG = 0xFF & result[3 * (16 * z + x) + 1];
-						int currentB = 0xFF & result[3 * (16 * z + x) + 2];
-
-						int commonBits = currentR & currentG & currentB;
-						
-						if (commonBits == 0xFF)
-						{
-							blockPos.setPos(blockX + x, 0, blockZ + z);
-							
-							int color = colorResolver.getColor(world.getBiome(blockPos), xF64, zF64);
-							
-							int colorR = Color.RGBAGetR(color);
-							int colorG = Color.RGBAGetG(color);
-							int colorB = Color.RGBAGetB(color);
-							
-							result[3 * (16 * z + x) + 0] = (byte)colorR;
-							result[3 * (16 * z + x) + 1] = (byte)colorG;
-							result[3 * (16 * z + x) + 2] = (byte)colorB;
-						}
-						
-						xF64 += 1.0;
-					}
+					int colorR = Color.RGBAGetR(color);
+					int colorG = Color.RGBAGetG(color);
+					int colorB = Color.RGBAGetB(color);
 					
-					zF64 += 1.0;
+					result[3 * (16 * z + x) + 0] = (byte)colorR;
+					result[3 * (16 * z + x) + 1] = (byte)colorG;
+					result[3 * (16 * z + x) + 2] = (byte)colorB;
 				}
-			} break;
+				
+				xF64 += 1.0;
+			}
+			
+			zF64 += 1.0;
 		}
 	}
 	
@@ -734,7 +553,6 @@ public final class BetterBiomeBlendClient
 		{
 			gatherRawColorsForArea(	
 				world,
-				colorType,
 				chunkX,
 				chunkZ,
 				minX,
@@ -958,17 +776,17 @@ public final class BetterBiomeBlendClient
 		if (gameSettings.biomeBlendRadius > 0 && 
 			gameSettings.biomeBlendRadius <= BIOME_BLEND_RADIUS_MAX)
 		{
-			ColorBlendCache cache = acquireBlendCache();
+			ColorBlendCache blendCache = acquireBlendCache();
 			
-			gatherRawColorsToCaches(world, colorType, chunkX, chunkZ, cache.blendRadius, rawCache, cache.color, colorResolverIn);
+			gatherRawColorsToCaches(world, colorType, chunkX, chunkZ, blendCache.blendRadius, rawCache, blendCache.color, colorResolverIn);
 			
-			blendCachedColorsForChunk(world, result, cache);
+			blendCachedColorsForChunk(world, result, blendCache);
 			
-			releaseBlendCache(cache);
+			releaseBlendCache(blendCache);
 		}
 		else
 		{
-			gatherRawColorsForChunk(world, result, chunkX, chunkZ, colorType, colorResolverIn);
+			gatherRawColorsForChunk(world, result, chunkX, chunkZ, colorResolverIn);
 		}
 	}
 	
