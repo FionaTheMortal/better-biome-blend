@@ -21,8 +21,11 @@ public class BiomeColor
 	public static final Lock                   freeBlendCacheslock = new ReentrantLock();
 	public static final Stack<ColorBlendCache> freeBlendCaches     = new Stack<ColorBlendCache>();
 
+	public static final RegistryObject<Biome> PLAINS = RegistryObject.of(
+		new ResourceLocation("minecraft:plains"), ForgeRegistries.BIOMES);
+	
 	public static final byte[]
-	chunkOffsets = 
+	neighbourOffsets = 
 	{
 		-1, -1,
 		 0, -1,
@@ -36,7 +39,7 @@ public class BiomeColor
 	};
 
 	public static final byte[]
-	copyRectParams = 
+	neighbourRectParams = 
 	{
 	 	 1,  1,  0,  0, -1, -1,
 		 0,  1,  0,  0,  0, -1,
@@ -174,7 +177,7 @@ public class BiomeColor
 	}
 	
 	public static void
-	gatherRawColorsForArea(
+	gatherRawColorsForRect(
 		World  world,
 		int    chunkX,
 		int    chunkZ,
@@ -233,11 +236,8 @@ public class BiomeColor
 		}
 	}
 	
-	public static final RegistryObject<Biome> PLAINS = RegistryObject.of(
-		new ResourceLocation("minecraft:plains"), ForgeRegistries.BIOMES);
-
 	public static void
-	fillWithDefaultColor(		
+	fillRectWithDefaultColor(		
 		World  world,
 		int    colorType,
 		int    chunkX,
@@ -301,19 +301,19 @@ public class BiomeColor
 		int    chunkIndex,
 		ColorResolver colorResolver)
 	{
-		int rectParamsOffset = 6 * chunkIndex;
+		int offset = 6 * chunkIndex;
 		
-		int minX = copyRectParams[rectParamsOffset + 0] * (16 - blendRadius);
-		int minZ = copyRectParams[rectParamsOffset + 1] * (16 - blendRadius);
+		int minX = neighbourRectParams[offset + 0] * (16 - blendRadius);
+		int minZ = neighbourRectParams[offset + 1] * (16 - blendRadius);
 		
-		int maxX = copyRectParams[rectParamsOffset + 2] * (blendRadius - 16) + 16;
-		int maxZ = copyRectParams[rectParamsOffset + 3] * (blendRadius - 16) + 16;
+		int maxX = neighbourRectParams[offset + 2] * (blendRadius - 16) + 16;
+		int maxZ = neighbourRectParams[offset + 3] * (blendRadius - 16) + 16;
 		
 		IChunk chunk = world.getChunk(chunkX, chunkZ, ChunkStatus.BIOMES, false);
 		
 		if (chunk != null)
 		{
-			gatherRawColorsForArea(	
+			gatherRawColorsForRect(	
 				world,
 				chunkX,
 				chunkZ,
@@ -321,12 +321,12 @@ public class BiomeColor
 				maxX,
 				minZ,
 				maxZ,
-				result, 
+				result,
 				colorResolver);	
 		}
 		else
 		{
-			fillWithDefaultColor(
+			fillRectWithDefaultColor(
 				world,
 				colorType,
 				chunkX,
@@ -354,8 +354,8 @@ public class BiomeColor
 			index < 9;
 			++index)
 		{
-			int offsetX = chunkOffsets[2 * index + 0];
-			int offsetZ = chunkOffsets[2 * index + 1];
+			int offsetX = neighbourOffsets[2 * index + 0];
+			int offsetZ = neighbourOffsets[2 * index + 1];
 
 			int rawChunkX = chunkX + offsetX;
 			int rawChunkZ = chunkZ + offsetZ;
@@ -390,14 +390,14 @@ public class BiomeColor
 	{
 		int rectParamsOffset = 6 * chunkIndex;
 		
-		int srcMinX = copyRectParams[rectParamsOffset + 0] * (16 - blendRadius);
-		int srcMinZ = copyRectParams[rectParamsOffset + 1] * (16 - blendRadius);
+		int srcMinX = neighbourRectParams[rectParamsOffset + 0] * (16 - blendRadius);
+		int srcMinZ = neighbourRectParams[rectParamsOffset + 1] * (16 - blendRadius);
 		
-		int srcMaxX = copyRectParams[rectParamsOffset + 2] * (blendRadius - 16) + 16;
-		int srcMaxZ = copyRectParams[rectParamsOffset + 3] * (blendRadius - 16) + 16;
+		int srcMaxX = neighbourRectParams[rectParamsOffset + 2] * (blendRadius - 16) + 16;
+		int srcMaxZ = neighbourRectParams[rectParamsOffset + 3] * (blendRadius - 16) + 16;
 		
-		int dstMinX = Math.max((copyRectParams[rectParamsOffset + 4] << 4) + blendRadius, 0);
-		int dstMinZ = Math.max((copyRectParams[rectParamsOffset + 5] << 4) + blendRadius, 0);
+		int dstMinX = Math.max((neighbourRectParams[rectParamsOffset + 4] << 4) + blendRadius, 0);
+		int dstMinZ = Math.max((neighbourRectParams[rectParamsOffset + 5] << 4) + blendRadius, 0);
 	
 		int dstDim = 16 + 2 * blendRadius;
 		
