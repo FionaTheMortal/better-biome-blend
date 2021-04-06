@@ -1,12 +1,13 @@
 package fionathemortal.betterbiomeblend;
 
+import java.util.Arrays;
 import java.util.Stack;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 
-public class ColorChunkCache 
+public final class ColorChunkCache 
 {
 	public Lock lock;
 	
@@ -16,18 +17,21 @@ public class ColorChunkCache
 	public int  invalidationCounter;
 	
 	public static long
-	getChunkKey(int chunkX, int chunkZ)
+	getChunkKey(int chunkX, int chunkZ, int colorType)
 	{
-		long result = 
-			((long)chunkZ << 32) | 
-			((long)chunkX & 0xFFFFFFFFL);
-		
+		long result =
+			((long)(chunkZ & 0x7FFFFFFFL) << 31) | 
+			((long)(chunkX & 0x7FFFFFFFL))       |
+			((long)colorType << 62);
+				
 		return result;
 	}
 	
 	public
 	ColorChunkCache(int count)
 	{
+		lock = new ReentrantLock();
+		
 		hash      = new Long2ObjectLinkedOpenHashMap<ColorChunk>(count);
 		freeStack = new Stack<ColorChunk>();
 		
@@ -37,8 +41,6 @@ public class ColorChunkCache
 		{
 			freeStack.add(new ColorChunk());
 		}
-
-		lock = new ReentrantLock();
 	}
 
 	public void
@@ -74,15 +76,20 @@ public class ColorChunkCache
 		
 		++invalidationCounter;
 	
-		long key = getChunkKey(chunkX, chunkZ);
-		
-		ColorChunk chunk = hash.remove(key);
-		
-		if (chunk != null)
+		for (int colorType = BiomeColorType.FIRST;
+			colorType <= BiomeColorType.LAST;
+			++colorType)
 		{
-			releaseChunkWithoutLock(chunk);
+			long key = getChunkKey(chunkX, chunkZ, colorType);
 			
-			chunk.markAsInvalid();
+			ColorChunk chunk = hash.remove(key);
+			
+			if (chunk != null)
+			{
+				releaseChunkWithoutLock(chunk);
+				
+				chunk.markAsInvalid();
+			}
 		}
 		
 		lock.unlock();
@@ -103,18 +110,91 @@ public class ColorChunkCache
 				z <= 1;
 				++z)
 			{
-				long key = getChunkKey(chunkX + x, chunkZ + z);
-				
-				ColorChunk chunk = hash.remove(key);
-				
-				if (chunk != null)
+				for (int colorType = BiomeColorType.FIRST;
+					colorType <= BiomeColorType.LAST;
+					++colorType)
 				{
-					releaseChunkWithoutLock(chunk);
+					long key = getChunkKey(chunkX + x, chunkZ + z, colorType);
 					
-					chunk.markAsInvalid();
+					ColorChunk chunk = hash.remove(key);
+					
+					if (chunk != null)
+					{
+						releaseChunkWithoutLock(chunk);
+						
+						chunk.markAsInvalid();
+					}
 				}
 			}
 		}	
+		
+		lock.unlock();
+	}
+	
+	public void
+	invalidateSmallNeighbourhood(int chunkX, int chunkZ)
+	{
+		lock.lock();
+		
+		++invalidationCounter;
+		
+		for (int chunkIndex = 0;
+			chunkIndex < 9;
+			++chunkIndex)
+		{
+			if (chunkIndex != 4)
+			{
+				int offsetX = BiomeColor.getNeighbourOffsetX(chunkIndex);
+				int offsetZ = BiomeColor.getNeighbourOffsetZ(chunkIndex);
+				
+				for (int colorType = BiomeColorType.FIRST;
+					colorType <= BiomeColorType.LAST;
+					++colorType)
+				{
+					long key = getChunkKey(chunkX + offsetX, chunkZ + offsetZ, colorType);
+					
+					ColorChunk chunk = hash.get(key);
+					
+					if (chunk != null)
+					{
+						int minX = BiomeColor.getNeighbourRectMinX(chunkIndex, 2);
+						int minZ = BiomeColor.getNeighbourRectMinZ(chunkIndex, 2);
+						int maxX = BiomeColor.getNeighbourRectMaxX(chunkIndex, 2);
+						int maxZ = BiomeColor.getNeighbourRectMaxZ(chunkIndex, 2);
+						
+						for (int z1 = minZ;
+							z1 < maxZ;
+							++z1)
+						{
+							for (int x1 = minX;
+								x1 < maxX;
+								++x1)
+							{
+								chunk.data[3 * (16 * z1 + x1) + 0] = (byte)-1;
+								chunk.data[3 * (16 * z1 + x1) + 1] = (byte)-1;
+								chunk.data[3 * (16 * z1 + x1) + 2] = (byte)-1;
+							}
+						}
+					}
+				}
+			}
+		}	
+		
+		for (int colorType = BiomeColorType.FIRST;
+			colorType <= BiomeColorType.LAST;
+			++colorType)
+		{
+			long key = getChunkKey(chunkX, chunkZ, colorType);
+			
+			ColorChunk chunk = hash.remove(key);
+			
+			if (chunk != null)
+			{
+				releaseChunkWithoutLock(chunk);
+				
+				chunk.markAsInvalid();
+			}
+		}
 		
 		lock.unlock();
 	}
@@ -139,11 +219,11 @@ public class ColorChunkCache
 	}
 
 	public ColorChunk
-	getChunk(int chunkX, int chunkZ)
+	getChunk(int chunkX, int chunkZ, int colorType)
 	{
 		ColorChunk result;
 		
-		long key = getChunkKey(chunkX, chunkZ);
+		long key = getChunkKey(chunkX, chunkZ, colorType);
 	
 		lock.lock();
 		
@@ -196,11 +276,11 @@ public class ColorChunkCache
 	}
 	
 	public ColorChunk
-	newChunk(int chunkX, int chunkZ)
+	newChunk(int chunkX, int chunkZ, int colorType)
 	{
 		ColorChunk result = null;
 		
-		long key = getChunkKey(chunkX, chunkZ);
+		long key = getChunkKey(chunkX, chunkZ, colorType);
 		
 		lock.lock();
 		
@@ -212,12 +292,18 @@ public class ColorChunkCache
 		{
 			for (;;)
 			{
+				long lastKey = hash.lastLongKey();
+				
 				result = hash.removeLast();
 				
-				if (result.refCount.get() == 1)
+				if (result.getReferenceCount() == 1)
 				{
-					result.release();
+					result.release();	
 					break;
+				}
+				else
+				{
+					hash.putAndMoveToFirst(lastKey, result);
 				}
 			}
 		}
@@ -226,8 +312,69 @@ public class ColorChunkCache
 		
 		result.key = key;
 		result.invalidationCounter = invalidationCounter;
+
+		result.acquire();
+
+		return result;
+	}
+	
+	public ColorChunk
+	getOrDefaultInitializeChunk(int chunkX, int chunkZ, int colorType)
+	{
+		ColorChunk result;
+		
+		long key = getChunkKey(chunkX, chunkZ, colorType);
+	
+		lock.lock();
+		
+		result = hash.getAndMoveToFirst(key);
+		
+		if (result == null)
+		{
+			if (!freeStack.empty())
+			{
+				result = freeStack.pop();
+			}
+			else
+			{
+				for (;;)
+				{
+					long lastKey = hash.lastLongKey();
+					
+					result = hash.removeLast();
+					
+					if (result.getReferenceCount() == 1)
+					{
+						result.release();	
+						break;
+					}
+					else
+					{
+						hash.putAndMoveToFirst(lastKey, result);
+					}
+				}
+			}
+			
+			result.key = key;
+			result.invalidationCounter = invalidationCounter;
+			
+			Arrays.fill(result.data, (byte)-1);
+			
+			result.acquire();
+						
+			ColorChunk prev = hash.putAndMoveToFirst(result.key, result);
+			
+			if (prev != null)
+			{
+				releaseChunkWithoutLock(prev);
+				
+				prev.markAsInvalid();
+			}
+		}
 		
 		result.acquire();
+		
+		lock.unlock();
 		
 		return result;
 	}

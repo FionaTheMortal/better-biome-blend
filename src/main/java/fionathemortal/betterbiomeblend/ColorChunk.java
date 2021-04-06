@@ -2,21 +2,29 @@ package fionathemortal.betterbiomeblend;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ColorChunk 
+public final class ColorChunk 
 {
-	public int[] data;
+	public byte[] data;
 	
 	public long key;
 	public int  invalidationCounter;
 	
-	public AtomicInteger refCount = new AtomicInteger();
-	
+	public AtomicInteger refCount   = new AtomicInteger();
+
 	public 
 	ColorChunk()
 	{
-		this.data = new int[16 * 16];
+		this.data = new byte[16 * 16 * 3];
 		
 		this.markAsInvalid();
+	}
+
+	public int
+	getReferenceCount()
+	{
+		int result = refCount.get();
+		
+		return result;
 	}
 	
 	public int
@@ -45,9 +53,13 @@ public class ColorChunk
 		int blockX = x & 15;
 		int blockZ = z & 15;
 		
-		int blockIndex = (blockZ << 4) | blockX;
+		int offset = 3 * ((blockZ << 4) | blockX);
 		
-		int result = this.data[blockIndex];
+		int colorR = this.data[offset + 0];
+		int colorG = this.data[offset + 1];
+		int colorB = this.data[offset + 2];
+		
+		int result = Color.makeRGBAWithFullAlpha(colorR, colorG, colorB);
 		
 		return result;
 	}
