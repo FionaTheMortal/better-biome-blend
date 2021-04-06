@@ -88,7 +88,7 @@ public abstract class MixinClientWorld extends World
 	{
 		colorCache.invalidateNeighbourhood(chunkX, chunkZ);
 		
-		rawColorCache.invalidateNeighbourhood2(chunkX, chunkZ);
+		rawColorCache.invalidateSmallNeighbourhood(chunkX, chunkZ);
 	}
 	
 	@Overwrite

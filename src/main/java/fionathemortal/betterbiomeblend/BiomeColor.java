@@ -1,7 +1,6 @@
 package fionathemortal.betterbiomeblend;
 
 import java.util.Stack;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -465,15 +464,14 @@ public final class BiomeColor
 	public static void
 	blendCachedColorsForChunk(World world, byte[] result, ColorBlendCache blendCache)
 	{
-		int   blendRadius = blendCache.blendRadius;
-
 		int[] R = blendCache.R;
 		int[] G = blendCache.G;
 		int[] B = blendCache.B;
-		
-		int blendDim    = 2 * blendRadius + 1;
+
+		int blendRadius = blendCache.blendRadius;
+		int blendDim = 2 * blendRadius + 1;
 		int blendCacheDim = 16 + 2 * blendRadius;
-		int blendCount  = blendDim * blendDim;
+		int blendCount = blendDim * blendDim;
 
 		for (int x = 0;
 			x < blendCacheDim;
@@ -571,7 +569,7 @@ public final class BiomeColor
 			
 			gatherRawColorsToCaches(world, colorType, chunkX, chunkZ, blendCache.blendRadius, rawCache, blendCache.color, colorResolverIn);
 			
-			blendCachedColorsForChunk(world, result, blendCache);
+			blendCachedColorsForChunk(world, result, blendCache);				
 			
 			releaseBlendCache(blendCache);
 		}
@@ -580,13 +578,6 @@ public final class BiomeColor
 			gatherRawColorsForChunk(world, result, chunkX, chunkZ, colorResolverIn);
 		}
 	}
-	
-	// NOTE: Temporary timing code
-	
-	static AtomicLong accumulatedTime = new AtomicLong();
-	static AtomicLong accumulatedCallCount = new AtomicLong();
-	
-	//
 	
 	public static ColorChunk
 	getBlendedColorChunk(
@@ -604,31 +595,7 @@ public final class BiomeColor
 		{
 			chunk = cache.newChunk(chunkX, chunkZ, colorType);
 			
-			// NOTE: Temporary timing code
-			
-			long time1 = System.nanoTime();
-			
-			//
-			
 			generateBlendedColorChunk(world, colorType, chunkX, chunkZ, rawCache, chunk.data, colorResolverIn);
-			
-			// NOTE: Temporary timing code
-			
-			long time2 = System.nanoTime();
-			long timeD = time2 - time1;
-			
-			long time = accumulatedTime.addAndGet(timeD);
-			long callCount = accumulatedCallCount.addAndGet(1);
-			
-			if ((callCount & (1024 - 1)) == 0)
-			{
-				BetterBiomeBlend.LOGGER.info((double)time / (double)callCount);
-
-				accumulatedTime.set(0);
-				accumulatedCallCount.set(0);
-			}
-			
-			//
 			
 			cache.putChunk(chunk);
 		}

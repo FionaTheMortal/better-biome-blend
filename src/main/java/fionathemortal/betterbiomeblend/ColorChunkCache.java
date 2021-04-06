@@ -19,12 +19,6 @@ public final class ColorChunkCache
 	public static long
 	getChunkKey(int chunkX, int chunkZ, int colorType)
 	{
-		/*
-		long result = 
-			((long)chunkZ << 32) | 
-			((long)chunkX & 0xFFFFFFFFL);
-		*/
-		
 		long result =
 			((long)(chunkZ & 0x7FFFFFFFL) << 31) | 
 			((long)(chunkX & 0x7FFFFFFFL))       |
@@ -138,7 +132,7 @@ public final class ColorChunkCache
 	}
 	
 	public void
-	invalidateNeighbourhood2(int chunkX, int chunkZ)
+	invalidateSmallNeighbourhood(int chunkX, int chunkZ)
 	{
 		lock.lock();
 		
