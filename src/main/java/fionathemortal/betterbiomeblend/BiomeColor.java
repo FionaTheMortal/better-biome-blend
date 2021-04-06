@@ -34,15 +34,15 @@ public final class BiomeColor
 	public static final byte[]
 	neighbourRectParams = 
 	{
-	 	 1,  1,  0,  0, -16, -16,  0,  0,
-		 0,  1,  0,  0,   0, -16,  0,  0,
-		 0,  1,  1,  0,  16, -16,  0,  0,
-		 1,  0,  0,  0, -16,   0,  0,  0,
+	 	-1, -1,  0,  0, -16, -16,  0,  0,
+		 0, -1,  0,  0,   0, -16,  0,  0,
+		 0, -1, -1,  0,  16, -16,  0,  0,
+		-1,  0,  0,  0, -16,   0,  0,  0,
 		 0,  0,  0,  0,   0,   0,  0,  0,
-		 0,  0,  1,  0,  16,   0,  0,  0,
-		 1,  0,  0,  1, -16,  16,  0,  0,
-		 0,  0,  0,  1,   0,  16,  0,  0,
-		 0,  0,  1,  1,  16,  16,  0,  0
+		 0,  0, -1,  0,  16,   0,  0,  0,
+		-1,  0,  0, -1, -16,  16,  0,  0,
+		 0,  0,  0, -1,   0,  16,  0,  0,
+		 0,  0, -1, -1,  16,  16,  0,  0
 	};
 	
 	public static int
@@ -65,7 +65,7 @@ public final class BiomeColor
 	getNeighbourRectMinX(int chunkIndex, int radius)
 	{
 		int offset = 8 * chunkIndex;
-		int result = neighbourRectParams[offset + 0] * (16 - radius);
+		int result = neighbourRectParams[offset + 0] & (16 - radius);
 
 		return result;
 	}
@@ -74,7 +74,7 @@ public final class BiomeColor
 	getNeighbourRectMinZ(int chunkIndex, int radius)
 	{
 		int offset = 8 * chunkIndex;
-		int result = neighbourRectParams[offset + 1] * (16 - radius);
+		int result = neighbourRectParams[offset + 1] & (16 - radius);
 		
 		return result;
 	}
@@ -83,7 +83,7 @@ public final class BiomeColor
 	getNeighbourRectMaxX(int chunkIndex, int radius)
 	{
 		int offset = 8 * chunkIndex;
-		int result = neighbourRectParams[offset + 2] * (radius - 16) + 16;
+		int result = (neighbourRectParams[offset + 2] & (radius - 16)) + 16;
 		
 		return result;
 	}
@@ -92,7 +92,7 @@ public final class BiomeColor
 	getNeighbourRectMaxZ(int chunkIndex, int radius)
 	{
 		int offset = 8 * chunkIndex;
-		int result = neighbourRectParams[offset + 3] * (radius - 16) + 16;
+		int result = (neighbourRectParams[offset + 3] & (radius - 16)) + 16;
 		
 		return result;
 	}
