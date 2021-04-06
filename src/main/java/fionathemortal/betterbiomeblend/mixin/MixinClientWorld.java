@@ -122,8 +122,6 @@ public abstract class MixinClientWorld extends World
 		
 		ColorChunk chunk = BiomeColor.getThreadLocalChunk(threadLocalChunk, chunkX, chunkZ, colorType);
 
-		// TODO: Jump table all of this?
-		
 		if (chunk == null)
 		{
 			chunk = BiomeColor.getBlendedColorChunk(this, colorType, chunkX, chunkZ, colorCache, rawColorCache, colorResolverIn);
@@ -131,16 +129,7 @@ public abstract class MixinClientWorld extends World
 			BiomeColor.setThreadLocalChunk(threadLocalChunk, chunk, colorCache);
 		}
 		
-		int result = 0;
-		
-		if (true) // chunk is generated
-		{
-			result = chunk.getColor(x, z);
-		}
-		else
-		{
-			// gen color if necessary
-		}
+		int result = chunk.getColor(x, z);
 		
 		return result;
 	}

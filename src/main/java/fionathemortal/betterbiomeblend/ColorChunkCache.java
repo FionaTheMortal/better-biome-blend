@@ -327,16 +327,60 @@ public final class ColorChunkCache
 	public ColorChunk
 	getOrDefaultInitializeChunk(int chunkX, int chunkZ, int colorType)
 	{
-		ColorChunk result = getChunk(chunkX, chunkZ, colorType);
+		ColorChunk result;
+		
+		long key = getChunkKey(chunkX, chunkZ, colorType);
+	
+		lock.lock();
+		
+		result = hash.getAndMoveToFirst(key);
 		
 		if (result == null)
 		{
-			result = newChunk(chunkX, chunkZ, colorType);
+			if (!freeStack.empty())
+			{
+				result = freeStack.pop();
+			}
+			else
+			{
+				for (;;)
+				{
+					long lastKey = hash.lastLongKey();
+					
+					result = hash.removeLast();
+					
+					if (result.getReferenceCount() == 1)
+					{
+						result.release();	
+						break;
+					}
+					else
+					{
+						hash.putAndMoveToFirst(lastKey, result);
+					}
+				}
+			}
+			
+			result.key = key;
+			result.invalidationCounter = invalidationCounter;
 			
 			Arrays.fill(result.data, (byte)-1);
 			
-			putChunk(result);
+			result.acquire();
+						
+			ColorChunk prev = hash.putAndMoveToFirst(result.key, result);
+			
+			if (prev != null)
+			{
+				releaseChunkWithoutLock(prev);
+				
+				prev.markAsInvalid();
+			}
 		}
+		
+		result.acquire();
+		
+		lock.unlock();
 		
 		return result;
 	}

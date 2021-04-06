@@ -164,7 +164,7 @@ public final class BiomeColor
 		{
 			freeBlendCaches.push(cache);
 		}
-			
+		
 		freeBlendCacheslock.unlock();		
 	}
 		
@@ -199,8 +199,8 @@ public final class BiomeColor
 	{
 		BlockPos.Mutable blockPos = new BlockPos.Mutable();
 
-		int blockX = chunkX * 16;
-		int blockZ = chunkZ * 16;
+		int blockX = 16 * chunkX;
+		int blockZ = 16 * chunkZ;
 
 		int dstIndex = 0;
 
@@ -239,7 +239,7 @@ public final class BiomeColor
 			zF64 += 1.0;
 		}
 	}
-	
+		
 	public static void
 	gatherRawColorsForRect(
 		World  world,
