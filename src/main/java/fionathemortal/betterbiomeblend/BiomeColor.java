@@ -466,13 +466,6 @@ public class BiomeColor
 		}
 	}
 	
-	// NOTE: Temporary timing code
-	
-	static AtomicLong accumulatedTime = new AtomicLong();
-	static AtomicLong accumulatedCallCount = new AtomicLong();
-	
-	//
-	
 	public static void
 	blendCachedColorsForChunk(World world, byte[] result, ColorBlendCache blendCache)
 	{
@@ -591,6 +584,13 @@ public class BiomeColor
 			gatherRawColorsForChunk(world, result, chunkX, chunkZ, colorResolverIn);
 		}
 	}
+	
+	// NOTE: Temporary timing code
+	
+	static AtomicLong accumulatedTime = new AtomicLong();
+	static AtomicLong accumulatedCallCount = new AtomicLong();
+	
+	//
 	
 	public static ColorChunk
 	getBlendedColorChunk(
