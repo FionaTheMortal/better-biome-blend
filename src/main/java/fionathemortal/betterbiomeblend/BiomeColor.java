@@ -117,7 +117,7 @@ public final class BiomeColor
 	
 	
 	public static void
-	clearGenCaches()
+	clearBlendCaches()
 	{
 		freeBlendCacheslock.lock();
 		

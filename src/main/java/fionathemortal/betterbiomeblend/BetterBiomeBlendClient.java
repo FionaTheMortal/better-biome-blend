@@ -139,7 +139,7 @@ public final class BetterBiomeBlendClient
 		{
 			settings.biomeBlendRadius = newSetting;
 			
-			BiomeColor.clearGenCaches();
+			BiomeColor.clearBlendCaches();
 			
 			Minecraft.getInstance().worldRenderer.loadRenderers();
 		}
