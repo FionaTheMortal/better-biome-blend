@@ -325,7 +325,7 @@ public final class ColorChunkCache
 	}
 	
 	public ColorChunk
-	getOrDefaultInitChunk(int chunkX, int chunkZ, int colorType)
+	getOrDefaultInitializeChunk(int chunkX, int chunkZ, int colorType)
 	{
 		ColorChunk result = getChunk(chunkX, chunkZ, colorType);
 		

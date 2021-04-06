@@ -1,22 +1,18 @@
 package fionathemortal.betterbiomeblend;
 
-import java.util.Arrays;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.IChunk;
 import net.minecraft.world.level.ColorResolver;
-import net.minecraftforge.fml.RegistryObject;
-import net.minecraftforge.registries.ForgeRegistries;
 
-public class BiomeColor 
+public final class BiomeColor 
 {
 	public static final Lock                   freeBlendCacheslock = new ReentrantLock();
 	public static final Stack<ColorBlendCache> freeBlendCaches     = new Stack<ColorBlendCache>();
@@ -38,15 +34,15 @@ public class BiomeColor
 	public static final byte[]
 	neighbourRectParams = 
 	{
-	 	 1,  1,  0,  0, -1, -1,
-		 0,  1,  0,  0,  0, -1,
-		 0,  1,  1,  0,  1, -1,
-		 1,  0,  0,  0, -1,  0,
-		 0,  0,  0,  0,  0,  0,
-		 0,  0,  1,  0,  1,  0,
-		 1,  0,  0,  1, -1,  1,
-		 0,  0,  0,  1,  0,  1,
-		 0,  0,  1,  1,  1,  1		
+	 	 1,  1,  0,  0, -16, -16,  0,  0,
+		 0,  1,  0,  0,   0, -16,  0,  0,
+		 0,  1,  1,  0,  16, -16,  0,  0,
+		 1,  0,  0,  0, -16,   0,  0,  0,
+		 0,  0,  0,  0,   0,   0,  0,  0,
+		 0,  0,  1,  0,  16,   0,  0,  0,
+		 1,  0,  0,  1, -16,  16,  0,  0,
+		 0,  0,  0,  1,   0,  16,  0,  0,
+		 0,  0,  1,  1,  16,  16,  0,  0
 	};
 	
 	public static int
@@ -68,7 +64,7 @@ public class BiomeColor
 	public static int
 	getNeighbourRectMinX(int chunkIndex, int radius)
 	{
-		int offset = 6 * chunkIndex;
+		int offset = 8 * chunkIndex;
 		int result = neighbourRectParams[offset + 0] * (16 - radius);
 
 		return result;
@@ -77,7 +73,7 @@ public class BiomeColor
 	public static int
 	getNeighbourRectMinZ(int chunkIndex, int radius)
 	{
-		int offset = 6 * chunkIndex;
+		int offset = 8 * chunkIndex;
 		int result = neighbourRectParams[offset + 1] * (16 - radius);
 		
 		return result;
@@ -86,7 +82,7 @@ public class BiomeColor
 	public static int
 	getNeighbourRectMaxX(int chunkIndex, int radius)
 	{
-		int offset = 6 * chunkIndex;
+		int offset = 8 * chunkIndex;
 		int result = neighbourRectParams[offset + 2] * (radius - 16) + 16;
 		
 		return result;
@@ -95,7 +91,7 @@ public class BiomeColor
 	public static int
 	getNeighbourRectMaxZ(int chunkIndex, int radius)
 	{
-		int offset = 6 * chunkIndex;
+		int offset = 8 * chunkIndex;
 		int result = neighbourRectParams[offset + 3] * (radius - 16) + 16;
 		
 		return result;
@@ -104,8 +100,8 @@ public class BiomeColor
 	public static int
 	getNeighbourRectBlendCacheMinX(int chunkIndex, int radius)
 	{
-		int offset = 6 * chunkIndex;
-		int result = Math.max((neighbourRectParams[offset + 4] << 4) + radius, 0);
+		int offset = 8 * chunkIndex;
+		int result = Math.max(neighbourRectParams[offset + 4] + radius, 0);
 	
 		return result;
 	}
@@ -113,8 +109,8 @@ public class BiomeColor
 	public static int
 	getNeighbourRectBlendCacheMinZ(int chunkIndex, int radius)
 	{
-		int offset = 6 * chunkIndex;
-		int result = Math.max((neighbourRectParams[offset + 5] << 4) + radius, 0);
+		int offset = 8 * chunkIndex;
+		int result = Math.max(neighbourRectParams[offset + 5] + radius, 0);
 
 		return result;
 	}
@@ -410,7 +406,7 @@ public class BiomeColor
 			int rawChunkX = chunkX + offsetX;
 			int rawChunkZ = chunkZ + offsetZ;
 			
-			ColorChunk rawChunk = rawCache.getOrDefaultInitChunk(rawChunkX, rawChunkZ, colorType);
+			ColorChunk rawChunk = rawCache.getOrDefaultInitializeChunk(rawChunkX, rawChunkZ, colorType);
 			
 			gatherRawColorsToCache(
 				world,
