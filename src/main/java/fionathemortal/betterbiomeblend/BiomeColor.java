@@ -562,7 +562,7 @@ public final class BiomeColor
 	{
 		int blendRadius = BetterBiomeBlendClient.getBlendRadiusSetting();
 		
-		if (blendRadius > 0 && 
+		if (blendRadius >  BetterBiomeBlendClient.BIOME_BLEND_RADIUS_MIN && 
 			blendRadius <= BetterBiomeBlendClient.BIOME_BLEND_RADIUS_MAX)
 		{
 			ColorBlendCache blendCache = acquireBlendCache(blendRadius);
