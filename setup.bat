@@ -1,1 +1,1 @@
-gradlew genEclipseRuns --refresh-dependencies && gradlew eclipse
+gradlew setupDecompWorkspace --refresh-dependencies && gradlew eclipse

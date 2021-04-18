@@ -5,7 +5,6 @@ bin
 .metadata
 .classpath
 .project
-.factorypath
 
 # idea
 out
@@ -17,14 +16,7 @@ out
 # gradle
 build
 .gradle
-logs
 
 # other
 eclipse
 run
-
-# Files from Forge MDK
-forge*changelog.txt
-
-## gradle generated eclipse runs
-/*.launch
