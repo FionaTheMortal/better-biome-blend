@@ -2,9 +2,10 @@
 	"compatibilityLevel": "JAVA_8",
 	"package": "fionathemortal.betterbiomeblend.mixin",
 	"mixins": [
+	],
+	"client": [
 		"MixinBiomeColorHelper"
 	],
-	"client": [],
 	"server": [],
 	"minVersion": "0.6"
 }
