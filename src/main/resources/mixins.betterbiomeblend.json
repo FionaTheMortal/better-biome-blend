@@ -4,7 +4,9 @@
 	"mixins": [
 	],
 	"client": [
-		"MixinBiomeColorHelper"
+		"AccessorChunkCache",
+		"MixinBiomeColorHelper",
+		"MixinWorldClient"
 	],
 	"server": [],
 	"minVersion": "0.6"
