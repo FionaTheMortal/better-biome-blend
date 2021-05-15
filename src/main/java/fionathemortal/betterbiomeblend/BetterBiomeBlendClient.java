@@ -1,11 +1,7 @@
 package fionathemortal.betterbiomeblend;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Stack;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import fionathemortal.betterbiomeblend.mixin.AccessorDoubleOptionSliderWidget;
 import net.minecraft.client.MinecraftClient;
@@ -19,11 +15,9 @@ import net.minecraft.client.options.Option;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 
 public final class BetterBiomeBlendClient
