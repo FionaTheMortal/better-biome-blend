@@ -278,7 +278,7 @@ public final class ColorChunkCache
 	public ColorChunk
 	newChunk(int chunkX, int chunkZ, int colorType)
 	{
-		ColorChunk result = null;
+		ColorChunk result;
 		
 		long key = getChunkKey(chunkX, chunkZ, colorType);
 		

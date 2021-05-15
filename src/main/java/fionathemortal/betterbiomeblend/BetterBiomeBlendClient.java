@@ -10,7 +10,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.VideoSettingsScreen;
-import net.minecraft.client.gui.widget.OptionSlider;
 import net.minecraft.client.gui.widget.list.OptionsRowList;
 import net.minecraft.client.settings.SliderPercentageOption;
 import net.minecraft.util.ResourceLocation;
@@ -210,6 +209,7 @@ public final class BetterBiomeBlendClient
 		} 
 		catch (ClassNotFoundException e) 
 		{
+			BetterBiomeBlend.LOGGER.info("Otifine does not seem to be loaded, so no need to overwrite anything.");
 		}
 		
 		if (success)

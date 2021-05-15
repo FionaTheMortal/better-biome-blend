@@ -14,7 +14,7 @@ import net.minecraft.world.level.ColorResolver;
 public final class BiomeColor 
 {
 	public static final Lock                   freeBlendCacheslock = new ReentrantLock();
-	public static final Stack<ColorBlendCache> freeBlendCaches     = new Stack<ColorBlendCache>();
+	public static final Stack<ColorBlendCache> freeBlendCaches     = new Stack<>();
 
 	public static final byte[]
 	neighbourOffsets = 
@@ -300,10 +300,7 @@ public final class BiomeColor
 	}
 	
 	public static void
-	fillRectWithDefaultColor(		
-		World  world,
-		int    chunkX,
-		int    chunkZ,
+	fillRectWithDefaultColor(
 		int    minX,
 		int    maxX,
 		int    minZ,
@@ -372,9 +369,6 @@ public final class BiomeColor
 		else
 		{
 			fillRectWithDefaultColor(
-				world,
-				chunkX,
-				chunkZ,
 				minX,
 				maxX,
 				minZ,
