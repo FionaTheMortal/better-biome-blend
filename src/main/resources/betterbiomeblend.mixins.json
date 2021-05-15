@@ -2,7 +2,7 @@
 	"required": true,
 	"package": "fionathemortal.betterbiomeblend.mixin",
 	"compatibilityLevel": "JAVA_8",
-	"refmap": "betterbiomeblend.refmap.json",
+	"refmap": "betterbiomeblend-refmap.json",
 	"client": [
 		MixinClientWorld,
 		MixinVideoOptionsScreen,
