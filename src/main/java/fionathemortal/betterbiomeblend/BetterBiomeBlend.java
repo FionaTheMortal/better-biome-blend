@@ -12,30 +12,30 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod(BetterBiomeBlend.MOD_ID)
-public final class BetterBiomeBlend 
+public final class BetterBiomeBlend
 {
-	public static final String MOD_ID = "betterbiomeblend";
-	public static final Logger LOGGER = LogManager.getLogger(BetterBiomeBlend.MOD_ID);
+    public static final String MOD_ID = "betterbiomeblend";
+    public static final Logger LOGGER = LogManager.getLogger(BetterBiomeBlend.MOD_ID);
 
-	public
-	BetterBiomeBlend()
-	{
+    public
+    BetterBiomeBlend()
+    {
         ModLoadingContext.get().registerExtensionPoint(
-    		ExtensionPoint.DISPLAYTEST, 
-    		() -> Pair.of(
-				() -> "client-only", 
-				(v, n) -> n)
-    		);
+            ExtensionPoint.DISPLAYTEST,
+            () -> Pair.of(
+                () -> "client-only",
+                (v, n) -> n)
+            );
 
         DistExecutor.unsafeRunWhenOn(
-    		Dist.CLIENT, 
-    		() -> 
-	    		() -> 
-	    		{
-	    			MinecraftForge.EVENT_BUS.register(BetterBiomeBlendClient.class);
-	    			
-	    			BetterBiomeBlendClient.overwriteOptifineGUIBlendRadiusOption();
-				}
-    		);
-	}
+            Dist.CLIENT,
+            () ->
+                () ->
+                {
+                    MinecraftForge.EVENT_BUS.register(BetterBiomeBlendClient.class);
+
+                    BetterBiomeBlendClient.overwriteOptifineGUIBlendRadiusOption();
+                }
+            );
+    }
 }

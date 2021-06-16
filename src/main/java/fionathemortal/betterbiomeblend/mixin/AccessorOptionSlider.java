@@ -9,7 +9,6 @@ import net.minecraft.client.settings.SliderPercentageOption;
 @Mixin(OptionSlider.class)
 public interface AccessorOptionSlider
 {
-	@Accessor()
-	SliderPercentageOption getOption();
+    @Accessor()
+    SliderPercentageOption getOption();
 }
-
