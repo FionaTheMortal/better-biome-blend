@@ -28,109 +28,110 @@ import net.minecraft.world.level.ColorResolver;
 @Mixin(ClientWorld.class)
 public abstract class MixinClientWorld extends World
 {
-	protected MixinClientWorld(
-		MutableWorldProperties worldInfo, 
-		RegistryKey<World> dimension, 
-		DimensionType dimensionType,
-		Supplier<Profiler> profiler, 
-		boolean isRemote, 
-		boolean isDebug, 
-		long seed) 
+    @Shadow
+    private Object2ObjectArrayMap<ColorResolver, BiomeColorCache> colorCache =
+        new Object2ObjectArrayMap<ColorResolver, BiomeColorCache>();
+
+    private final ColorChunkCache blendColorCache = new ColorChunkCache(2048);
+    private final ColorChunkCache rawColorCache   = new ColorChunkCache(512);
+
+    private final ThreadLocal<ColorChunk> threadLocalWaterChunk   =
+        ThreadLocal.withInitial(
+            () ->
+            {
+                ColorChunk chunk = new ColorChunk();
+                chunk.acquire();
+                return chunk;
+            });
+
+    private final ThreadLocal<ColorChunk> threadLocalGrassChunk   =
+        ThreadLocal.withInitial(
+            () ->
+            {
+                ColorChunk chunk = new ColorChunk();
+                chunk.acquire();
+                return chunk;
+            });
+
+    private final ThreadLocal<ColorChunk> threadLocalFoliageChunk =
+        ThreadLocal.withInitial(
+            () ->
+            {
+                ColorChunk chunk = new ColorChunk();
+                chunk.acquire();
+                return chunk;
+            });
+
+	protected
+	MixinClientWorld(
+			MutableWorldProperties worldInfo,
+			RegistryKey<World>     dimension,
+			DimensionType          dimensionType,
+			Supplier<Profiler>     profiler,
+			boolean                isRemote,
+			boolean                isDebug,
+			long                   seed)
 	{
 		super(worldInfo, dimension, dimensionType, profiler, isRemote, isDebug, seed);
 	}
 
-	@Shadow
-	private Object2ObjectArrayMap<ColorResolver, BiomeColorCache> colorCache = 
-		new Object2ObjectArrayMap<ColorResolver, BiomeColorCache>();
-	
-	private final ColorChunkCache blendColorCache = new ColorChunkCache(2048);
-	private final ColorChunkCache rawColorCache   = new ColorChunkCache(512);
-	
-	private final ThreadLocal<ColorChunk> threadLocalWaterChunk   = 
-		ThreadLocal.withInitial(
-			() -> 
-			{ 
-				ColorChunk chunk = new ColorChunk(); 
-				chunk.acquire(); 
-				return chunk; 
-			});
-	
-	private final ThreadLocal<ColorChunk> threadLocalGrassChunk   = 
-		ThreadLocal.withInitial(
-			() -> 
-			{
-				ColorChunk chunk = new ColorChunk(); 
-				chunk.acquire(); 
-				return chunk; 
-			});
-	
-	private final ThreadLocal<ColorChunk> threadLocalFoliageChunk = 
-		ThreadLocal.withInitial(
-			() -> 
-			{ 
-				ColorChunk chunk = new ColorChunk(); 
-				chunk.acquire(); 
-				return chunk;
-			});
-	
 	@Inject(method = "reloadColor", at = @At("HEAD"))
-   	public void
-   	onReloadColor(CallbackInfo ci)
-   	{
-		blendColorCache.invalidateAll();
-		rawColorCache.invalidateAll();
-   	}
-	
-	@Inject(method = "resetChunkColor", at = @At("HEAD"))
-	public void 
-	onResetChunkColor(int chunkX, int chunkZ, CallbackInfo ci)
-	{
-		blendColorCache.invalidateNeighbourhood(chunkX, chunkZ);
-		
-		rawColorCache.invalidateSmallNeighbourhood(chunkX, chunkZ);
-	}
-	
-	@Overwrite
-	public int 
-	getColor(BlockPos blockPosIn, ColorResolver colorResolverIn)
-	{
-		int                     colorType;
-		ThreadLocal<ColorChunk> threadLocalChunk;
-		
-		if (colorResolverIn == BiomeColors.GRASS_COLOR)
-		{
-			colorType        = BiomeColorType.GRASS;
-			threadLocalChunk = threadLocalGrassChunk;
-		}
-		else if (colorResolverIn == BiomeColors.WATER_COLOR)
-		{
-			colorType        = BiomeColorType.WATER;
-			threadLocalChunk = threadLocalWaterChunk;
-		}
-		else
-		{
-			colorType        = BiomeColorType.FOLIAGE;
-			threadLocalChunk = threadLocalFoliageChunk;
-		}
+    public void
+    onReloadColor(CallbackInfo ci)
+    {
+        blendColorCache.invalidateAll();
+        rawColorCache.invalidateAll();
+    }
 
-		int x = blockPosIn.getX();
-		int z = blockPosIn.getZ();
-		
-		int chunkX = x >> 4;
-		int chunkZ = z >> 4;
-		
-		ColorChunk chunk = BiomeColor.getThreadLocalChunk(threadLocalChunk, chunkX, chunkZ, colorType);
+    @Inject(method = "resetChunkColor", at = @At("HEAD"))
+    public void
+    onResetChunkColor(int chunkX, int chunkZ, CallbackInfo ci)
+    {
+        blendColorCache.invalidateNeighbourhood(chunkX, chunkZ);
 
-		if (chunk == null)
-		{
-			chunk = BiomeColor.getBlendedColorChunk(this, colorType, chunkX, chunkZ, blendColorCache, rawColorCache, colorResolverIn);
-			
-			BiomeColor.setThreadLocalChunk(threadLocalChunk, chunk, blendColorCache);
-		}
-		
-		int result = chunk.getColor(x, z);
-		
-		return result;	
-	}
+        rawColorCache.invalidateSmallNeighbourhood(chunkX, chunkZ);
+    }
+
+    @Overwrite
+    public int
+    getColor(BlockPos blockPosIn, ColorResolver colorResolverIn)
+    {
+        int                     colorType;
+        ThreadLocal<ColorChunk> threadLocalChunk;
+
+        if (colorResolverIn == BiomeColors.GRASS_COLOR)
+        {
+            colorType        = BiomeColorType.GRASS;
+            threadLocalChunk = threadLocalGrassChunk;
+        }
+        else if (colorResolverIn == BiomeColors.WATER_COLOR)
+        {
+            colorType        = BiomeColorType.WATER;
+            threadLocalChunk = threadLocalWaterChunk;
+        }
+        else
+        {
+            colorType        = BiomeColorType.FOLIAGE;
+            threadLocalChunk = threadLocalFoliageChunk;
+        }
+
+        int x = blockPosIn.getX();
+        int z = blockPosIn.getZ();
+
+        int chunkX = x >> 4;
+        int chunkZ = z >> 4;
+
+        ColorChunk chunk = BiomeColor.getThreadLocalChunk(threadLocalChunk, chunkX, chunkZ, colorType);
+
+        if (chunk == null)
+        {
+            chunk = BiomeColor.getBlendedColorChunk(this, colorType, chunkX, chunkZ, blendColorCache, rawColorCache, colorResolverIn);
+
+            BiomeColor.setThreadLocalChunk(threadLocalChunk, chunk, blendColorCache);
+        }
+
+        int result = chunk.getColor(x, z);
+
+        return result;
+    }
 }

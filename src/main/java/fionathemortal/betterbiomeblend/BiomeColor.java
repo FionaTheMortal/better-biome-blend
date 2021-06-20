@@ -18,7 +18,7 @@ public final class BiomeColor
 	public static final Stack<ColorBlendCache> freeBlendCaches = new Stack<ColorBlendCache>();
 
 	public static final byte[]
-	neighbourOffsets = 
+	neighbourOffsets =
 	{
 		-1, -1,
 		 0, -1,
@@ -32,7 +32,7 @@ public final class BiomeColor
 	};
 
 	public static final byte[]
-	neighbourRectParams = 
+	neighbourRectParams =
 	{
 	 	-1, -1,  0,  0, -16, -16,  0,  0,
 		 0, -1,  0,  0,   0, -16,  0,  0,
@@ -44,23 +44,23 @@ public final class BiomeColor
 		 0,  0,  0, -1,   0,  16,  0,  0,
 		 0,  0, -1, -1,  16,  16,  0,  0
 	};
-	
+
 	public static int
 	getNeighbourOffsetX(int chunkIndex)
 	{
 		int result = neighbourOffsets[2 * chunkIndex + 0];
-		
+
 		return result;
 	}
-	
+
 	public static int
 	getNeighbourOffsetZ(int chunkIndex)
 	{
 		int result = neighbourOffsets[2 * chunkIndex + 1];
-		
+
 		return result;
 	}
-	
+
 	public static int
 	getNeighbourRectMinX(int chunkIndex, int radius)
 	{
@@ -69,43 +69,43 @@ public final class BiomeColor
 
 		return result;
 	}
-	
+
 	public static int
 	getNeighbourRectMinZ(int chunkIndex, int radius)
 	{
 		int offset = 8 * chunkIndex;
 		int result = neighbourRectParams[offset + 1] & (16 - radius);
-		
+
 		return result;
 	}
-	
+
 	public static int
 	getNeighbourRectMaxX(int chunkIndex, int radius)
 	{
 		int offset = 8 * chunkIndex;
 		int result = (neighbourRectParams[offset + 2] & (radius - 16)) + 16;
-		
+
 		return result;
 	}
-	
+
 	public static int
 	getNeighbourRectMaxZ(int chunkIndex, int radius)
 	{
 		int offset = 8 * chunkIndex;
 		int result = (neighbourRectParams[offset + 3] & (radius - 16)) + 16;
-		
+
 		return result;
 	}
-	
+
 	public static int
 	getNeighbourRectBlendCacheMinX(int chunkIndex, int radius)
 	{
 		int offset = 8 * chunkIndex;
 		int result = Math.max(neighbourRectParams[offset + 4] + radius, 0);
-	
+
 		return result;
 	}
-	
+
 	public static int
 	getNeighbourRectBlendCacheMinZ(int chunkIndex, int radius)
 	{
@@ -114,85 +114,85 @@ public final class BiomeColor
 
 		return result;
 	}
-	
+
 	public static void
 	clearBlendCaches()
 	{
 		freeBlendCacheslock.lock();
-		
+
 		freeBlendCaches.clear();
-		
+
 		freeBlendCacheslock.unlock();
 	}
-	
+
 	public static ColorBlendCache
 	acquireBlendCache(int blendRadius)
 	{
 		ColorBlendCache result = null;
-		
+
 		freeBlendCacheslock.lock();
-		
+
 		while (!freeBlendCaches.empty())
 		{
 			result = freeBlendCaches.pop();
-			
+
 			if (result.blendRadius == blendRadius)
 			{
 				break;
 			}
 		}
-				
+
 		freeBlendCacheslock.unlock();
-		
+
 		if (result == null)
 		{
 			result = new ColorBlendCache(blendRadius);
 		}
-		
+
 		return result;
 	}
-	
+
 	public static void
 	releaseBlendCache(ColorBlendCache cache)
 	{
 		freeBlendCacheslock.lock();
-		
+
 		int blendRadius = BetterBiomeBlendClient.getBlendRadiusSetting();
-		
+
 		if (cache.blendRadius == blendRadius)
 		{
 			freeBlendCaches.push(cache);
 		}
-		
-		freeBlendCacheslock.unlock();		
+
+		freeBlendCacheslock.unlock();
 	}
-		
+
 	public static ColorChunk
 	getThreadLocalChunk(ThreadLocal<ColorChunk> threadLocal, int chunkX, int chunkZ, int colorType)
 	{
 		ColorChunk result = null;
 		ColorChunk local = threadLocal.get();
-		
+
 		long key = ColorChunkCache.getChunkKey(chunkX, chunkZ, colorType);
-		
+
 		if (local.key == key)
 		{
 			result = local;
 		}
-		
+
 		return result;
 	}
-	
+
 	public static void
 	setThreadLocalChunk(ThreadLocal<ColorChunk> threadLocal, ColorChunk chunk, ColorChunkCache cache)
 	{
 		ColorChunk local = threadLocal.get();
-		
+
 		cache.releaseChunk(local);
-		
+
 		threadLocal.set(chunk);
 	}
-	
+
 
 	public static void
 	gatherRawColorsForChunk(World world, byte[] result, int chunkX, int chunkZ, ColorResolver colorResolver)
@@ -206,27 +206,27 @@ public final class BiomeColor
 
 		double baseXF64 = (double)blockX;
 		double baseZF64 = (double)blockZ;
-		
+
 		double zF64 = baseZF64;
-		
+
 		for (int z = 0;
 			z < 16;
 			++z)
 		{
 			double xF64 = baseXF64;
-			
+
 			for (int x = 0;
 				x < 16;
 				++x)
 			{
 				blockPos.set(blockX + x, 0, blockZ + z);
-				
+
 				int color = colorResolver.getColor(world.getBiome(blockPos), xF64, zF64);
-				
+
 				int colorR = Color.RGBAGetR(color);
 				int colorG = Color.RGBAGetG(color);
 				int colorB = Color.RGBAGetB(color);
-				
+
 				result[3 * dstIndex + 0] = (byte)colorR;
 				result[3 * dstIndex + 1] = (byte)colorG;
 				result[3 * dstIndex + 2] = (byte)colorB;
@@ -235,11 +235,11 @@ public final class BiomeColor
 
 				xF64 += 1.0;
 			}
-			
+
 			zF64 += 1.0;
 		}
 	}
-		
+
 	public static void
 	gatherRawColorsForRect(
 		World  world,
@@ -249,7 +249,7 @@ public final class BiomeColor
 		int    maxX,
 		int    minZ,
 		int    maxZ,
-		byte[] result, 
+		byte[] result,
 		ColorResolver colorResolver)
 	{
 		BlockPos.Mutable blockPos = new BlockPos.Mutable();
@@ -259,9 +259,9 @@ public final class BiomeColor
 
 		double baseXF64 = (double)(blockX + minX);
 		double baseZF64 = (double)(blockZ + minZ);
-		
+
 		double zF64 = baseZF64;
-		
+
 		for (int z = minZ;
 			z < maxZ;
 			++z)
@@ -277,31 +277,31 @@ public final class BiomeColor
 				int currentB = 0xFF & result[3 * (16 * z + x) + 2];
 
 				int commonBits = currentR & currentG & currentB;
-				
+
 				if (commonBits == 0xFF)
 				{
 					blockPos.set(blockX + x, 0, blockZ + z);
-					
+
 					int color = colorResolver.getColor(world.getBiome(blockPos), xF64, zF64);
-					
+
 					int colorR = Color.RGBAGetR(color);
 					int colorG = Color.RGBAGetG(color);
 					int colorB = Color.RGBAGetB(color);
-					
+
 					result[3 * (16 * z + x) + 0] = (byte)colorR;
 					result[3 * (16 * z + x) + 1] = (byte)colorG;
 					result[3 * (16 * z + x) + 2] = (byte)colorB;
 				}
-				
+
 				xF64 += 1.0;
 			}
-			
+
 			zF64 += 1.0;
 		}
 	}
-	
+
 	public static void
-	fillRectWithDefaultColor(		
+	fillRectWithDefaultColor(
 		World  world,
 		int    chunkX,
 		int    chunkZ,
@@ -313,18 +313,18 @@ public final class BiomeColor
 		ColorResolver colorResolver)
 	{
 		Biome plains = BuiltinRegistries.BIOME.get(BetterBiomeBlendClient.PLAINS);
-		
+
 		int color = 0;
-		
+
 		if (plains != null)
 		{
 			color = colorResolver.getColor(plains, 0, 0);
 		}
-		
+
 		int colorR = Color.RGBAGetR(color);
 		int colorG = Color.RGBAGetG(color);
 		int colorB = Color.RGBAGetB(color);
-		
+
 		for (int z = minZ;
 			z < maxZ;
 			++z)
@@ -339,7 +339,7 @@ public final class BiomeColor
 			}
 		}
 	}
-	
+
 	public static void
 	gatherRawColorsToCache(
 		World  world,
@@ -351,15 +351,15 @@ public final class BiomeColor
 		ColorResolver colorResolver)
 	{
 		Chunk chunk = world.getChunk(chunkX, chunkZ, ChunkStatus.BIOMES, false);
-		
+
 		int minX = getNeighbourRectMinX(chunkIndex, blendRadius);
 		int minZ = getNeighbourRectMinZ(chunkIndex, blendRadius);
 		int maxX = getNeighbourRectMaxX(chunkIndex, blendRadius);
 		int maxZ = getNeighbourRectMaxZ(chunkIndex, blendRadius);
-		
+
 		if (chunk != null)
 		{
-			gatherRawColorsForRect(	
+			gatherRawColorsForRect(
 				world,
 				chunkX,
 				chunkZ,
@@ -368,7 +368,7 @@ public final class BiomeColor
 				minZ,
 				maxZ,
 				result,
-				colorResolver);	
+				colorResolver);
 		}
 		else
 		{
@@ -384,14 +384,14 @@ public final class BiomeColor
 				colorResolver);
 		}
 	}
-	
+
 	public static void
 	gatherRawColorsToCaches(
-		World           world, 
+		World           world,
 		int             colorType,
-		int             chunkX, 
-		int             chunkZ, 
-		int             blendRadius, 
+		int             chunkX,
+		int             chunkZ,
+		int             blendRadius,
 		ColorChunkCache rawCache,
 		byte[]          result,
 		ColorResolver   colorResolver)
@@ -405,9 +405,9 @@ public final class BiomeColor
 
 			int rawChunkX = chunkX + offsetX;
 			int rawChunkZ = chunkZ + offsetZ;
-			
+
 			ColorChunk rawChunk = rawCache.getOrDefaultInitializeChunk(rawChunkX, rawChunkZ, colorType);
-			
+
 			gatherRawColorsToCache(
 				world,
 				rawChunkX,
@@ -416,13 +416,13 @@ public final class BiomeColor
 				rawChunk.data,
 				chunkIndex,
 				colorResolver);
-			
+
 			copyRawCacheToBlendCache(rawChunk.data, result, chunkIndex, blendRadius);
-		
+
 			rawCache.releaseChunk(rawChunk);
 		}
 	}
-	
+
 	public static void
 	copyRawCacheToBlendCache(byte[] rawCache, byte[] result, int chunkIndex, int blendRadius)
 	{
@@ -432,19 +432,19 @@ public final class BiomeColor
 		int srcMaxZ = getNeighbourRectMaxZ(chunkIndex, blendRadius);
 		int dstMinX = getNeighbourRectBlendCacheMinX(chunkIndex, blendRadius);
 		int dstMinZ = getNeighbourRectBlendCacheMinZ(chunkIndex, blendRadius);
-	
+
 		int dstDim = 16 + 2 * blendRadius;
-		
+
 		int dstLine = 3 * (dstMinX + dstMinZ * dstDim);
 		int srcLine = 3 * (srcMinX + srcMinZ * 16);
-		
+
 		for (int z = srcMinZ;
 			z < srcMaxZ;
 			++z)
 		{
 			int dstIndex = dstLine;
 			int srcIndex = srcLine;
-			
+
 			for (int x = srcMinX;
 				x < srcMaxX;
 				++x)
@@ -452,16 +452,16 @@ public final class BiomeColor
 				result[dstIndex + 0] = rawCache[srcIndex + 0];
 				result[dstIndex + 1] = rawCache[srcIndex + 1];
 				result[dstIndex + 2] = rawCache[srcIndex + 2];
-				
+
 				dstIndex += 3;
 				srcIndex += 3;
 			}
-			
+
 			dstLine += 3 * dstDim;
 			srcLine += 3 * 16;
 		}
 	}
-	
+
 	public static void
 	blendCachedColorsForChunk(World world, byte[] result, ColorBlendCache blendCache)
 	{
@@ -482,7 +482,7 @@ public final class BiomeColor
 			G[x] = 0xFF & blendCache.color[3 * x + 1];
 			B[x] = 0xFF & blendCache.color[3 * x + 2];
 		}
-		
+
 		for (int z = 1;
 			z < blendDim;
 			++z)
@@ -496,7 +496,7 @@ public final class BiomeColor
 				B[x] += 0xFF & blendCache.color[3 * (blendCacheDim * z + x) + 2];
 			}
 		}
-		
+
 		for (int z = 0;
 			z < 16;
 			++z)
@@ -504,7 +504,7 @@ public final class BiomeColor
 			int accumulatedR = 0;
 			int accumulatedG = 0;
 			int accumulatedB = 0;
-			
+
 			for (int x = 0;
 				x < blendDim;
 				++x)
@@ -513,7 +513,7 @@ public final class BiomeColor
 				accumulatedG += G[x];
 				accumulatedB += B[x];
 			}
-			
+
 			for (int x = 0;
 				x < 16;
 				++x)
@@ -521,11 +521,11 @@ public final class BiomeColor
 				int colorR = accumulatedR / blendCount;
 				int colorG = accumulatedG / blendCount;
 				int colorB = accumulatedB / blendCount;
-				
+
 				result[3 * (16 * z + x) + 0] = (byte)colorR;
 				result[3 * (16 * z + x) + 1] = (byte)colorG;
 				result[3 * (16 * z + x) + 2] = (byte)colorB;
-				
+
 				if (x < 15)
 				{
 					accumulatedR += R[x + blendDim] - R[x];
@@ -533,7 +533,7 @@ public final class BiomeColor
 					accumulatedB += B[x + blendDim] - B[x];
 				}
 			}
-			
+
 			if (z < 15)
 			{
 				for (int x = 0;
@@ -542,7 +542,7 @@ public final class BiomeColor
 				{
 					int index1 = 3 * (blendCacheDim * (z           ) + x);
 					int index2 = 3 * (blendCacheDim * (z + blendDim) + x);
-					
+
 					R[x] += (0xFF & blendCache.color[index2 + 0]) - (0xFF & blendCache.color[index1 + 0]);
 					G[x] += (0xFF & blendCache.color[index2 + 1]) - (0xFF & blendCache.color[index1 + 1]);
 					B[x] += (0xFF & blendCache.color[index2 + 2]) - (0xFF & blendCache.color[index1 + 2]);
@@ -555,23 +555,23 @@ public final class BiomeColor
 	generateBlendedColorChunk(
 		World           world,
 		int             colorType,
-		int             chunkX, 
-		int             chunkZ, 
+		int             chunkX,
+		int             chunkZ,
 		ColorChunkCache rawCache,
 		byte[]          result,
 		ColorResolver   colorResolverIn)
 	{
 		int blendRadius = BetterBiomeBlendClient.getBlendRadiusSetting();
-		
-		if (blendRadius > 0 && 
+
+		if (blendRadius > 0 &&
 			blendRadius <= BetterBiomeBlendClient.BIOME_BLEND_RADIUS_MAX)
 		{
 			ColorBlendCache blendCache = acquireBlendCache(blendRadius);
-			
+
 			gatherRawColorsToCaches(world, colorType, chunkX, chunkZ, blendCache.blendRadius, rawCache, blendCache.color, colorResolverIn);
-			
-			blendCachedColorsForChunk(world, result, blendCache);				
-			
+
+			blendCachedColorsForChunk(world, result, blendCache);
+
 			releaseBlendCache(blendCache);
 		}
 		else
@@ -579,28 +579,28 @@ public final class BiomeColor
 			gatherRawColorsForChunk(world, result, chunkX, chunkZ, colorResolverIn);
 		}
 	}
-	
+
 	public static ColorChunk
 	getBlendedColorChunk(
-		World           world, 
+		World           world,
 		int             colorType,
-		int             chunkX, 
-		int             chunkZ, 
-		ColorChunkCache cache, 
+		int             chunkX,
+		int             chunkZ,
+		ColorChunkCache cache,
 		ColorChunkCache rawCache,
 		ColorResolver   colorResolverIn)
 	{
 		ColorChunk chunk = cache.getChunk(chunkX, chunkZ, colorType);
-		
+
 		if (chunk == null)
 		{
 			chunk = cache.newChunk(chunkX, chunkZ, colorType);
-			
+
 			generateBlendedColorChunk(world, colorType, chunkX, chunkZ, rawCache, chunk.data, colorResolverIn);
-			
+
 			cache.putChunk(chunk);
 		}
-		
+
 		return chunk;
 	}
 }

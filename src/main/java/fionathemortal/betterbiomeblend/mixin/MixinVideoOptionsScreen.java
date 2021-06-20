@@ -15,15 +15,15 @@ import net.minecraft.text.Text;
 @Mixin(VideoOptionsScreen.class)
 public abstract class MixinVideoOptionsScreen extends GameOptionsScreen
 {
-	public MixinVideoOptionsScreen(Screen parent, GameOptions gameOptions, Text title) 
-	{
-		super(parent, gameOptions, title);
-	}
+    public MixinVideoOptionsScreen(Screen parent, GameOptions gameOptions, Text title)
+    {
+        super(parent, gameOptions, title);
+    }
 
-	@Inject(method = "init", at = @At("TAIL"))
-	public void 
-	onInit(CallbackInfo ci)
-	{
-		BetterBiomeBlendClient.replaceBiomeBlendRadiusOption(this);
-	}
+    @Inject(method = "init", at = @At("TAIL"))
+    public void
+    onInit(CallbackInfo ci)
+    {
+        BetterBiomeBlendClient.replaceBiomeBlendRadiusOption(this);
+    }
 }

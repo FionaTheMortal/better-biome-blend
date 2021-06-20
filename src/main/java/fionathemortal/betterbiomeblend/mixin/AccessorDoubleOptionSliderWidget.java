@@ -9,7 +9,6 @@ import net.minecraft.client.options.DoubleOption;
 @Mixin(DoubleOptionSliderWidget.class)
 public interface AccessorDoubleOptionSliderWidget
 {
-	@Accessor()
-	DoubleOption getOption();
+    @Accessor()
+    DoubleOption getOption();
 }
-
