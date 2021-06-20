@@ -14,8 +14,8 @@ import net.minecraft.world.level.ColorResolver;
 
 public final class BiomeColor
 {
-	public static final Lock            freeBlendCacheslock = new ReentrantLock();
-	public static final Stack<ColorBlendCache> freeBlendCaches = new Stack<ColorBlendCache>();
+	public static final Lock                   freeBlendCacheslock = new ReentrantLock();
+	public static final Stack<ColorBlendCache> freeBlendCaches     = new Stack<ColorBlendCache>();
 
 	public static final byte[]
 	neighbourOffsets =
