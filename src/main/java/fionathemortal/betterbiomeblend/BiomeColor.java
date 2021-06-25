@@ -180,6 +180,7 @@ public final class BiomeColor
         }
         else
         {
+            threadLocal = StaticCompatibilityCache.getThreadLocalGrassChunkWrapper();
         }
 
         return threadLocal;
@@ -198,7 +199,7 @@ public final class BiomeColor
         }
         else
         {
-
+            threadLocal = StaticCompatibilityCache.getThreadLocalWaterChunkWrapper();
         }
 
         return threadLocal;
@@ -217,7 +218,7 @@ public final class BiomeColor
         }
         else
         {
-
+            threadLocal = StaticCompatibilityCache.getThreadLocalFoliageChunkWrapper();
         }
 
         return threadLocal;
@@ -552,6 +553,7 @@ public final class BiomeColor
         }
         else
         {
+            cache = StaticCompatibilityCache.getColorChunkCache();
         }
 
         return cache;
