@@ -3,6 +3,7 @@ package fionathemortal.betterbiomeblend.mixin;
 import fionathemortal.betterbiomeblend.BiomeColor;
 import fionathemortal.betterbiomeblend.BiomeColorType;
 import fionathemortal.betterbiomeblend.ColorChunk;
+import fionathemortal.betterbiomeblend.ColorChunkCache;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.biome.BiomeColorHelper;
@@ -12,33 +13,6 @@ import org.spongepowered.asm.mixin.Overwrite;
 @Mixin(value = BiomeColorHelper.class)
 public abstract class MixinBiomeColorHelper
 {
-    private final static ThreadLocal<ColorChunk> threadLocalWaterChunk   =
-        ThreadLocal.withInitial(
-            () ->
-            {
-                ColorChunk chunk = new ColorChunk();
-                chunk.acquire();
-                return chunk;
-            });
-
-    private final static ThreadLocal<ColorChunk> threadLocalGrassChunk   =
-        ThreadLocal.withInitial(
-            () ->
-            {
-                ColorChunk chunk = new ColorChunk();
-                chunk.acquire();
-                return chunk;
-            });
-
-    private final static ThreadLocal<ColorChunk> threadLocalFoliageChunk =
-        ThreadLocal.withInitial(
-            () ->
-            {
-                ColorChunk chunk = new ColorChunk();
-                chunk.acquire();
-                return chunk;
-            });
-
     @Overwrite
     public static int
     getGrassColorAtPos(IBlockAccess blockAccess, BlockPos pos)
@@ -49,13 +23,17 @@ public abstract class MixinBiomeColorHelper
         int chunkX = x >> 4;
         int chunkZ = z >> 4;
 
-        ColorChunk chunk = null; // BiomeColor.getThreadLocalChunk(threadLocalGrassChunk, chunkX, chunkZ, BiomeColorType.GRASS, blockAccess);
+        ThreadLocal<ColorChunk> threadLocal = BiomeColor.getThreadLocalGrassChunkWrapper(blockAccess);
+
+        ColorChunk chunk = BiomeColor.getThreadLocalChunk(threadLocal, chunkX, chunkZ, BiomeColorType.GRASS);
 
         if (chunk == null)
         {
-            chunk = BiomeColor.getBlendedColorChunk(blockAccess, BiomeColorType.GRASS, chunkX, chunkZ);
+            ColorChunkCache cache = BiomeColor.getColorChunkCacheForIBlockAccess(blockAccess);
 
-            // BiomeColor.setThreadLocalChunk(threadLocalGrassChunk, chunk, blockAccess);
+            chunk = BiomeColor.getBlendedColorChunk(cache, blockAccess, BiomeColorType.GRASS, chunkX, chunkZ);
+
+            BiomeColor.setThreadLocalChunk(threadLocal, chunk, cache);
         }
 
         int result = chunk.getColor(x, z);
@@ -73,13 +51,17 @@ public abstract class MixinBiomeColorHelper
         int chunkX = x >> 4;
         int chunkZ = z >> 4;
 
-        ColorChunk chunk = null; // BiomeColor.getThreadLocalChunk(threadLocalFoliageChunk, chunkX, chunkZ, BiomeColorType.FOLIAGE, blockAccess);
+        ThreadLocal<ColorChunk> threadLocal = BiomeColor.getThreadLocalFoliageChunkWrapper(blockAccess);
+
+        ColorChunk chunk = BiomeColor.getThreadLocalChunk(threadLocal, chunkX, chunkZ, BiomeColorType.FOLIAGE);
 
         if (chunk == null)
         {
-            chunk = BiomeColor.getBlendedColorChunk(blockAccess, BiomeColorType.FOLIAGE, chunkX, chunkZ);
+            ColorChunkCache cache = BiomeColor.getColorChunkCacheForIBlockAccess(blockAccess);
 
-            // BiomeColor.setThreadLocalChunk(threadLocalFoliageChunk, chunk, blockAccess);
+            chunk = BiomeColor.getBlendedColorChunk(cache, blockAccess, BiomeColorType.FOLIAGE, chunkX, chunkZ);
+
+            BiomeColor.setThreadLocalChunk(threadLocal, chunk, cache);
         }
 
         int result = chunk.getColor(x, z);
@@ -97,13 +79,17 @@ public abstract class MixinBiomeColorHelper
         int chunkX = x >> 4;
         int chunkZ = z >> 4;
 
-        ColorChunk chunk = null; // BiomeColor.getThreadLocalChunk(threadLocalWaterChunk, chunkX, chunkZ, BiomeColorType.WATER, blockAccess);
+        ThreadLocal<ColorChunk> threadLocal = BiomeColor.getThreadLocalWaterChunkWrapper(blockAccess);
+
+        ColorChunk chunk = BiomeColor.getThreadLocalChunk(threadLocal, chunkX, chunkZ, BiomeColorType.WATER);
 
         if (chunk == null)
         {
-            chunk = BiomeColor.getBlendedColorChunk(blockAccess, BiomeColorType.WATER, chunkX, chunkZ);
+            ColorChunkCache cache = BiomeColor.getColorChunkCacheForIBlockAccess(blockAccess);
 
-            // BiomeColor.setThreadLocalChunk(threadLocalWaterChunk, chunk, blockAccess);
+            chunk = BiomeColor.getBlendedColorChunk(cache, blockAccess, BiomeColorType.WATER, chunkX, chunkZ);
+
+            BiomeColor.setThreadLocalChunk(threadLocal, chunk, cache);
         }
 
         int result = chunk.getColor(x, z);

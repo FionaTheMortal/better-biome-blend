@@ -1,6 +1,7 @@
 package fionathemortal.betterbiomeblend;
 
 import fionathemortal.betterbiomeblend.mixin.AccessorChunkCache;
+import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
@@ -13,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public final class BiomeColor
 {
     public static final Lock                   freeBlendCacheslock = new ReentrantLock();
-    public static final Stack<ColorBlendCache> freeBlendCaches     = new Stack<ColorBlendCache>();
+    public static final Stack<ColorBlendCache> freeBlendCaches     = new Stack<>();
 
     public static final byte[]
     neighbourOffsets =
@@ -165,8 +166,64 @@ public final class BiomeColor
         freeBlendCacheslock.unlock();
     }
 
+    public static ThreadLocal<ColorChunk>
+    getThreadLocalGrassChunkWrapper(IBlockAccess blockAccess)
+    {
+        ThreadLocal<ColorChunk> threadLocal = null;
+
+        World world = getWorldFromBlockAccess(blockAccess);
+
+        if (world instanceof ColorChunkCacheProvider)
+        {
+            threadLocal = ((ColorChunkCacheProvider)world).getTreadLocalGrassChunk();
+        }
+        else
+        {
+        }
+
+        return threadLocal;
+    }
+
+    public static ThreadLocal<ColorChunk>
+    getThreadLocalWaterChunkWrapper(IBlockAccess blockAccess)
+    {
+        ThreadLocal<ColorChunk> threadLocal = null;
+
+        World world = getWorldFromBlockAccess(blockAccess);
+
+        if (world instanceof ColorChunkCacheProvider)
+        {
+            threadLocal = ((ColorChunkCacheProvider)world).getTreadLocalWaterChunk();
+        }
+        else
+        {
+
+        }
+
+        return threadLocal;
+    }
+
+    public static ThreadLocal<ColorChunk>
+    getThreadLocalFoliageChunkWrapper(IBlockAccess blockAccess)
+    {
+        ThreadLocal<ColorChunk> threadLocal = null;
+
+        World world = getWorldFromBlockAccess(blockAccess);
+
+        if (world instanceof ColorChunkCacheProvider)
+        {
+            threadLocal = ((ColorChunkCacheProvider)world).getTreadLocalFoliageChunk();
+        }
+        else
+        {
+
+        }
+
+        return threadLocal;
+    }
+
     public static ColorChunk
-    getThreadLocalChunk(ThreadLocal<ColorChunk> threadLocal, int chunkX, int chunkZ, int colorType, IBlockAccess blockAccess)
+    getThreadLocalChunk(ThreadLocal<ColorChunk> threadLocal, int chunkX, int chunkZ, int colorType)
     {
         ColorChunk result = null;
         ColorChunk local = threadLocal.get();
@@ -182,7 +239,7 @@ public final class BiomeColor
     }
 
     public static void
-    setThreadLocalChunk(ThreadLocal<ColorChunk> threadLocal, ColorChunk chunk, ColorChunkCache cache, IBlockAccess blockAccess)
+    setThreadLocalChunk(ThreadLocal<ColorChunk> threadLocal, ColorChunk chunk, ColorChunkCache cache)
     {
         ColorChunk local = threadLocal.get();
 
@@ -430,11 +487,11 @@ public final class BiomeColor
 
     public static void
     generateBlendedColorChunk(
-        IBlockAccess    blockAccess,
-        int             chunkX,
-        int             chunkZ,
-        byte[]          result,
-        int             colorType)
+        IBlockAccess blockAccess,
+        int          chunkX,
+        int          chunkZ,
+        byte[]       result,
+        int          colorType)
     {
         int blendRadius = 14; // BetterBiomeBlendClient.getBlendRadiusSetting();
 
@@ -479,51 +536,43 @@ public final class BiomeColor
         return result;
     }
 
-    public static ColorChunk
-    getBlendedColorChunk(
-        IBlockAccess blockAccess,
-        int          colorType,
-        int          chunkX,
-        int          chunkZ)
+    public static ColorChunkCache
+    getColorChunkCacheForIBlockAccess(IBlockAccess blockAccess)
     {
         ColorChunkCache cache = null;
 
         World world = getWorldFromBlockAccess(blockAccess);
 
-        if (world != null)
+        if (world instanceof ColorChunkCacheProvider)
         {
-            if (world instanceof ColorChunkCacheProvider)
-            {
-                ColorChunkCacheProvider cacheProvider = (ColorChunkCacheProvider)world;
+            ColorChunkCacheProvider cacheProvider = (ColorChunkCacheProvider)world;
 
-                cache = cacheProvider.getColorChunkCache();
-            }
-        }
-
-        ColorChunk chunk = null;
-
-        if (cache != null)
-        {
-            chunk = cache.getChunk(chunkX, chunkZ, colorType);
-
-            if (chunk == null)
-            {
-                chunk = cache.newChunk(chunkX, chunkZ, colorType);
-
-                generateBlendedColorChunk(blockAccess, chunkX, chunkZ, chunk.data, colorType);
-
-                cache.putChunk(chunk);
-            }
+            cache = cacheProvider.getColorChunkCache();
         }
         else
         {
-            BetterBiomeBlend.LOGGER.info("BetterBiomeBlend Issue:");
-            BetterBiomeBlend.LOGGER.info(blockAccess.getClass());
+        }
 
-            /*
-            chunk = new ColorChunk(); // dummy chunk
-            generateBlendedColorChunk(world, chunkX, chunkZ, chunk.data, colorType);
-            */
+        return cache;
+    }
+
+    public static ColorChunk
+    getBlendedColorChunk(
+        ColorChunkCache cache,
+        IBlockAccess    blockAccess,
+        int             colorType,
+        int             chunkX,
+        int             chunkZ)
+    {
+        ColorChunk chunk = cache.getChunk(chunkX, chunkZ, colorType);
+
+        if (chunk == null)
+        {
+            chunk = cache.newChunk(chunkX, chunkZ, colorType);
+
+            generateBlendedColorChunk(blockAccess, chunkX, chunkZ, chunk.data, colorType);
+
+            cache.putChunk(chunk);
         }
 
         return chunk;
