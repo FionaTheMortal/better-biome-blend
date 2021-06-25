@@ -539,11 +539,9 @@ public final class BiomeColor
     }
 
     public static ColorChunkCache
-    getColorChunkCacheForIBlockAccess(IBlockAccess blockAccess)
+    getColorChunkCacheForWorld(World world)
     {
         ColorChunkCache cache = null;
-
-        World world = getWorldFromBlockAccess(blockAccess);
 
         if (world instanceof ColorChunkCacheProvider)
         {
@@ -555,6 +553,16 @@ public final class BiomeColor
         {
             cache = StaticCompatibilityCache.getColorChunkCache();
         }
+
+        return cache;
+    }
+
+    public static ColorChunkCache
+    getColorChunkCacheForIBlockAccess(IBlockAccess blockAccess)
+    {
+        World world = getWorldFromBlockAccess(blockAccess);
+
+        ColorChunkCache cache = getColorChunkCacheForWorld(world);
 
         return cache;
     }

@@ -27,12 +27,7 @@ public class BetterBiomeBlend
         Chunk chunk = event.getChunk();
         World world = event.getWorld();
 
-        ColorChunkCache cache = null;
-
-        if (world instanceof ColorChunkCacheProvider)
-        {
-            cache = ((ColorChunkCacheProvider) world).getColorChunkCache();
-        }
+        ColorChunkCache cache = BiomeColor.getColorChunkCacheForWorld(world);
 
         if (cache != null)
         {

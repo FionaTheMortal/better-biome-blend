@@ -33,8 +33,8 @@ public final class StaticCompatibilityCache
                 return chunk;
             });
 
-    private static AtomicBoolean   isGenerated     = new AtomicBoolean(false);
-    private static ColorChunkCache colorChunkCache = null;
+    private static          AtomicBoolean   isGenerated     = new AtomicBoolean(false);
+    private static volatile ColorChunkCache colorChunkCache = null;
 
     public static ColorChunkCache
     getColorChunkCache()
