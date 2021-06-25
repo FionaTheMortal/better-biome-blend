@@ -2,7 +2,10 @@ package fionathemortal.betterbiomeblend;
 
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraftforge.common.config.Config;
+import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.event.world.ChunkEvent;
+import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
@@ -34,6 +37,16 @@ public class BetterBiomeBlend
         if (cache != null)
         {
             cache.invalidateNeighbourhood(chunk.x, chunk.z);
+        }
+    }
+
+    @SubscribeEvent
+    public static void
+    onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event)
+    {
+        if (event.getModID().equals(BetterBiomeBlend.MOD_ID))
+        {
+            ConfigManager.sync(BetterBiomeBlend.MOD_ID, Config.Type.INSTANCE);
         }
     }
 }

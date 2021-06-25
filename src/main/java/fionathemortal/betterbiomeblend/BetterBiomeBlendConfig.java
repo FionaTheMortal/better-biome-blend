@@ -9,5 +9,6 @@ public class BetterBiomeBlendConfig
     @Config.RangeInt(
         min = BetterBiomeBlendClient.BIOME_BLEND_RADIUS_MIN,
         max = BetterBiomeBlendClient.BIOME_BLEND_RADIUS_MAX)
+    @Config.RequiresWorldRestart
     public static int blendRadius = 14;
 }
