@@ -44,7 +44,7 @@ public final class ColorChunk
     public void
     markAsInvalid()
     {
-        key = Long.MIN_VALUE;
+        key = -1;
     }
 
     public int

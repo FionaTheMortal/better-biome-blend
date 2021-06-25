@@ -1,9 +1,6 @@
 package fionathemortal.betterbiomeblend.mixin;
 
-import fionathemortal.betterbiomeblend.BiomeColor;
-import fionathemortal.betterbiomeblend.BiomeColorType;
-import fionathemortal.betterbiomeblend.ColorChunk;
-import fionathemortal.betterbiomeblend.ColorChunkCache;
+import fionathemortal.betterbiomeblend.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.biome.BiomeColorHelper;

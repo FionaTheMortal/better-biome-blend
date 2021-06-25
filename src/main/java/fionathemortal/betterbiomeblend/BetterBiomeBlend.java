@@ -11,37 +11,9 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Mod(modid = BetterBiomeBlend.MOD_ID)
-@Mod.EventBusSubscriber()
+@Mod(modid = BetterBiomeBlend.MOD_ID, clientSideOnly = true)
 public class BetterBiomeBlend
 {
     public static final String MOD_ID = "betterbiomeblend";
     public static final Logger LOGGER = LogManager.getLogger(BetterBiomeBlend.MOD_ID);
-
-    // TODO: This probably needs to be moved later when we make this a client-side only mod
-
-    @SubscribeEvent
-    public static void
-    onChunkLoadedEvent(ChunkEvent.Load event)
-    {
-        Chunk chunk = event.getChunk();
-        World world = event.getWorld();
-
-        ColorChunkCache cache = BiomeColor.getColorChunkCacheForWorld(world);
-
-        if (cache != null)
-        {
-            cache.invalidateNeighbourhood(chunk.x, chunk.z);
-        }
-    }
-
-    @SubscribeEvent
-    public static void
-    onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event)
-    {
-        if (event.getModID().equals(BetterBiomeBlend.MOD_ID))
-        {
-            ConfigManager.sync(BetterBiomeBlend.MOD_ID, Config.Type.INSTANCE);
-        }
-    }
 }
