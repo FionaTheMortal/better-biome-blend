@@ -1,6 +1,6 @@
 package fionathemortal.betterbiomeblend;
 
-public interface ColorChunkCacheProvider 
+public interface ColorChunkCacheProvider
 {
-	ColorChunkCache getColorChunkCache();
+    ColorChunkCache getColorChunkCache();
 }

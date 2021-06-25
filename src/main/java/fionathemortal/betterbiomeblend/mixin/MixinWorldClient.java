@@ -9,12 +9,12 @@ import net.minecraft.client.multiplayer.WorldClient;
 @Mixin(WorldClient.class)
 public abstract class MixinWorldClient implements ColorChunkCacheProvider
 {
-	public final ColorChunkCache colorChunkCache = new ColorChunkCache(2048);
-	
+    public final ColorChunkCache colorChunkCache = new ColorChunkCache(2048);
+
     @Override
-    public ColorChunkCache 
-    getColorChunkCache() 
+    public ColorChunkCache
+    getColorChunkCache()
     {
-    	return colorChunkCache;
+        return colorChunkCache;
     }
 }

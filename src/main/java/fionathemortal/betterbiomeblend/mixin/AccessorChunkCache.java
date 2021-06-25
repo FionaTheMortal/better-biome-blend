@@ -7,8 +7,8 @@ import net.minecraft.world.ChunkCache;
 import net.minecraft.world.World;
 
 @Mixin(ChunkCache.class)
-public interface AccessorChunkCache 
+public interface AccessorChunkCache
 {
-	@Accessor()
-	World getWorld();
+    @Accessor()
+    World getWorld();
 }
