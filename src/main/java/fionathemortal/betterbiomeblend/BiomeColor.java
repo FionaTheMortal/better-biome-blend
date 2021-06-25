@@ -156,7 +156,7 @@ public final class BiomeColor
     {
         freeBlendCacheslock.lock();
 
-        int blendRadius = 0; // BetterBiomeBlendClient.getBlendRadiusSetting();
+        int blendRadius = BetterBiomeBlendConfig.blendRadius;
 
         if (cache.blendRadius == blendRadius)
         {
@@ -344,11 +344,11 @@ public final class BiomeColor
 
     public static void
     gatherRawColorsToBlendCache(
-        IBlockAccess    blockAccess,
-        int             chunkX,
-        int             chunkZ,
-        int             blendRadius,
-        byte[]          result,
+        IBlockAccess                   blockAccess,
+        int                            chunkX,
+        int                            chunkZ,
+        int                            blendRadius,
+        byte[]                         result,
         BiomeColorHelper.ColorResolver colorResolver)
     {
         for (int chunkIndex = 0;
@@ -493,7 +493,7 @@ public final class BiomeColor
         byte[]       result,
         int          colorType)
     {
-        int blendRadius = 14; // BetterBiomeBlendClient.getBlendRadiusSetting();
+        int blendRadius = BetterBiomeBlendConfig.blendRadius;
 
         BiomeColorHelper.ColorResolver colorResolver = getColorResolverForColorType(colorType);
 
