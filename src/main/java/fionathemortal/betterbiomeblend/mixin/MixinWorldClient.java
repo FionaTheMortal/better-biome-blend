@@ -1,10 +1,9 @@
 package fionathemortal.betterbiomeblend.mixin;
 
-import org.spongepowered.asm.mixin.Mixin;
-
-import fionathemortal.betterbiomeblend.ColorChunkCacheProvider;
 import fionathemortal.betterbiomeblend.ColorChunkCache;
+import fionathemortal.betterbiomeblend.ColorChunkCacheProvider;
 import net.minecraft.client.multiplayer.WorldClient;
+import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(WorldClient.class)
 public abstract class MixinWorldClient implements ColorChunkCacheProvider

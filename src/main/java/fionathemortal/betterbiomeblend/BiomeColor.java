@@ -1,17 +1,14 @@
 package fionathemortal.betterbiomeblend;
 
+import fionathemortal.betterbiomeblend.mixin.AccessorChunkCache;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
+import net.minecraft.world.biome.BiomeColorHelper;
+
 import java.util.Stack;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import fionathemortal.betterbiomeblend.mixin.AccessorChunkCache;
-import fionathemortal.betterbiomeblend.mixin.MixinWorldClient;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.ChunkCache;
-import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.World;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.BiomeColorHelper;
 
 public final class BiomeColor
 {

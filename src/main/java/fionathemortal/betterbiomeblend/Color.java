@@ -6,8 +6,8 @@ public final class Color
     makeRGBAWithFullAlpha(int R, int G, int B)
     {
         int result =
-            ((0xFF & R) << 0)  |
-            ((0xFF & G) << 8)  |
+            ((0xFF & R) <<  0) |
+            ((0xFF & G) <<  8) |
             ((0xFF & B) << 16) |
             0xFF000000;
 
