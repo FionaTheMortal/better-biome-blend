@@ -46,8 +46,6 @@ dependencies {
         exclude module: 'commons-io'
         exclude module: 'gson'
     }
-
-    implementation files('libs/betterbiomeblend-1.1.5-optifine-api.jar')
 }
 
 processResources {
