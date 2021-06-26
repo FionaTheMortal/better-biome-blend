@@ -10,6 +10,35 @@ import org.spongepowered.asm.mixin.Overwrite;
 @Mixin(value = BiomeColorHelper.class)
 public abstract class MixinBiomeColorHelper
 {
+    private static int
+    getColorAtPos(IBlockAccess blockAccess, BlockPos pos, BiomeColorHelper.ColorResolver colorResolver)
+    {
+        int x = pos.getX();
+        int z = pos.getZ();
+
+        int chunkX = x >> 4;
+        int chunkZ = z >> 4;
+
+        int colorResolverID = ColorResolverCompatibility.getColorResolverID(colorResolver);
+
+        ThreadLocal<ColorChunk> threadLocal = BiomeColor.getThreadLocalGenericChunkWrapper(blockAccess);
+
+        ColorChunk chunk = BiomeColor.getThreadLocalChunk(threadLocal, chunkX, chunkZ, colorResolverID);
+
+        if (chunk == null)
+        {
+            ColorChunkCache cache = BiomeColor.getColorChunkCacheForIBlockAccess(blockAccess);
+
+            chunk = BiomeColor.getBlendedColorChunk(cache, blockAccess, colorResolverID, chunkX, chunkZ, colorResolver);
+
+            BiomeColor.setThreadLocalChunk(threadLocal, chunk, cache);
+        }
+
+        int result = chunk.getColor(x, z);
+
+        return result;
+    }
+
     @Overwrite
     public static int
     getGrassColorAtPos(IBlockAccess blockAccess, BlockPos pos)
@@ -28,7 +57,7 @@ public abstract class MixinBiomeColorHelper
         {
             ColorChunkCache cache = BiomeColor.getColorChunkCacheForIBlockAccess(blockAccess);
 
-            chunk = BiomeColor.getBlendedColorChunk(cache, blockAccess, BiomeColorType.GRASS, chunkX, chunkZ);
+            chunk = BiomeColor.getBlendedColorChunk(cache, blockAccess, BiomeColorType.GRASS, chunkX, chunkZ, BiomeColorHelper.GRASS_COLOR);
 
             BiomeColor.setThreadLocalChunk(threadLocal, chunk, cache);
         }
@@ -56,7 +85,7 @@ public abstract class MixinBiomeColorHelper
         {
             ColorChunkCache cache = BiomeColor.getColorChunkCacheForIBlockAccess(blockAccess);
 
-            chunk = BiomeColor.getBlendedColorChunk(cache, blockAccess, BiomeColorType.FOLIAGE, chunkX, chunkZ);
+            chunk = BiomeColor.getBlendedColorChunk(cache, blockAccess, BiomeColorType.FOLIAGE, chunkX, chunkZ, BiomeColorHelper.FOLIAGE_COLOR);
 
             BiomeColor.setThreadLocalChunk(threadLocal, chunk, cache);
         }
@@ -84,7 +113,7 @@ public abstract class MixinBiomeColorHelper
         {
             ColorChunkCache cache = BiomeColor.getColorChunkCacheForIBlockAccess(blockAccess);
 
-            chunk = BiomeColor.getBlendedColorChunk(cache, blockAccess, BiomeColorType.WATER, chunkX, chunkZ);
+            chunk = BiomeColor.getBlendedColorChunk(cache, blockAccess, BiomeColorType.WATER, chunkX, chunkZ, BiomeColorHelper.WATER_COLOR);
 
             BiomeColor.setThreadLocalChunk(threadLocal, chunk, cache);
         }

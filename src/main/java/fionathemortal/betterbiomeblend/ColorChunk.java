@@ -1,5 +1,7 @@
 package fionathemortal.betterbiomeblend;
 
+import net.minecraft.world.biome.BiomeColorHelper;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class ColorChunk
@@ -44,7 +46,10 @@ public final class ColorChunk
     public void
     markAsInvalid()
     {
-        key = -1;
+        key =
+            ((long)(0x02000000L) << 26) |
+            ((long)(0x02000000L))       |
+            ((long)-1 << 52);
     }
 
     public int

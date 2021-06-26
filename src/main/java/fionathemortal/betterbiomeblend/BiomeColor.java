@@ -226,6 +226,25 @@ public final class BiomeColor
         return threadLocal;
     }
 
+    public static ThreadLocal<ColorChunk>
+    getThreadLocalGenericChunkWrapper(IBlockAccess blockAccess)
+    {
+        ThreadLocal<ColorChunk> threadLocal = null;
+
+        World world = getWorldFromBlockAccess(blockAccess);
+
+        if (world instanceof ColorChunkCacheProvider)
+        {
+            threadLocal = ((ColorChunkCacheProvider)world).getTreadLocalGenericChunk();
+        }
+        else
+        {
+            threadLocal = StaticCompatibilityCache.getThreadLocalGenericChunkWrapper();
+        }
+
+        return threadLocal;
+    }
+
     public static ColorChunk
     getThreadLocalChunk(ThreadLocal<ColorChunk> threadLocal, int chunkX, int chunkZ, int colorType)
     {
@@ -465,41 +484,16 @@ public final class BiomeColor
         }
     }
 
-    public static BiomeColorHelper.ColorResolver
-    getColorResolverForColorType(int colorType)
-    {
-        BiomeColorHelper.ColorResolver result = null;
-
-        switch (colorType)
-        {
-            case BiomeColorType.GRASS:
-            {
-                result = BiomeColorHelper.GRASS_COLOR;
-            } break;
-            case BiomeColorType.WATER:
-            {
-                result = BiomeColorHelper.WATER_COLOR;
-            } break;
-            case BiomeColorType.FOLIAGE:
-            {
-                result = BiomeColorHelper.FOLIAGE_COLOR;
-            } break;
-        }
-
-        return result;
-    }
-
     public static void
     generateBlendedColorChunk(
-        IBlockAccess blockAccess,
-        int          chunkX,
-        int          chunkZ,
-        byte[]       result,
-        int          colorType)
+        IBlockAccess                   blockAccess,
+        int                            chunkX,
+        int                            chunkZ,
+        byte[]                         result,
+        int                            colorType,
+        BiomeColorHelper.ColorResolver colorResolver)
     {
         int blendRadius = BetterBiomeBlendConfig.blendRadius;
-
-        BiomeColorHelper.ColorResolver colorResolver = getColorResolverForColorType(colorType);
 
         if (blendRadius >  BetterBiomeBlendClient.BIOME_BLEND_RADIUS_MIN &&
             blendRadius <= BetterBiomeBlendClient.BIOME_BLEND_RADIUS_MAX)
@@ -583,19 +577,20 @@ public final class BiomeColor
 
     public static ColorChunk
     getBlendedColorChunk(
-        ColorChunkCache cache,
-        IBlockAccess    blockAccess,
-        int             colorType,
-        int             chunkX,
-        int             chunkZ)
+        ColorChunkCache                cache,
+        IBlockAccess                   blockAccess,
+        int                            colorID,
+        int                            chunkX,
+        int                            chunkZ,
+        BiomeColorHelper.ColorResolver colorResolver)
     {
-        ColorChunk chunk = cache.getChunk(chunkX, chunkZ, colorType);
+        ColorChunk chunk = cache.getChunk(chunkX, chunkZ, colorID);
 
         if (chunk == null)
         {
-            chunk = cache.newChunk(chunkX, chunkZ, colorType);
+            chunk = cache.newChunk(chunkX, chunkZ, colorID);
 
-            generateBlendedColorChunk(blockAccess, chunkX, chunkZ, chunk.data, colorType);
+            generateBlendedColorChunk(blockAccess, chunkX, chunkZ, chunk.data, colorID, colorResolver);
 
             cache.putChunk(chunk);
         }

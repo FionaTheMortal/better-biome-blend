@@ -6,7 +6,8 @@
 	"client": [
 		"AccessorChunkCache",
 		"MixinBiomeColorHelper",
-		"MixinWorldClient"
+		"MixinWorldClient",
+		"MixinCustomColors"
 	],
 	"server": [],
 	"minVersion": "0.6"

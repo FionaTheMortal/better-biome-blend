@@ -8,6 +8,7 @@ import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.optifine.CustomColors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

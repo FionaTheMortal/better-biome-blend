@@ -36,6 +36,15 @@ public abstract class MixinWorldClient implements ColorChunkCacheProvider
                 return chunk;
             });
 
+    public final ThreadLocal<ColorChunk> threadLocalGenericChunk =
+        ThreadLocal.withInitial(
+            () ->
+            {
+                ColorChunk chunk = new ColorChunk();
+                chunk.acquire();
+                return chunk;
+            });
+
     public final ColorChunkCache colorChunkCache = new ColorChunkCache(2048);
 
     @Override
@@ -64,5 +73,12 @@ public abstract class MixinWorldClient implements ColorChunkCacheProvider
     getTreadLocalFoliageChunk()
     {
         return threadLocalFoliageChunk;
+    }
+
+    @Override
+    public ThreadLocal<ColorChunk>
+    getTreadLocalGenericChunk()
+    {
+        return threadLocalGenericChunk;
     }
 }

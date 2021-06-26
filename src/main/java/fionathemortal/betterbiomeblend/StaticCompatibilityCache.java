@@ -33,6 +33,15 @@ public final class StaticCompatibilityCache
                 return chunk;
             });
 
+    private static final ThreadLocal<ColorChunk> threadLocalGenericChunk =
+        ThreadLocal.withInitial(
+            () ->
+            {
+                ColorChunk chunk = new ColorChunk();
+                chunk.acquire();
+                return chunk;
+            });
+
     private static          AtomicBoolean   isGenerated     = new AtomicBoolean(false);
     private static volatile ColorChunkCache colorChunkCache = null;
 
@@ -72,5 +81,11 @@ public final class StaticCompatibilityCache
     getThreadLocalFoliageChunkWrapper()
     {
         return threadLocalFoliageChunk;
+    }
+
+    public static ThreadLocal<ColorChunk>
+    getThreadLocalGenericChunkWrapper()
+    {
+        return threadLocalGenericChunk;
     }
 }

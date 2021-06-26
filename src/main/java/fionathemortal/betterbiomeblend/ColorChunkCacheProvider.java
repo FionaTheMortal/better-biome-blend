@@ -9,4 +9,6 @@ public interface ColorChunkCacheProvider
     ThreadLocal<ColorChunk> getTreadLocalWaterChunk();
 
     ThreadLocal<ColorChunk> getTreadLocalFoliageChunk();
+
+    ThreadLocal<ColorChunk> getTreadLocalGenericChunk();
 }
