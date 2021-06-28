@@ -10,8 +10,6 @@ public class BetterBiomeBlend implements ModInitializer
     public void
     onInitialize()
     {
-        // ScreenEvents.AFTER_INIT.register(BetterBiomeBlendClient::postInitGUIEvent);
-
         BetterBiomeBlendClient.overwriteOptifineGUIBlendRadiusOption();
     }
 }

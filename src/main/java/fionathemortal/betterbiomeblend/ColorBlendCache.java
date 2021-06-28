@@ -5,9 +5,9 @@ public final class ColorBlendCache
     int    blendRadius;
     byte[] color;
 
-    int[] R;
-    int[] G;
-    int[] B;
+    float[] R;
+    float[] G;
+    float[] B;
 
     public ColorBlendCache(int blendRadius)
     {
@@ -16,8 +16,8 @@ public final class ColorBlendCache
         this.blendRadius = blendRadius;
         this.color = new byte[3 * genCacheDim * genCacheDim];
 
-        this.R = new int[genCacheDim];
-        this.G = new int[genCacheDim];
-        this.B = new int[genCacheDim];
+        this.R = new float[genCacheDim];
+        this.G = new float[genCacheDim];
+        this.B = new float[genCacheDim];
     }
 }
