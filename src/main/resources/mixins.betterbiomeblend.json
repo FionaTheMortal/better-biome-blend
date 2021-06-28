@@ -1,14 +1,15 @@
 {
-	"compatibilityLevel": "JAVA_8",
-	"package": "fionathemortal.betterbiomeblend.mixin",
-	"mixins": [
-	],
-	"client": [
-		"AccessorChunkCache",
-		"MixinBiomeColorHelper",
-		"MixinWorldClient",
-		"MixinCustomColors"
-	],
-	"server": [],
-	"minVersion": "0.6"
+    "compatibilityLevel": "JAVA_8",
+    "package": "fionathemortal.betterbiomeblend.mixin",
+    "mixins": [
+    ],
+    "client": [
+        "AccessorChunkCache",
+        "MixinBiomeColorHelper",
+        "MixinWorldClient",
+        "MixinCustomColors"
+    ],
+    "server": [
+    ],
+    "minVersion": "0.6"
 }

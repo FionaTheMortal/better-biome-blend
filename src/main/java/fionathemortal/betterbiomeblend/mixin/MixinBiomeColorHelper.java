@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 @Mixin(value = BiomeColorHelper.class)
 public abstract class MixinBiomeColorHelper
 {
+    @Overwrite
     private static int
     getColorAtPos(IBlockAccess blockAccess, BlockPos pos, BiomeColorHelper.ColorResolver colorResolver)
     {
