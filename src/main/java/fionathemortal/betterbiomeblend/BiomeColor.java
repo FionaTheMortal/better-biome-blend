@@ -582,9 +582,6 @@ public final class BiomeColor
 		}
 	}
 
-	static AtomicLong time = new AtomicLong();
-	static AtomicLong call = new AtomicLong();
-
 	public static ColorChunk
 	getBlendedColorChunk(
 		World           world,
@@ -601,21 +598,7 @@ public final class BiomeColor
 		{
 			chunk = cache.newChunk(chunkX, chunkZ, colorType);
 
-			long now1 = System.nanoTime();
-
 			generateBlendedColorChunk(world, colorType, chunkX, chunkZ, rawCache, chunk.data, colorResolverIn);
-
-			long now2 = System.nanoTime();
-			long totalTime = time.addAndGet(now2 - now1);
-			long totalCall = call.incrementAndGet();
-
-			if (totalCall % 1024*16 == 0)
-			{
-				System.out.println((double)totalTime / (double)totalCall);
-
-				time.set(0);
-				call.set(0);
-			}
 
 			cache.putChunk(chunk);
 		}
