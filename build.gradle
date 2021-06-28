@@ -1,62 +1,59 @@
 buildscript {
     repositories {
-        mavenCentral()
+        maven { url = 'https://files.minecraftforge.net/maven' }
         jcenter()
-        maven { url = "http://files.minecraftforge.net/maven" }
-        maven { url='https://repo.spongepowered.org/repository/maven-public/' }
+        mavenCentral()
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
-        classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:3.+'
     }
 }
-apply plugin: 'net.minecraftforge.gradle.forge'
-apply plugin: 'org.spongepowered.mixin'
+        
+apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
 
 version = mod_version
 group = mod_group
 archivesBaseName = mod_id
 
-sourceCompatibility = targetCompatibility = '1.8'
-compileJava {
-    sourceCompatibility = targetCompatibility = '1.8'
-}
+sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 
 minecraft {
-    version = "${minecraft_version}-${forge_version}"
-    runDir = "run"
-    mappings = mappings_version
-    String resolved_core_plugin = mod_core_plugin.replace('${mod_group}', mod_group).replace('${mod_id}', mod_id);
-    clientJvmArgs += "-Dfml.coreMods.load=${resolved_core_plugin}"
-    serverJvmArgs += "-Dfml.coreMods.load=${resolved_core_plugin}"
-    String resolved_core_config = mod_mixin_configs.replace('${mod_id}', mod_id);
-    clientRunArgs += "--mixin ${resolved_core_config}"
-    serverRunArgs += "--mixin ${resolved_core_config}"
-}
+    mappings channel: mappings_channel, version: mappings_version
+    // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
+    // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
-repositories {
-    mavenCentral()
-    maven { url = "https://repo.spongepowered.org/maven" }
+    runs {
+        client {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            property 'forge.logging.console.level', 'debug'
+        }
+
+        server {
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            property 'forge.logging.console.level', 'debug'
+        }
+    }
 }
 
 dependencies {
-    provided('org.spongepowered:mixin:0.7.11-SNAPSHOT') {
-        exclude module: 'guava'
-        exclude module: 'commons-io'
-        exclude module: 'gson'
-    }
+    minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2855'
 }
 
 processResources {
     inputs.property "version", project.version
-    inputs.property "mcversion", project.minecraft.version
+    inputs.property "mcversion", minecraft_version
 
     from(sourceSets.main.resources.srcDirs) {
         include 'mcmod.info'
 
         expand 'mod_id': mod_id, 'mod_name': mod_name, 'version': project.version,
-                'mcversion': project.minecraft.version, 'mod_description': mod_description,
+                'mcversion': minecraft_version, 'mod_description': mod_description,
                 'mod_author': mod_author
     }
 
@@ -66,19 +63,30 @@ processResources {
 }
 
 jar {
-    from(configurations.provided.collect {
-        it.isDirectory() ? it : zipTree(it)
-    }) {
-        exclude "LICENSE.txt", "META-INF/MANIFSET.MF", "META-INF/maven/**", "META-INF/*.RSA", "META-INF/*.SF"
-    }
-
     manifest {
-        attributes "FMLCorePlugin": mod_core_plugin
-        attributes "FMLCorePluginContainsFMLMod": "true"
-        attributes "ForceLoadAsMod": "true"
-        attributes "TweakClass": "org.spongepowered.asm.launch.MixinTweaker"
-        attributes "TweakOrder": "0"
-        attributes "MixinConfigs": mod_mixin_configs.replace('${mod_id}', mod_id)
-        attributes "FMLAT": 'betterbiomeblend_at.cfg'
+        attributes([
+            "Specification-Title": "${mod_id}",
+            "Specification-Vendor": "",
+            "Specification-Version": "1",
+            "Implementation-Title": project.name,
+            "Implementation-Version": "${mod_version}",
+            "Implementation-Vendor" :"",
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
+
+jar.finalizedBy('reobfJar') 
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact jar
+        }
+    }
+    repositories {
+        maven {
+            url "file:///${project.projectDir}/mcmodsrepo"
+        }
     }
 }
