@@ -93,7 +93,7 @@ public final class Color
     {
         float colorF32 = byteToNormalizedFloat(color);
 
-        float result = approxsRGBToLinear(colorF32);
+        float result = sRGBToLinear(colorF32);
 
         return result;
     }
@@ -101,7 +101,7 @@ public final class Color
     public static byte
     linearFloatTosRGBByte(float color)
     {
-        float sRGB = approxLinearTosRGB(color);
+        float sRGB = linearTosRGB(color);
 
         byte result = normalizedFloatToByte(sRGB);
 
@@ -128,7 +128,15 @@ public final class Color
         int   xi = (int)Math.floor(x);
         float xf = x - xi;
 
-        float result = (float)(1 << xi) * approxExp2Polynomial(xf);
+        float value = approxExp2Polynomial(xf);
+
+        int bits = Float.floatToIntBits(value);
+        int exponent = (int)((bits >> 23) & ((1 << 23) - 1));
+        exponent += xi;
+
+        bits = (bits & ((1 << 31) | ((1 << 23) - 1))) | (exponent << 23);
+
+        float result = Float.intBitsToFloat(bits);
 
         return result;
     }
@@ -147,28 +155,6 @@ public final class Color
         return result;
     }
 
-    static final int getHighestSetBitIndexMasks[] = { 0x2, 0xC, 0xF0, 0xFF00, 0xFFFF0000 };
-    static final int getHighestSetBitIndexShift[] = { 1, 2, 4, 8, 16 };
-
-    public static int
-    getHighestSetBitIndex(int x)
-    {
-        int result = 0;
-
-        for (int i = 4;
-            i >= 0;
-            --i)
-        {
-            if ((x & getHighestSetBitIndexMasks[i]) != 0)
-            {
-                x >>>= getHighestSetBitIndexShift[i];
-                result |= getHighestSetBitIndexShift[i];
-            }
-        }
-
-        return result;
-    }
-
     public static float
     approxLog2(float x)
     {
@@ -176,16 +162,10 @@ public final class Color
         int exponent = (int)((bits >> 23) & ((1 << 23) - 1));
         int mantissa = (bits & ((1 << 23) - 1)) | (1 << 23);
 
-        int msb = getHighestSetBitIndex(mantissa);
-        int bias = msb + 1;
+        int bias = 23 + 1;
 
         int   resultExponent = exponent - (127 + 23) + bias;
         float resultMantissa = (float)(mantissa) / (float)(1 << bias);
-
-        if (bits < 0)
-        {
-            resultMantissa = -resultMantissa;
-        }
 
         float result = resultExponent + approxLog2Polynomial(resultMantissa);
 
