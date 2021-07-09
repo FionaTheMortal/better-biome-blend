@@ -297,11 +297,11 @@ public final class ColorCache
             }
         }
 
+        result.invalidationCounter = invalidationCounter;
+
         lock.unlock();
 
         result.key = key;
-        result.invalidationCounter = invalidationCounter;
-
         result.acquire();
 
         return result;
