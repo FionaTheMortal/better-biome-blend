@@ -14,7 +14,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(VideoOptionsScreen.class)
 public abstract class MixinVideoOptionsScreen extends GameOptionsScreen
 {
-    public MixinVideoOptionsScreen(Screen parent, GameOptions gameOptions, Text title)
+    public
+    MixinVideoOptionsScreen(Screen parent, GameOptions gameOptions, Text title)
     {
         super(parent, gameOptions, title);
     }

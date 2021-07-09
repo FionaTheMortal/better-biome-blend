@@ -2,18 +2,15 @@ package fionathemortal.betterbiomeblend;
 
 public final class Color
 {
-    public static final float[] sRGBLUT;
+    public static final float[] sRGBLUT = new float[256];
 
     static
     {
-        sRGBLUT = new float[256];
-
         for (int i = 0;
             i < 256;
             ++i)
         {
             float color = byteToNormalizedFloat(i);
-
             sRGBLUT[i] = sRGBToLinear(color);
         }
     }
@@ -22,10 +19,10 @@ public final class Color
     makeRGBAWithFullAlpha(int R, int G, int B)
     {
         int result =
-            ((0xFF & R) << 0)  |
-            ((0xFF & G) << 8)  |
+            ((0xFF & R) <<  0) |
+            ((0xFF & G) <<  8) |
             ((0xFF & B) << 16) |
-            0xFF000000;
+            ((0xFF    ) << 24);
 
         return result;
     }

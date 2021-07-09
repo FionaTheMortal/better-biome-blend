@@ -7,7 +7,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 
-public final class ColorChunkCache
+public final class ColorCache
 {
     public Lock lock;
 
@@ -16,19 +16,8 @@ public final class ColorChunkCache
 
     public int  invalidationCounter;
 
-    public static long
-    getChunkKey(int chunkX, int chunkZ, int colorType)
-    {
-        long result =
-            ((long)(chunkZ & 0x7FFFFFFFL) << 31) |
-            ((long)(chunkX & 0x7FFFFFFFL))       |
-            ((long)colorType << 62);
-
-        return result;
-    }
-
     public
-    ColorChunkCache(int count)
+    ColorCache(int count)
     {
         lock = new ReentrantLock();
 
@@ -80,7 +69,7 @@ public final class ColorChunkCache
             colorType <= BiomeColorType.LAST;
             ++colorType)
         {
-            long key = getChunkKey(chunkX, chunkZ, colorType);
+            long key = ColorCaching.getChunkKey(chunkX, chunkZ, colorType);
 
             ColorChunk chunk = hash.remove(key);
 
@@ -114,7 +103,7 @@ public final class ColorChunkCache
                     colorType <= BiomeColorType.LAST;
                     ++colorType)
                 {
-                    long key = getChunkKey(chunkX + x, chunkZ + z, colorType);
+                    long key = ColorCaching.getChunkKey(chunkX + x, chunkZ + z, colorType);
 
                     ColorChunk chunk = hash.remove(key);
 
@@ -144,23 +133,23 @@ public final class ColorChunkCache
         {
             if (chunkIndex != 4)
             {
-                int offsetX = BiomeColor.getNeighbourOffsetX(chunkIndex);
-                int offsetZ = BiomeColor.getNeighbourOffsetZ(chunkIndex);
+                int offsetX = ColorBlending.getNeighbourOffsetX(chunkIndex);
+                int offsetZ = ColorBlending.getNeighbourOffsetZ(chunkIndex);
 
                 for (int colorType = BiomeColorType.FIRST;
                     colorType <= BiomeColorType.LAST;
                     ++colorType)
                 {
-                    long key = getChunkKey(chunkX + offsetX, chunkZ + offsetZ, colorType);
+                    long key = ColorCaching.getChunkKey(chunkX + offsetX, chunkZ + offsetZ, colorType);
 
                     ColorChunk chunk = hash.get(key);
 
                     if (chunk != null)
                     {
-                        int minX = BiomeColor.getNeighbourRectMinX(chunkIndex, 2);
-                        int minZ = BiomeColor.getNeighbourRectMinZ(chunkIndex, 2);
-                        int maxX = BiomeColor.getNeighbourRectMaxX(chunkIndex, 2);
-                        int maxZ = BiomeColor.getNeighbourRectMaxZ(chunkIndex, 2);
+                        int minX = ColorBlending.getNeighbourRectMinX(chunkIndex, 2);
+                        int minZ = ColorBlending.getNeighbourRectMinZ(chunkIndex, 2);
+                        int maxX = ColorBlending.getNeighbourRectMaxX(chunkIndex, 2);
+                        int maxZ = ColorBlending.getNeighbourRectMaxZ(chunkIndex, 2);
 
                         for (int z1 = minZ;
                             z1 < maxZ;
@@ -184,7 +173,7 @@ public final class ColorChunkCache
             colorType <= BiomeColorType.LAST;
             ++colorType)
         {
-            long key = getChunkKey(chunkX, chunkZ, colorType);
+            long key = ColorCaching.getChunkKey(chunkX, chunkZ, colorType);
 
             ColorChunk chunk = hash.remove(key);
 
@@ -223,7 +212,7 @@ public final class ColorChunkCache
     {
         ColorChunk result;
 
-        long key = getChunkKey(chunkX, chunkZ, colorType);
+        long key = ColorCaching.getChunkKey(chunkX, chunkZ, colorType);
 
         lock.lock();
 
@@ -248,7 +237,11 @@ public final class ColorChunkCache
 
         ColorChunk prev = hash.getAndMoveToFirst(chunk.key);
 
-        if (prev != null)
+        if (prev == null)
+        {
+            hash.putAndMoveToFirst(chunk.key, chunk);
+        }
+        else
         {
             ColorChunk olderChunk;
 
@@ -267,10 +260,6 @@ public final class ColorChunkCache
 
             olderChunk.markAsInvalid();
         }
-        else
-        {
-            hash.putAndMoveToFirst(chunk.key, chunk);
-        }
 
         lock.unlock();
     }
@@ -280,7 +269,7 @@ public final class ColorChunkCache
     {
         ColorChunk result = null;
 
-        long key = getChunkKey(chunkX, chunkZ, colorType);
+        long key = ColorCaching.getChunkKey(chunkX, chunkZ, colorType);
 
         lock.lock();
 
@@ -323,7 +312,7 @@ public final class ColorChunkCache
     {
         ColorChunk result;
 
-        long key = getChunkKey(chunkX, chunkZ, colorType);
+        long key = ColorCaching.getChunkKey(chunkX, chunkZ, colorType);
 
         lock.lock();
 

@@ -2,6 +2,7 @@ package fionathemortal.betterbiomeblend.mixin;
 
 import java.util.function.Supplier;
 
+import fionathemortal.betterbiomeblend.*;
 import net.minecraft.util.math.ChunkPos;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -11,10 +12,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import fionathemortal.betterbiomeblend.BiomeColor;
-import fionathemortal.betterbiomeblend.BiomeColorType;
-import fionathemortal.betterbiomeblend.ColorChunk;
-import fionathemortal.betterbiomeblend.ColorChunkCache;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import net.minecraft.client.color.world.BiomeColors;
 import net.minecraft.client.world.ClientWorld;
@@ -35,10 +32,10 @@ public abstract class MixinClientWorld extends World
         new Object2ObjectArrayMap<>();
 
     @Unique
-    private final ColorChunkCache blendColorCache = new ColorChunkCache(2048);
+    private final ColorCache blendColorCache = new ColorCache(2048);
 
     @Unique
-    private final ColorChunkCache rawColorCache   = new ColorChunkCache(512);
+    private final ColorCache rawColorCache   = new ColorCache(512);
 
     @Unique
     private final ThreadLocal<ColorChunk> threadLocalWaterChunk   =
@@ -51,14 +48,7 @@ public abstract class MixinClientWorld extends World
             });
 
     @Unique
-    private final ThreadLocal<ColorChunk> threadLocalGrassChunk   =
-        ThreadLocal.withInitial(
-            () ->
-            {
-                ColorChunk chunk = new ColorChunk();
-                chunk.acquire();
-                return chunk;
-            });
+    private final ThreadLocal<ColorChunk> threadLocalGrassChunk   = ThreadLocal.withInitial(ColorChunk::new);
 
     @Unique
     private final ThreadLocal<ColorChunk> threadLocalFoliageChunk =
@@ -96,7 +86,6 @@ public abstract class MixinClientWorld extends World
     onResetChunkColor(ChunkPos position, CallbackInfo ci)
     {
         blendColorCache.invalidateNeighbourhood(position.x, position.z);
-
         rawColorCache.invalidateSmallNeighbourhood(position.x, position.z);
     }
 
@@ -129,13 +118,13 @@ public abstract class MixinClientWorld extends World
         int chunkX = x >> 4;
         int chunkZ = z >> 4;
 
-        ColorChunk chunk = BiomeColor.getThreadLocalChunk(threadLocalChunk, chunkX, chunkZ, colorType);
+        ColorChunk chunk = ColorCaching.getThreadLocalChunk(threadLocalChunk, chunkX, chunkZ, colorType);
 
         if (chunk == null)
         {
-            chunk = BiomeColor.getBlendedColorChunk(this, colorType, chunkX, chunkZ, blendColorCache, rawColorCache, colorResolverIn);
+            chunk = ColorCaching.getBlendedColorChunk(this, colorResolverIn, colorType, chunkX, chunkZ, blendColorCache, rawColorCache);
 
-            BiomeColor.setThreadLocalChunk(threadLocalChunk, chunk, blendColorCache);
+            ColorCaching.setThreadLocalChunk(threadLocalChunk, chunk, blendColorCache);
         }
 
         int result = chunk.getColor(x, z);
