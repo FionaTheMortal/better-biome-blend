@@ -6,6 +6,7 @@ import net.minecraft.util.math.ChunkPos;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -33,9 +34,13 @@ public abstract class MixinClientWorld extends World
     private Object2ObjectArrayMap<ColorResolver, BiomeColorCache> colorCache =
         new Object2ObjectArrayMap<>();
 
+    @Unique
     private final ColorChunkCache blendColorCache = new ColorChunkCache(2048);
+
+    @Unique
     private final ColorChunkCache rawColorCache   = new ColorChunkCache(512);
 
+    @Unique
     private final ThreadLocal<ColorChunk> threadLocalWaterChunk   =
         ThreadLocal.withInitial(
             () ->
@@ -45,6 +50,7 @@ public abstract class MixinClientWorld extends World
                 return chunk;
             });
 
+    @Unique
     private final ThreadLocal<ColorChunk> threadLocalGrassChunk   =
         ThreadLocal.withInitial(
             () ->
@@ -54,6 +60,7 @@ public abstract class MixinClientWorld extends World
                 return chunk;
             });
 
+    @Unique
     private final ThreadLocal<ColorChunk> threadLocalFoliageChunk =
         ThreadLocal.withInitial(
             () ->
@@ -65,13 +72,13 @@ public abstract class MixinClientWorld extends World
 
 	protected
 	MixinClientWorld(
-			MutableWorldProperties worldInfo,
-			RegistryKey<World>     dimension,
-			DimensionType          dimensionType,
-			Supplier<Profiler>     profiler,
-			boolean                isRemote,
-			boolean                isDebug,
-			long                   seed)
+        MutableWorldProperties worldInfo,
+        RegistryKey<World>     dimension,
+        DimensionType          dimensionType,
+        Supplier<Profiler>     profiler,
+        boolean                isRemote,
+        boolean                isDebug,
+        long                   seed)
 	{
 		super(worldInfo, dimension, dimensionType, profiler, isRemote, isDebug, seed);
 	}
