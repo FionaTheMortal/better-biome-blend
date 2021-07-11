@@ -48,7 +48,14 @@ public abstract class MixinClientWorld extends World
             });
 
     @Unique
-    private final ThreadLocal<ColorChunk> threadLocalGrassChunk   = ThreadLocal.withInitial(ColorChunk::new);
+    private final ThreadLocal<ColorChunk> threadLocalGrassChunk   =
+        ThreadLocal.withInitial(
+            () ->
+            {
+                ColorChunk chunk = new ColorChunk();
+                chunk.acquire();
+                return chunk;
+            });
 
     @Unique
     private final ThreadLocal<ColorChunk> threadLocalFoliageChunk =

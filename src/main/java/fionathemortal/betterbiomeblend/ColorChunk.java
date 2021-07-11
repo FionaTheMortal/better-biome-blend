@@ -9,7 +9,7 @@ public final class ColorChunk
     public long key;
     public int  invalidationCounter;
 
-    public AtomicInteger refCount   = new AtomicInteger();
+    public AtomicInteger refCount = new AtomicInteger();
 
     public
     ColorChunk()
