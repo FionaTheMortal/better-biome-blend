@@ -124,10 +124,11 @@ public final class ColorBlending
 
         while (!freeBlendBuffers.empty())
         {
-            result = freeBlendBuffers.pop();
+            ColorBlendBuffer buffer = freeBlendBuffers.pop();
 
-            if (result.blendRadius == blendRadius)
+            if (buffer.blendRadius == blendRadius)
             {
+                result = buffer;
                 break;
             }
         }
