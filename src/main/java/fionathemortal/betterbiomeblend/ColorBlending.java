@@ -366,8 +366,8 @@ public final class ColorBlending
         byte[]          result)
     {
         for (int chunkIndex = 0;
-                chunkIndex < 9;
-                ++chunkIndex)
+            chunkIndex < 9;
+            ++chunkIndex)
         {
             int offsetX = getNeighbourOffsetX(chunkIndex);
             int offsetZ = getNeighbourOffsetZ(chunkIndex);
@@ -408,15 +408,15 @@ public final class ColorBlending
         int srcLine = 3 * (srcMinX + srcMinZ * 16);
 
         for (int z = srcMinZ;
-                z < srcMaxZ;
-                ++z)
+            z < srcMaxZ;
+            ++z)
         {
             int dstIndex = dstLine;
             int srcIndex = srcLine;
 
             for (int x = srcMinX;
-                    x < srcMaxX;
-                    ++x)
+                x < srcMaxX;
+                ++x)
             {
                 result[dstIndex + 0] = rawCache[srcIndex + 0];
                 result[dstIndex + 1] = rawCache[srcIndex + 1];
@@ -475,8 +475,8 @@ public final class ColorBlending
             float accumulatedB = 0;
 
             for (int x = 0;
-                    x < blendDim;
-                    ++x)
+                x < blendDim;
+                ++x)
             {
                 accumulatedR += R[x];
                 accumulatedG += G[x];
@@ -506,8 +506,8 @@ public final class ColorBlending
             if (z < 15)
             {
                 for (int x = 0;
-                        x < blendCacheDim;
-                        ++x)
+                    x < blendCacheDim;
+                    ++x)
                 {
                     int index1 = 3 * (blendCacheDim * (z           ) + x);
                     int index2 = 3 * (blendCacheDim * (z + blendDim) + x);
