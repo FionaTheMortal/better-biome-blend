@@ -522,13 +522,13 @@ public final class ColorBlending
 
     public static void
     generateBlendedColorChunk(
-        World           world,
-        ColorResolver   colorResolverIn,
-        int             colorType,
-        int             chunkX,
-        int             chunkZ,
-        ColorCache rawCache,
-        byte[]          result)
+        World         world,
+        ColorResolver colorResolverIn,
+        int           colorType,
+        int           chunkX,
+        int           chunkZ,
+        ColorCache    rawCache,
+        byte[]        result)
     {
         int blendRadius = BetterBiomeBlendClient.getBlendRadiusSetting();
 

@@ -2,25 +2,22 @@ package fionathemortal.betterbiomeblend;
 
 import java.util.Arrays;
 import java.util.Stack;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 
 public final class ColorCache
 {
-    public Lock lock;
+    public final ReentrantLock                            lock;
+    public final Long2ObjectLinkedOpenHashMap<ColorChunk> hash;
+    public final Stack<ColorChunk>                        freeStack;
 
-    public Long2ObjectLinkedOpenHashMap<ColorChunk> hash;
-    public Stack<ColorChunk>                        freeStack;
-
-    public int  invalidationCounter;
+    public int invalidationCounter;
 
     public
     ColorCache(int count)
     {
-        lock = new ReentrantLock();
-
+        lock      = new ReentrantLock();
         hash      = new Long2ObjectLinkedOpenHashMap<ColorChunk>(count);
         freeStack = new Stack<ColorChunk>();
 
@@ -210,13 +207,11 @@ public final class ColorCache
     public ColorChunk
     getChunk(int chunkX, int chunkZ, int colorType)
     {
-        ColorChunk result;
-
         long key = ColorCaching.getChunkKey(chunkX, chunkZ, colorType);
 
         lock.lock();
 
-        result = hash.getAndMoveToFirst(key);
+        ColorChunk result = hash.getAndMoveToFirst(key);
 
         if (result != null)
         {
@@ -267,11 +262,11 @@ public final class ColorCache
     public ColorChunk
     newChunk(int chunkX, int chunkZ, int colorType)
     {
-        ColorChunk result = null;
-
         long key = ColorCaching.getChunkKey(chunkX, chunkZ, colorType);
 
         lock.lock();
+
+        ColorChunk result = null;
 
         if (!freeStack.empty())
         {
