@@ -274,10 +274,10 @@ public final class BiomeColor
 
     public static void
     gatherRawColorsForChunk(
-        IBlockAccess blockAccess,
-        byte[]       result,
-        int          chunkX,
-        int          chunkZ,
+        IBlockAccess                   blockAccess,
+        byte[]                         result,
+        int                            chunkX,
+        int                            chunkZ,
         BiomeColorHelper.ColorResolver colorResolver)
     {
         BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
@@ -314,12 +314,12 @@ public final class BiomeColor
 
     public static void
     gatherRawColorsToBlendCache(
-        IBlockAccess blockAccess,
-        int    chunkX,
-        int    chunkZ,
-        int    blendRadius,
-        byte[] result,
-        int    chunkIndex,
+        IBlockAccess                   blockAccess,
+        int                            chunkX,
+        int                            chunkZ,
+        int                            blendRadius,
+        byte[]                         result,
+        int                            chunkIndex,
         BiomeColorHelper.ColorResolver colorResolver)
     {
         BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
@@ -399,9 +399,9 @@ public final class BiomeColor
     public static void
     blendCachedColorsForChunk(IBlockAccess blockAccess, byte[] result, ColorBlendCache blendCache)
     {
-        int[] R = blendCache.R;
-        int[] G = blendCache.G;
-        int[] B = blendCache.B;
+        float[] R = blendCache.R;
+        float[] G = blendCache.G;
+        float[] B = blendCache.B;
 
         int blendRadius = blendCache.blendRadius;
         int blendDim = 2 * blendRadius + 1;
@@ -412,9 +412,9 @@ public final class BiomeColor
             x < blendCacheDim;
             ++x)
         {
-            R[x] = 0xFF & blendCache.color[3 * x + 0];
-            G[x] = 0xFF & blendCache.color[3 * x + 1];
-            B[x] = 0xFF & blendCache.color[3 * x + 2];
+            R[x] = Color.sRGBByteToLinearFloat(0xFF & blendCache.color[3 * x + 0]);
+            G[x] = Color.sRGBByteToLinearFloat(0xFF & blendCache.color[3 * x + 1]);
+            B[x] = Color.sRGBByteToLinearFloat(0xFF & blendCache.color[3 * x + 2]);
         }
 
         for (int z = 1;
@@ -425,9 +425,9 @@ public final class BiomeColor
                 x < blendCacheDim;
                 ++x)
             {
-                R[x] += 0xFF & blendCache.color[3 * (blendCacheDim * z + x) + 0];
-                G[x] += 0xFF & blendCache.color[3 * (blendCacheDim * z + x) + 1];
-                B[x] += 0xFF & blendCache.color[3 * (blendCacheDim * z + x) + 2];
+                R[x] += Color.sRGBByteToLinearFloat(0xFF & blendCache.color[3 * (blendCacheDim * z + x) + 0]);
+                G[x] += Color.sRGBByteToLinearFloat(0xFF & blendCache.color[3 * (blendCacheDim * z + x) + 1]);
+                B[x] += Color.sRGBByteToLinearFloat(0xFF & blendCache.color[3 * (blendCacheDim * z + x) + 2]);
             }
         }
 
@@ -435,9 +435,9 @@ public final class BiomeColor
             z < 16;
             ++z)
         {
-            int accumulatedR = 0;
-            int accumulatedG = 0;
-            int accumulatedB = 0;
+            float accumulatedR = 0;
+            float accumulatedG = 0;
+            float accumulatedB = 0;
 
             for (int x = 0;
                 x < blendDim;
@@ -452,13 +452,13 @@ public final class BiomeColor
                 x < 16;
                 ++x)
             {
-                int colorR = accumulatedR / blendCount;
-                int colorG = accumulatedG / blendCount;
-                int colorB = accumulatedB / blendCount;
+                float colorR = accumulatedR / blendCount;
+                float colorG = accumulatedG / blendCount;
+                float colorB = accumulatedB / blendCount;
 
-                result[3 * (16 * z + x) + 0] = (byte)colorR;
-                result[3 * (16 * z + x) + 1] = (byte)colorG;
-                result[3 * (16 * z + x) + 2] = (byte)colorB;
+                result[3 * (16 * z + x) + 0] = Color.linearFloatTosRGBByte(colorR);
+                result[3 * (16 * z + x) + 1] = Color.linearFloatTosRGBByte(colorG);
+                result[3 * (16 * z + x) + 2] = Color.linearFloatTosRGBByte(colorB);
 
                 if (x < 15)
                 {
@@ -477,9 +477,9 @@ public final class BiomeColor
                     int index1 = 3 * (blendCacheDim * (z           ) + x);
                     int index2 = 3 * (blendCacheDim * (z + blendDim) + x);
 
-                    R[x] += (0xFF & blendCache.color[index2 + 0]) - (0xFF & blendCache.color[index1 + 0]);
-                    G[x] += (0xFF & blendCache.color[index2 + 1]) - (0xFF & blendCache.color[index1 + 1]);
-                    B[x] += (0xFF & blendCache.color[index2 + 2]) - (0xFF & blendCache.color[index1 + 2]);
+                    R[x] += Color.sRGBByteToLinearFloat(0xFF & blendCache.color[index2 + 0]) - Color.sRGBByteToLinearFloat(0xFF & blendCache.color[index1 + 0]);
+                    G[x] += Color.sRGBByteToLinearFloat(0xFF & blendCache.color[index2 + 1]) - Color.sRGBByteToLinearFloat(0xFF & blendCache.color[index1 + 1]);
+                    B[x] += Color.sRGBByteToLinearFloat(0xFF & blendCache.color[index2 + 2]) - Color.sRGBByteToLinearFloat(0xFF & blendCache.color[index1 + 2]);
                 }
             }
         }
