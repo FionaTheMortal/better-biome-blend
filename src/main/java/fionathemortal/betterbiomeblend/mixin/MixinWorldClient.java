@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.Unique;
 public abstract class MixinWorldClient implements ColorChunkCacheProvider
 {
     @Unique
-    public final ThreadLocal<ColorChunk> threadLocalGrassChunk   =
+    public final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalGrassChunk   =
         ThreadLocal.withInitial(
             () ->
             {
@@ -21,7 +21,7 @@ public abstract class MixinWorldClient implements ColorChunkCacheProvider
             });
 
     @Unique
-    public final ThreadLocal<ColorChunk> threadLocalWaterChunk   =
+    public final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalWaterChunk   =
         ThreadLocal.withInitial(
             () ->
             {
@@ -31,7 +31,7 @@ public abstract class MixinWorldClient implements ColorChunkCacheProvider
             });
 
     @Unique
-    public final ThreadLocal<ColorChunk> threadLocalFoliageChunk =
+    public final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalFoliageChunk =
         ThreadLocal.withInitial(
             () ->
             {
@@ -41,7 +41,7 @@ public abstract class MixinWorldClient implements ColorChunkCacheProvider
             });
 
     @Unique
-    public final ThreadLocal<ColorChunk> threadLocalGenericChunk =
+    public final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalGenericChunk =
         ThreadLocal.withInitial(
             () ->
             {
@@ -51,40 +51,40 @@ public abstract class MixinWorldClient implements ColorChunkCacheProvider
             });
 
     @Unique
-    public final ColorChunkCache colorChunkCache = new ColorChunkCache(2048);
+    public final ColorChunkCache betterBiomeBlend$colorChunkCache = new ColorChunkCache(2048);
 
     @Override
     public ColorChunkCache
     getColorChunkCache()
     {
-        return colorChunkCache;
+        return betterBiomeBlend$colorChunkCache;
     }
 
     @Override
     public ThreadLocal<ColorChunk>
     getTreadLocalGrassChunk()
     {
-        return threadLocalGrassChunk;
+        return betterBiomeBlend$threadLocalGrassChunk;
     }
 
     @Override
     public ThreadLocal<ColorChunk>
     getTreadLocalWaterChunk()
     {
-        return threadLocalWaterChunk;
+        return betterBiomeBlend$threadLocalWaterChunk;
     }
 
     @Override
     public ThreadLocal<ColorChunk>
     getTreadLocalFoliageChunk()
     {
-        return threadLocalFoliageChunk;
+        return betterBiomeBlend$threadLocalFoliageChunk;
     }
 
     @Override
     public ThreadLocal<ColorChunk>
     getTreadLocalGenericChunk()
     {
-        return threadLocalGenericChunk;
+        return betterBiomeBlend$threadLocalGenericChunk;
     }
 }
