@@ -12,33 +12,32 @@ import java.net.URL;
 import java.security.CodeSource;
 import java.util.Map;
 
-public class CoreMod implements IFMLLoadingPlugin
+public class CoreMod implements IFMLLoadingPlugin 
 {
-    public CoreMod()
+    public CoreMod() 
     {
         MixinBootstrap.init();
 
         CodeSource codeSource = this.getClass().getProtectionDomain().getCodeSource();
-
-        if (codeSource != null)
+        
+        if (codeSource != null) 
         {
-
             URL location = codeSource.getLocation();
-
-            try
+            
+            try 
             {
                 File file = new File(location.toURI());
-
-                if (file.isFile())
+                
+                if (file.isFile()) 
                 {
                     CoreModManager.getReparseableCoremods().remove(file.getName());
                 }
-            }
-            catch (URISyntaxException ignored)
+            } 
+            catch (URISyntaxException ignored) 
             {
             }
-        }
-        else
+        } 
+        else 
         {
             LogManager.getLogger().warn("No CodeSource, if this is not a development environment we might run into problems!");
             LogManager.getLogger().warn(this.getClass().getProtectionDomain());
@@ -46,31 +45,36 @@ public class CoreMod implements IFMLLoadingPlugin
     }
 
     @Override
-    public String[] getASMTransformerClass()
+    public String[] 
+	getASMTransformerClass() 
     {
         return new String[0];
     }
 
     @Override
-    public String getModContainerClass()
+    public String 
+    getModContainerClass() 
     {
         return null;
     }
 
     @Nullable
     @Override
-    public String getSetupClass()
+    public String 
+    getSetupClass() 
     {
         return null;
     }
 
     @Override
-    public void injectData(Map<String, Object> data)
+    public void 
+    injectData(Map<String, Object> data) 
     {
     }
 
     @Override
-    public String getAccessTransformerClass()
+    public String
+    getAccessTransformerClass() 
     {
         return null;
     }
