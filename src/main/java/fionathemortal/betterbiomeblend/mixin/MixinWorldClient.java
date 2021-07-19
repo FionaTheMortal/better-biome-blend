@@ -5,10 +5,12 @@ import fionathemortal.betterbiomeblend.ColorChunkCache;
 import fionathemortal.betterbiomeblend.ColorChunkCacheProvider;
 import net.minecraft.client.multiplayer.WorldClient;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(WorldClient.class)
 public abstract class MixinWorldClient implements ColorChunkCacheProvider
 {
+    @Unique
     public final ThreadLocal<ColorChunk> threadLocalGrassChunk   =
         ThreadLocal.withInitial(
             () ->
@@ -18,6 +20,7 @@ public abstract class MixinWorldClient implements ColorChunkCacheProvider
                 return chunk;
             });
 
+    @Unique
     public final ThreadLocal<ColorChunk> threadLocalWaterChunk   =
         ThreadLocal.withInitial(
             () ->
@@ -27,6 +30,7 @@ public abstract class MixinWorldClient implements ColorChunkCacheProvider
                 return chunk;
             });
 
+    @Unique
     public final ThreadLocal<ColorChunk> threadLocalFoliageChunk =
         ThreadLocal.withInitial(
             () ->
@@ -36,6 +40,7 @@ public abstract class MixinWorldClient implements ColorChunkCacheProvider
                 return chunk;
             });
 
+    @Unique
     public final ThreadLocal<ColorChunk> threadLocalGenericChunk =
         ThreadLocal.withInitial(
             () ->
@@ -45,6 +50,7 @@ public abstract class MixinWorldClient implements ColorChunkCacheProvider
                 return chunk;
             });
 
+    @Unique
     public final ColorChunkCache colorChunkCache = new ColorChunkCache(2048);
 
     @Override
