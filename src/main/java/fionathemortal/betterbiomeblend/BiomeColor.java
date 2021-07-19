@@ -136,10 +136,11 @@ public final class BiomeColor
 
         while (!freeBlendCaches.empty())
         {
-            result = freeBlendCaches.pop();
+            ColorBlendCache cache = freeBlendCaches.pop();
 
-            if (result.blendRadius == blendRadius)
+            if (cache.blendRadius == blendRadius)
             {
+                result = cache;
                 break;
             }
         }
