@@ -356,14 +356,14 @@ public final class ColorBlending
 
     public static void
     gatherRawColorsToCaches(
-        World           world,
-        ColorResolver   colorResolver,
-        int             colorType,
-        int             chunkX,
-        int             chunkZ,
-        int             blendRadius,
-        ColorCache      rawCache,
-        byte[]          result)
+        World         world,
+        ColorResolver colorResolver,
+        int           colorType,
+        int           chunkX,
+        int           chunkZ,
+        int           blendRadius,
+        ColorCache    rawCache,
+        byte[]        result)
     {
         for (int chunkIndex = 0;
             chunkIndex < 9;
