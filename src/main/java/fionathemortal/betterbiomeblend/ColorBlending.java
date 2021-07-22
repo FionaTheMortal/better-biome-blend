@@ -10,12 +10,11 @@ import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.level.ColorResolver;
 
 import java.util.Stack;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class ColorBlending
 {
-    public static final Lock                    freeBlendBuffersLock = new ReentrantLock();
+    public static final ReentrantLock           freeBlendBuffersLock = new ReentrantLock();
     public static final Stack<ColorBlendBuffer> freeBlendBuffers     = new Stack<>();
 
     public static final byte[]

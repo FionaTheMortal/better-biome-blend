@@ -77,7 +77,7 @@ public class BiomeCache
     }
 
     public void
-    invalidateNeighbourhood(int chunkX, int chunkZ)
+    invalidateNeighborhood(int chunkX, int chunkZ)
     {
         lock.lock();
 
