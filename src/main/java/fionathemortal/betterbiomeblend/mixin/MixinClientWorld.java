@@ -32,13 +32,13 @@ public abstract class MixinClientWorld extends World
         new Object2ObjectArrayMap<>();
 
     @Unique
-    private final ColorCache blendColorCache = new ColorCache(2048);
+    private final ColorCache betterBiomeBlend$blendColorCache = new ColorCache(2048);
 
     @Unique
-    private final ColorCache rawColorCache   = new ColorCache(512);
+    private final ColorCache betterBiomeBlend$rawColorCache   = new ColorCache(512);
 
     @Unique
-    private final ThreadLocal<ColorChunk> threadLocalWaterChunk   =
+    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalWaterChunk   =
         ThreadLocal.withInitial(
             () ->
             {
@@ -48,7 +48,7 @@ public abstract class MixinClientWorld extends World
             });
 
     @Unique
-    private final ThreadLocal<ColorChunk> threadLocalGrassChunk   =
+    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalGrassChunk   =
         ThreadLocal.withInitial(
             () ->
             {
@@ -58,7 +58,7 @@ public abstract class MixinClientWorld extends World
             });
 
     @Unique
-    private final ThreadLocal<ColorChunk> threadLocalFoliageChunk =
+    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalFoliageChunk =
         ThreadLocal.withInitial(
             () ->
             {
@@ -84,16 +84,16 @@ public abstract class MixinClientWorld extends World
     public void
     onReloadColor(CallbackInfo ci)
     {
-        blendColorCache.invalidateAll();
-        rawColorCache.invalidateAll();
+        betterBiomeBlend$blendColorCache.invalidateAll();
+        betterBiomeBlend$rawColorCache.invalidateAll();
     }
 
     @Inject(method = "resetChunkColor", at = @At("HEAD"))
     public void
     onResetChunkColor(ChunkPos position, CallbackInfo ci)
     {
-        blendColorCache.invalidateNeighbourhood(position.x, position.z);
-        rawColorCache.invalidateChunk(position.x, position.z);
+        betterBiomeBlend$blendColorCache.invalidateNeighbourhood(position.x, position.z);
+        betterBiomeBlend$rawColorCache.invalidateChunk(position.x, position.z);
     }
 
     @Overwrite
@@ -106,17 +106,17 @@ public abstract class MixinClientWorld extends World
         if (colorResolverIn == BiomeColors.GRASS_COLOR)
         {
             colorType        = BiomeColorType.GRASS;
-            threadLocalChunk = threadLocalGrassChunk;
+            threadLocalChunk = betterBiomeBlend$threadLocalGrassChunk;
         }
         else if (colorResolverIn == BiomeColors.WATER_COLOR)
         {
             colorType        = BiomeColorType.WATER;
-            threadLocalChunk = threadLocalWaterChunk;
+            threadLocalChunk = betterBiomeBlend$threadLocalWaterChunk;
         }
         else
         {
             colorType        = BiomeColorType.FOLIAGE;
-            threadLocalChunk = threadLocalFoliageChunk;
+            threadLocalChunk = betterBiomeBlend$threadLocalFoliageChunk;
         }
 
         int x = blockPosIn.getX();
@@ -129,9 +129,16 @@ public abstract class MixinClientWorld extends World
 
         if (chunk == null)
         {
-            chunk = ColorCaching.getBlendedColorChunk(this, colorResolverIn, colorType, chunkX, chunkZ, blendColorCache, rawColorCache);
+            chunk = ColorCaching.getBlendedColorChunk(
+                this,
+                colorResolverIn,
+                colorType,
+                chunkX,
+                chunkZ,
+                betterBiomeBlend$blendColorCache,
+                betterBiomeBlend$rawColorCache);
 
-            ColorCaching.setThreadLocalChunk(threadLocalChunk, chunk, blendColorCache);
+            ColorCaching.setThreadLocalChunk(threadLocalChunk, chunk, betterBiomeBlend$blendColorCache);
         }
 
         int result = chunk.getColor(x, z);
