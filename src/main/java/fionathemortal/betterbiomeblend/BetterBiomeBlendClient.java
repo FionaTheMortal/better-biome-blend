@@ -36,17 +36,6 @@ public final class BetterBiomeBlendClient
 
     public static GameOptions gameOptions;
 
-    public static void
-    postInitGUIEvent(MinecraftClient client, Screen screen, int scaledWidth, int scaledHeight)
-    {
-        if (screen instanceof VideoOptionsScreen)
-        {
-            VideoOptionsScreen optionsScreen = (VideoOptionsScreen)screen;
-
-            replaceBiomeBlendRadiusOption(optionsScreen);
-        }
-    }
-
     @SuppressWarnings("resource")
     public static void
     replaceBiomeBlendRadiusOption(Screen screen)
