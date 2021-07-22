@@ -1,10 +1,10 @@
 package fionathemortal.betterbiomeblend;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+
 import java.util.Arrays;
 import java.util.Stack;
 import java.util.concurrent.locks.ReentrantLock;
-
-import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 
 public final class ColorCache
 {

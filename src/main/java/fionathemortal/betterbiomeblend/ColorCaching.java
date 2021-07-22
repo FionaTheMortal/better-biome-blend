@@ -50,7 +50,8 @@ public final class ColorCaching
         int           chunkX,
         int           chunkZ,
         ColorCache    cache,
-        ColorCache    rawCache)
+        ColorCache    rawCache,
+        BiomeCache    biomeCache)
     {
         ColorChunk chunk = cache.getChunk(chunkX, chunkZ, colorType);
 
@@ -58,9 +59,7 @@ public final class ColorCaching
         {
             chunk = cache.newChunk(chunkX, chunkZ, colorType);
 
-            // BetterBiomeBlendClient.LOGGER.info("Generating chunk: " + chunkX + " " + chunkZ + "with counter: " + chunk.invalidationCounter);
-
-            ColorBlending.generateBlendedColorChunk(world, colorResolverIn, colorType, chunkX, chunkZ, rawCache, chunk.data);
+            ColorBlending.generateBlendedColorChunk(world, colorResolverIn, colorType, chunkX, chunkZ, rawCache, biomeCache, chunk.data);
 
             cache.putChunk(chunk);
         }

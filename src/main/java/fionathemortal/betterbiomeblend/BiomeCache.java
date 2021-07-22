@@ -127,9 +127,9 @@ public class BiomeCache
     }
 
     public BiomeChunk
-    getChunk(int chunkX, int chunkZ, int colorType)
+    getChunk(int chunkX, int chunkZ)
     {
-        long key = ColorCaching.getChunkKey(chunkX, chunkZ, colorType);
+        long key = ColorCaching.getChunkKey(chunkX, chunkZ, 0);
 
         lock.lock();
 
@@ -182,9 +182,9 @@ public class BiomeCache
     }
 
     public BiomeChunk
-    newChunk(int chunkX, int chunkZ, int colorType)
+    newChunk(int chunkX, int chunkZ)
     {
-        long key = ColorCaching.getChunkKey(chunkX, chunkZ, colorType);
+        long key = ColorCaching.getChunkKey(chunkX, chunkZ, 0);
 
         lock.lock();
 
@@ -225,11 +225,11 @@ public class BiomeCache
     }
 
     public BiomeChunk
-    getOrDefaultInitializeChunk(int chunkX, int chunkZ, int colorType)
+    getOrDefaultInitializeChunk(int chunkX, int chunkZ)
     {
         BiomeChunk result;
 
-        long key = ColorCaching.getChunkKey(chunkX, chunkZ, colorType);
+        long key = ColorCaching.getChunkKey(chunkX, chunkZ, 0);
 
         lock.lock();
 

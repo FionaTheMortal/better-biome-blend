@@ -1,9 +1,18 @@
 package fionathemortal.betterbiomeblend.mixin;
 
-import java.util.function.Supplier;
-
 import fionathemortal.betterbiomeblend.*;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import net.minecraft.client.color.world.BiomeColors;
+import net.minecraft.client.world.BiomeColorCache;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.profiler.Profiler;
+import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.MutableWorldProperties;
+import net.minecraft.world.World;
+import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.level.ColorResolver;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -12,17 +21,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
-import net.minecraft.client.color.world.BiomeColors;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.client.world.BiomeColorCache;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.profiler.Profiler;
-import net.minecraft.world.dimension.DimensionType;
-import net.minecraft.world.MutableWorldProperties;
-import net.minecraft.world.World;
-import net.minecraft.world.level.ColorResolver;
+import java.util.function.Supplier;
 
 @Mixin(ClientWorld.class)
 public abstract class MixinClientWorld extends World
@@ -89,6 +88,7 @@ public abstract class MixinClientWorld extends World
     {
         betterBiomeBlend$blendColorCache.invalidateAll();
         betterBiomeBlend$rawColorCache.invalidateAll();
+        betterBiomeBlend$biomeCache.invalidateAll();
     }
 
     @Inject(method = "resetChunkColor", at = @At("HEAD"))
@@ -97,6 +97,7 @@ public abstract class MixinClientWorld extends World
     {
         betterBiomeBlend$blendColorCache.invalidateNeighbourhood(position.x, position.z);
         betterBiomeBlend$rawColorCache.invalidateChunk(position.x, position.z);
+        betterBiomeBlend$biomeCache.invalidateChunk(position.x, position.z);
     }
 
     @Overwrite
@@ -139,7 +140,8 @@ public abstract class MixinClientWorld extends World
                 chunkX,
                 chunkZ,
                 betterBiomeBlend$blendColorCache,
-                betterBiomeBlend$rawColorCache);
+                betterBiomeBlend$rawColorCache,
+                betterBiomeBlend$biomeCache);
 
             ColorCaching.setThreadLocalChunk(threadLocalChunk, chunk, betterBiomeBlend$blendColorCache);
         }
