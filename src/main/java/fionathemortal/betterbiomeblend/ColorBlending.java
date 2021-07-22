@@ -442,7 +442,7 @@ public final class ColorBlending
         BiomeCache    biomeCache,
         byte[]        blendBuffer)
     {
-        boolean neighborsAreLoaded = true;
+        boolean  neighborsAreLoaded = true;
         IChunk[] neighbors          = new Chunk[9];
 
         for (int index = 0;
