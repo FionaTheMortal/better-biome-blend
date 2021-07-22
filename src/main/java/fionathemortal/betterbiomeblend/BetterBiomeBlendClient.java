@@ -42,9 +42,6 @@ public final class BetterBiomeBlendClient
 
     public static final GameSettings gameSettings = Minecraft.getInstance().gameSettings;
 
-    public static final RegistryObject<Biome> PLAINS = RegistryObject.of(
-        new ResourceLocation("minecraft:plains"), ForgeRegistries.BIOMES);
-
     @SubscribeEvent
     public static void
     postInitGUIEvent(InitGuiEvent.Post event)

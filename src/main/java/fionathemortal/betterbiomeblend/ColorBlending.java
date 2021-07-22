@@ -383,8 +383,8 @@ public final class ColorBlending
     public static int
     calculateDefaultColor(int blendRadius, byte[] blendBuffer)
     {
-        final int blendMinX = getNeighbourRectBlendCacheMinX(4, blendRadius);
-        final int blendMinZ = getNeighbourRectBlendCacheMinZ(4, blendRadius);
+        final int blendMinX = getNeighbourRectBlendCacheMinX(0, blendRadius);
+        final int blendMinZ = getNeighbourRectBlendCacheMinZ(0, blendRadius);
 
         final int smallAreaMinX = blendMinX + 2;
         final int smallAreaMinZ = blendMinZ + 2;
