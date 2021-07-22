@@ -19,9 +19,13 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.biome.Biome;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public final class BetterBiomeBlendClient
 {
+    public static final Logger LOGGER = LogManager.getLogger(BetterBiomeBlend.MOD_ID);
+
     public static final int BIOME_BLEND_RADIUS_MAX = 14;
     public static final int BIOME_BLEND_RADIUS_MIN = 0;
 
@@ -38,17 +42,6 @@ public final class BetterBiomeBlendClient
 
     public static final RegistryKey<Biome> PLAINS =
         RegistryKey.of(Registry.BIOME_KEY, new Identifier("minecraft", "plains"));
-
-    public static void
-    postInitGUIEvent(MinecraftClient client, Screen screen, int scaledWidth, int scaledHeight)
-    {
-        if (screen instanceof VideoOptionsScreen)
-        {
-            VideoOptionsScreen optionsScreen = (VideoOptionsScreen)screen;
-
-            replaceBiomeBlendRadiusOption(optionsScreen);
-        }
-    }
 
     @SuppressWarnings("resource")
     public static void
@@ -122,8 +115,6 @@ public final class BetterBiomeBlendClient
         {
             settings.biomeBlendRadius = newSetting;
 
-            BiomeColor.clearBlendCaches();
-
             MinecraftClient.getInstance().worldRenderer.reload();
         }
     }
@@ -181,23 +172,20 @@ public final class BetterBiomeBlendClient
                 {
                     success = true;
                 }
-                else
-                {
-                    // BetterBiomeBlend.LOGGER.warn("Optifine GUI option was not found.");
-                }
             }
             catch (Exception e)
             {
-                // BetterBiomeBlend.LOGGER.warn(e);
+                BetterBiomeBlendClient.LOGGER.info("Optifine failed to overwrite GUI Option");
             }
         }
         catch (ClassNotFoundException e)
         {
+            BetterBiomeBlendClient.LOGGER.info("Optifine is not installed");
         }
 
         if (success)
         {
-            // BetterBiomeBlend.LOGGER.info("Optifine GUI option was successfully replaced.");
+            BetterBiomeBlendClient.LOGGER.info("Optifine GUI option was successfully replaced");
         }
     }
 

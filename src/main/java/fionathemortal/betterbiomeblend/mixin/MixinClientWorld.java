@@ -1,7 +1,17 @@
 package fionathemortal.betterbiomeblend.mixin;
 
-import java.util.function.Supplier;
-
+import fionathemortal.betterbiomeblend.*;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import net.minecraft.client.color.world.BiomeColors;
+import net.minecraft.client.world.BiomeColorCache;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.profiler.Profiler;
+import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.MutableWorldProperties;
+import net.minecraft.world.World;
+import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.level.ColorResolver;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -10,37 +20,25 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import fionathemortal.betterbiomeblend.BiomeColor;
-import fionathemortal.betterbiomeblend.BiomeColorType;
-import fionathemortal.betterbiomeblend.ColorChunk;
-import fionathemortal.betterbiomeblend.ColorChunkCache;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
-import net.minecraft.client.color.world.BiomeColors;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.client.world.BiomeColorCache;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.profiler.Profiler;
-import net.minecraft.world.dimension.DimensionType;
-import net.minecraft.world.MutableWorldProperties;
-import net.minecraft.world.World;
-import net.minecraft.world.level.ColorResolver;
+import java.util.function.Supplier;
 
 @Mixin(ClientWorld.class)
 public abstract class MixinClientWorld extends World
 {
     @Shadow
-    private Object2ObjectArrayMap<ColorResolver, BiomeColorCache> colorCache =
-        new Object2ObjectArrayMap<ColorResolver, BiomeColorCache>();
+    private Object2ObjectArrayMap<ColorResolver, BiomeColorCache> colorCache = new Object2ObjectArrayMap<>();
 
     @Unique
-    private final ColorChunkCache blendColorCache = new ColorChunkCache(2048);
+    private final ColorCache betterBiomeBlend$blendColorCache = new ColorCache(2048);
 
     @Unique
-    private final ColorChunkCache rawColorCache   = new ColorChunkCache(512);
+    private final ColorCache betterBiomeBlend$rawColorCache   = new ColorCache(512);
 
     @Unique
-    private final ThreadLocal<ColorChunk> threadLocalWaterChunk   =
+    private final BiomeCache betterBiomeBlend$biomeCache      = new BiomeCache(32);
+
+    @Unique
+    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalWaterChunk   =
         ThreadLocal.withInitial(
             () ->
             {
@@ -50,7 +48,7 @@ public abstract class MixinClientWorld extends World
             });
 
     @Unique
-    private final ThreadLocal<ColorChunk> threadLocalGrassChunk   =
+    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalGrassChunk   =
         ThreadLocal.withInitial(
             () ->
             {
@@ -60,7 +58,7 @@ public abstract class MixinClientWorld extends World
             });
 
     @Unique
-    private final ThreadLocal<ColorChunk> threadLocalFoliageChunk =
+    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalFoliageChunk =
         ThreadLocal.withInitial(
             () ->
             {
@@ -86,17 +84,18 @@ public abstract class MixinClientWorld extends World
     public void
     onReloadColor(CallbackInfo ci)
     {
-        blendColorCache.invalidateAll();
-        rawColorCache.invalidateAll();
+        betterBiomeBlend$blendColorCache.invalidateAll();
+        betterBiomeBlend$rawColorCache.invalidateAll();
+        betterBiomeBlend$biomeCache.invalidateAll();
     }
 
     @Inject(method = "resetChunkColor", at = @At("HEAD"))
     public void
     onResetChunkColor(int chunkX, int chunkZ, CallbackInfo ci)
     {
-        blendColorCache.invalidateNeighbourhood(chunkX, chunkZ);
-
-        rawColorCache.invalidateSmallNeighbourhood(chunkX, chunkZ);
+        betterBiomeBlend$blendColorCache.invalidateNeighbourhood(chunkX, chunkZ);
+        betterBiomeBlend$rawColorCache.invalidateChunk(chunkX, chunkZ);
+        betterBiomeBlend$biomeCache.invalidateChunk(chunkX, chunkZ);
     }
 
     @Overwrite
@@ -109,17 +108,17 @@ public abstract class MixinClientWorld extends World
         if (colorResolverIn == BiomeColors.GRASS_COLOR)
         {
             colorType        = BiomeColorType.GRASS;
-            threadLocalChunk = threadLocalGrassChunk;
+            threadLocalChunk = betterBiomeBlend$threadLocalGrassChunk;
         }
         else if (colorResolverIn == BiomeColors.WATER_COLOR)
         {
             colorType        = BiomeColorType.WATER;
-            threadLocalChunk = threadLocalWaterChunk;
+            threadLocalChunk = betterBiomeBlend$threadLocalWaterChunk;
         }
         else
         {
             colorType        = BiomeColorType.FOLIAGE;
-            threadLocalChunk = threadLocalFoliageChunk;
+            threadLocalChunk = betterBiomeBlend$threadLocalFoliageChunk;
         }
 
         int x = blockPosIn.getX();
@@ -128,13 +127,21 @@ public abstract class MixinClientWorld extends World
         int chunkX = x >> 4;
         int chunkZ = z >> 4;
 
-        ColorChunk chunk = BiomeColor.getThreadLocalChunk(threadLocalChunk, chunkX, chunkZ, colorType);
+        ColorChunk chunk = ColorCaching.getThreadLocalChunk(threadLocalChunk, chunkX, chunkZ, colorType);
 
         if (chunk == null)
         {
-            chunk = BiomeColor.getBlendedColorChunk(this, colorType, chunkX, chunkZ, blendColorCache, rawColorCache, colorResolverIn);
+            chunk = ColorCaching.getBlendedColorChunk(
+                this,
+                colorResolverIn,
+                colorType,
+                chunkX,
+                chunkZ,
+                betterBiomeBlend$blendColorCache,
+                betterBiomeBlend$rawColorCache,
+                betterBiomeBlend$biomeCache);
 
-            BiomeColor.setThreadLocalChunk(threadLocalChunk, chunk, blendColorCache);
+            ColorCaching.setThreadLocalChunk(threadLocalChunk, chunk, betterBiomeBlend$blendColorCache);
         }
 
         int result = chunk.getColor(x, z);
