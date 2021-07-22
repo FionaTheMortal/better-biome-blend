@@ -93,7 +93,7 @@ public abstract class MixinClientWorld extends World
     onResetChunkColor(ChunkPos position, CallbackInfo ci)
     {
         blendColorCache.invalidateNeighbourhood(position.x, position.z);
-        rawColorCache.invalidateSmallNeighbourhood(position.x, position.z);
+        rawColorCache.invalidateChunk(position.x, position.z);
     }
 
     @Overwrite

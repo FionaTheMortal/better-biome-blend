@@ -12,7 +12,7 @@ public final class ColorCache
     public final Long2ObjectLinkedOpenHashMap<ColorChunk> hash;
     public final Stack<ColorChunk>                        freeStack;
 
-    public int invalidationCounter;
+    public volatile int invalidationCounter;
 
     public
     ColorCache(int count)

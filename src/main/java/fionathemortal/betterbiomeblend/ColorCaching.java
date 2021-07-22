@@ -58,6 +58,8 @@ public final class ColorCaching
         {
             chunk = cache.newChunk(chunkX, chunkZ, colorType);
 
+            // BetterBiomeBlendClient.LOGGER.info("Generating chunk: " + chunkX + " " + chunkZ + "with counter: " + chunk.invalidationCounter);
+
             ColorBlending.generateBlendedColorChunk(world, colorResolverIn, colorType, chunkX, chunkZ, rawCache, chunk.data);
 
             cache.putChunk(chunk);
