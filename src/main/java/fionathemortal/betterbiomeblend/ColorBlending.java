@@ -387,22 +387,25 @@ public final class ColorBlending
         final int blendMinX = getNeighbourRectBlendCacheMinX(4, blendRadius);
         final int blendMinZ = getNeighbourRectBlendCacheMinZ(4, blendRadius);
 
+        final int smallAreaMinX = blendMinX + 2;
+        final int smallAreaMinZ = blendMinZ + 2;
+
         final int blendDim = 16 + 2 * blendRadius;
 
-        int blendLine = 3 * (blendMinX + blendMinZ * blendDim);
+        int blendLine = 3 * (smallAreaMinX + smallAreaMinZ * blendDim);
 
         int accumulatedR = 0;
         int accumulatedG = 0;
         int accumulatedB = 0;
 
         for (int z = 0;
-            z < 16;
+            z < 12;
             ++z)
         {
             int blendIndex = blendLine;
 
             for (int x = 0;
-                x < 16;
+                x < 12;
                 ++x)
             {
                 int colorR = 0xFF & blendBuffer[blendIndex + 0];
@@ -419,9 +422,9 @@ public final class ColorBlending
             blendLine += 3 * blendDim;
         }
 
-        int averageR = accumulatedR / (16 * 16);
-        int averageG = accumulatedG / (16 * 16);
-        int averageB = accumulatedB / (16 * 16);
+        int averageR = accumulatedR / (12 * 12);
+        int averageG = accumulatedG / (12 * 12);
+        int averageB = accumulatedB / (12 * 12);
 
         int result = Color.makeRGBAWithFullAlpha(averageR, averageG, averageB);
 
