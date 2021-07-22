@@ -38,6 +38,9 @@ public abstract class MixinClientWorld extends World
     private final ColorCache betterBiomeBlend$rawColorCache   = new ColorCache(512);
 
     @Unique
+    private final BiomeCache betterBiomeBlend$biomeCache      = new BiomeCache(32);
+
+    @Unique
     private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalWaterChunk   =
         ThreadLocal.withInitial(
             () ->
