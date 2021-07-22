@@ -69,8 +69,8 @@ public abstract class MixinClientWorld extends World
                 return chunk;
             });
 
-	protected
-	MixinClientWorld(
+    protected
+    MixinClientWorld(
         MutableWorldProperties worldInfo,
         RegistryKey<World>     dimension,
         DimensionType          dimensionType,
@@ -78,11 +78,11 @@ public abstract class MixinClientWorld extends World
         boolean                isRemote,
         boolean                isDebug,
         long                   seed)
-	{
-		super(worldInfo, dimension, dimensionType, profiler, isRemote, isDebug, seed);
-	}
+    {
+        super(worldInfo, dimension, dimensionType, profiler, isRemote, isDebug, seed);
+    }
 
-	@Inject(method = "reloadColor", at = @At("HEAD"))
+    @Inject(method = "reloadColor", at = @At("HEAD"))
     public void
     onReloadColor(CallbackInfo ci)
     {
