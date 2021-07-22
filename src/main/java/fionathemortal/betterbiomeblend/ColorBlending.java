@@ -20,11 +20,11 @@ public final class ColorBlending
     public static final byte[]
     neighbourOffsets =
     {
+         0,  0,
         -1, -1,
          0, -1,
          1, -1,
         -1,  0,
-         0,  0,
          1,  0,
         -1,  1,
          0,  1,
@@ -34,11 +34,11 @@ public final class ColorBlending
     public static final byte[]
     neighbourRectParams =
     {
+         0,  0,  0,  0,   0,   0,  0,  0,
         -1, -1,  0,  0, -16, -16,  0,  0,
          0, -1,  0,  0,   0, -16,  0,  0,
          0, -1, -1,  0,  16, -16,  0,  0,
         -1,  0,  0,  0, -16,   0,  0,  0,
-         0,  0,  0,  0,   0,   0,  0,  0,
          0,  0, -1,  0,  16,   0,  0,  0,
         -1,  0,  0, -1, -16,  16,  0,  0,
          0,  0,  0, -1,   0,  16,  0,  0,
@@ -233,15 +233,12 @@ public final class ColorBlending
         ColorResolver colorResolver,
         int           blendRadius,
         int           neighborIndex,
+        int           defaultColor,
         byte[]        blendBuffer)
     {
-        Biome plains = BuiltinRegistries.BIOME.get(BiomeKeys.PLAINS);
-
-        int color = colorResolver.getColor(plains, 0, 0);
-
-        int colorR = Color.RGBAGetR(color);
-        int colorG = Color.RGBAGetG(color);
-        int colorB = Color.RGBAGetB(color);
+        int colorR = Color.RGBAGetR(defaultColor);
+        int colorG = Color.RGBAGetG(defaultColor);
+        int colorB = Color.RGBAGetB(defaultColor);
 
         final int cacheMinX = getNeighbourRectMinX(neighborIndex, blendRadius);
         final int cacheMinZ = getNeighbourRectMinZ(neighborIndex, blendRadius);
@@ -288,12 +285,9 @@ public final class ColorBlending
         byte[]        cachedColors,
         Biome[]       cachedBiomes,
         byte[]        blendBuffer,
-        boolean       genNewColors)
+        boolean       genNewColors,
+        int           defaultColor)
     {
-        Biome plains = BuiltinRegistries.BIOME.get(BiomeKeys.PLAINS);
-
-        int defaultColor = colorResolver.getColor(plains, 0, 0);
-
         BlockPos.Mutable blockPos = new BlockPos.Mutable();
 
         final int cacheMinX = getNeighbourRectMinX(neighborIndex, blendRadius);
@@ -387,6 +381,53 @@ public final class ColorBlending
         }
     }
 
+    public static int
+    calculateDefaultColor(int blendRadius, byte[] blendBuffer)
+    {
+        final int blendMinX = getNeighbourRectBlendCacheMinX(4, blendRadius);
+        final int blendMinZ = getNeighbourRectBlendCacheMinZ(4, blendRadius);
+
+        final int blendDim = 16 + 2 * blendRadius;
+
+        int blendLine = 3 * (blendMinX + blendMinZ * blendDim);
+
+        int accumulatedR = 0;
+        int accumulatedG = 0;
+        int accumulatedB = 0;
+
+        for (int z = 0;
+            z < 16;
+            ++z)
+        {
+            int blendIndex = blendLine;
+
+            for (int x = 0;
+                x < 16;
+                ++x)
+            {
+                int colorR = 0xFF & blendBuffer[blendIndex + 0];
+                int colorG = 0xFF & blendBuffer[blendIndex + 1];
+                int colorB = 0xFF & blendBuffer[blendIndex + 2];
+
+                accumulatedR += colorR;
+                accumulatedG += colorG;
+                accumulatedB += colorB;
+
+                blendIndex += 3;
+            }
+
+            blendLine += 3 * blendDim;
+        }
+
+        int averageR = accumulatedR / (16 * 16);
+        int averageG = accumulatedG / (16 * 16);
+        int averageB = accumulatedB / (16 * 16);
+
+        int result = Color.makeRGBAWithFullAlpha(averageR, averageG, averageB);
+
+        return result;
+    }
+
     public static void
     gatherRawColorsToCaches(
         World         world,
@@ -421,6 +462,8 @@ public final class ColorBlending
             }
         }
 
+        int defaultColor = -1;
+
         for (int index = 0;
             index < 9;
             ++index)
@@ -433,17 +476,20 @@ public final class ColorBlending
 
             if (neighbors[index] != null)
             {
-                boolean genNewColors = (neighborsAreLoaded);
-
-                gatherRawColors(world, colorResolver, neighborX, neighborZ, blendRadius, index, colorChunk.data, biomeChunk.data, blendBuffer, genNewColors);
+                gatherRawColors(world, colorResolver, neighborX, neighborZ, blendRadius, index, colorChunk.data, biomeChunk.data, blendBuffer, neighborsAreLoaded, defaultColor);
             }
             else
             {
-                fillBlendCacheWithDefaultColor(world, colorResolver, blendRadius, index, blendBuffer);
+                fillBlendCacheWithDefaultColor(world, colorResolver, blendRadius, index, defaultColor, blendBuffer);
             }
 
             colorCache.releaseChunk(colorChunk);
             biomeCache.releaseChunk(biomeChunk);
+
+            if (!neighborsAreLoaded && defaultColor == -1)
+            {
+                defaultColor = calculateDefaultColor(blendRadius, blendBuffer);
+            }
         }
     }
 
