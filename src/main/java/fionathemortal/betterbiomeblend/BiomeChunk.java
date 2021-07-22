@@ -1,10 +1,12 @@
 package fionathemortal.betterbiomeblend;
 
+import net.minecraft.world.biome.Biome;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class ColorChunk
+public final class BiomeChunk
 {
-    public byte[] data;
+    public Biome[] data;
 
     public long key;
     public int  invalidationCounter;
@@ -12,9 +14,9 @@ public final class ColorChunk
     public AtomicInteger refCount = new AtomicInteger();
 
     public
-    ColorChunk()
+    BiomeChunk()
     {
-        this.data = new byte[16 * 16 * 3];
+        this.data = new Biome[16 * 16];
 
         this.markAsInvalid();
     }
@@ -45,22 +47,5 @@ public final class ColorChunk
     markAsInvalid()
     {
         key = -1;
-    }
-
-    public int
-    getColor(int x, int z)
-    {
-        int blockX = x & 15;
-        int blockZ = z & 15;
-
-        int offset = 3 * ((blockZ << 4) | blockX);
-
-        int colorR = this.data[offset + 0];
-        int colorG = this.data[offset + 1];
-        int colorB = this.data[offset + 2];
-
-        int result = Color.makeRGBAWithFullAlpha(colorR, colorG, colorB);
-
-        return result;
     }
 }

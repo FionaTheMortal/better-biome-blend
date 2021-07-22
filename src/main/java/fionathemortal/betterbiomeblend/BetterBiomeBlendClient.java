@@ -1,8 +1,5 @@
 package fionathemortal.betterbiomeblend;
 
-import java.lang.reflect.Field;
-import java.util.List;
-
 import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
 import net.minecraft.client.AbstractOption;
 import net.minecraft.client.GameSettings;
@@ -21,9 +18,16 @@ import net.minecraftforge.client.event.GuiScreenEvent.InitGuiEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.lang.reflect.Field;
+import java.util.List;
 
 public final class BetterBiomeBlendClient
 {
+    public static final Logger LOGGER = LogManager.getLogger(BetterBiomeBlend.MOD_ID);
+
     public static final int BIOME_BLEND_RADIUS_MAX = 14;
     public static final int BIOME_BLEND_RADIUS_MIN = 0;
 
@@ -138,8 +142,6 @@ public final class BetterBiomeBlendClient
         {
             settings.biomeBlendRadius = newSetting;
 
-            BiomeColor.clearBlendCaches();
-
             Minecraft.getInstance().worldRenderer.loadRenderers();
         }
     }
@@ -199,22 +201,22 @@ public final class BetterBiomeBlendClient
                 }
                 else
                 {
-                    BetterBiomeBlend.LOGGER.warn("Optifine GUI option was not found.");
+                    BetterBiomeBlendClient.LOGGER.warn("Optifine GUI option was not found.");
                 }
             }
             catch (Exception e)
             {
-                BetterBiomeBlend.LOGGER.warn(e);
+                BetterBiomeBlendClient.LOGGER.warn(e);
             }
         }
         catch (ClassNotFoundException e)
         {
-            BetterBiomeBlend.LOGGER.info("Otifine does not seem to be loaded, so no need to overwrite anything.");
+            BetterBiomeBlendClient.LOGGER.info("Otifine does not seem to be loaded, so no need to overwrite anything.");
         }
 
         if (success)
         {
-            BetterBiomeBlend.LOGGER.info("Optifine GUI option was successfully replaced.");
+            BetterBiomeBlendClient.LOGGER.info("Optifine GUI option was successfully replaced.");
         }
     }
 }
