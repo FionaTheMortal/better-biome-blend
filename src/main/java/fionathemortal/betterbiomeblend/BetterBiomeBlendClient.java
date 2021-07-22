@@ -40,9 +40,6 @@ public final class BetterBiomeBlendClient
 
     public static GameOptions gameOptions;
 
-    public static final RegistryKey<Biome> PLAINS =
-        RegistryKey.of(Registry.BIOME_KEY, new Identifier("minecraft", "plains"));
-
     @SuppressWarnings("resource")
     public static void
     replaceBiomeBlendRadiusOption(Screen screen)
