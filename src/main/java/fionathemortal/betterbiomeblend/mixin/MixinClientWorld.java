@@ -31,7 +31,7 @@ public abstract class MixinClientWorld extends World
         new Object2ObjectArrayMap<>();
 
     @Unique
-    private final ColorCache betterBiomeBlend$blendColorCache = new ColorCache(2048);
+    private final BlendCache betterBiomeBlend$blendColorCache = new BlendCache(2048);
 
     @Unique
     private final ColorCache betterBiomeBlend$rawColorCache   = new ColorCache(512);
@@ -87,17 +87,13 @@ public abstract class MixinClientWorld extends World
     onReloadColor(CallbackInfo ci)
     {
         betterBiomeBlend$blendColorCache.invalidateAll();
-        betterBiomeBlend$rawColorCache.invalidateAll();
-        betterBiomeBlend$biomeCache.invalidateAll();
     }
 
     @Inject(method = "resetChunkColor", at = @At("HEAD"))
     public void
     onResetChunkColor(ChunkPos position, CallbackInfo ci)
     {
-        betterBiomeBlend$blendColorCache.invalidateNeighbourhood(position.x, position.z);
-        betterBiomeBlend$rawColorCache.invalidateChunk(position.x, position.z);
-        betterBiomeBlend$biomeCache.invalidateChunk(position.x, position.z);
+        betterBiomeBlend$blendColorCache.invalidateChunk(position.x, position.z);
     }
 
     @Overwrite

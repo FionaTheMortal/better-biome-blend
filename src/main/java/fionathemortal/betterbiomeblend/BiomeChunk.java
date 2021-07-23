@@ -7,9 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class BiomeChunk
 {
     public Biome[] data;
-
-    public long key;
-    public int  invalidationCounter;
+    public long    key;
 
     public AtomicInteger refCount = new AtomicInteger();
 
