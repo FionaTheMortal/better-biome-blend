@@ -34,13 +34,13 @@ public abstract class MixinClientWorld extends World
     private final BlendCache betterBiomeBlend$blendColorCache = new BlendCache(2048);
 
     @Unique
-    private final ColorCache betterBiomeBlend$rawColorCache   = new ColorCache(512);
+    private final ColorCache betterBiomeBlend$chunkColorCache = new ColorCache(512);
 
     @Unique
-    private final BiomeCache betterBiomeBlend$biomeCache      = new BiomeCache(32);
+    private final BiomeCache betterBiomeBlend$chunkBiomeCache = new BiomeCache(32);
 
     @Unique
-    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalWaterChunk   =
+    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalWaterChunk =
         ThreadLocal.withInitial(
             () ->
             {
@@ -50,7 +50,7 @@ public abstract class MixinClientWorld extends World
             });
 
     @Unique
-    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalGrassChunk   =
+    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalGrassChunk =
         ThreadLocal.withInitial(
             () ->
             {
@@ -136,8 +136,8 @@ public abstract class MixinClientWorld extends World
                 chunkX,
                 chunkZ,
                 betterBiomeBlend$blendColorCache,
-                betterBiomeBlend$rawColorCache,
-                betterBiomeBlend$biomeCache);
+                betterBiomeBlend$chunkColorCache,
+                betterBiomeBlend$chunkBiomeCache);
 
             ColorCaching.setThreadLocalChunk(threadLocalChunk, chunk, betterBiomeBlend$blendColorCache);
         }
