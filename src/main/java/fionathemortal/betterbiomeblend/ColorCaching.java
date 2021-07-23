@@ -10,8 +10,8 @@ public final class ColorCaching
     {
         long result =
             ((long)(chunkZ & 0x7FFFFFFFL) << 31) |
-                ((long)(chunkX & 0x7FFFFFFFL))       |
-                ((long)colorType << 62);
+            ((long)(chunkX & 0x7FFFFFFFL))       |
+            ((long)colorType << 62);
 
         return result;
     }
