@@ -17,32 +17,32 @@ public final class ColorBlending
     public static final Stack<ColorBlendBuffer> freeBlendBuffers     = new Stack<>();
 
     public static final byte[]
-        neighbourOffsets =
-        {
-            0,  0,
-            -1, -1,
-            0, -1,
-            1, -1,
-            -1,  0,
-            1,  0,
-            -1,  1,
-            0,  1,
-            1,  1
-        };
+    neighbourOffsets =
+    {
+         0,  0,
+        -1, -1,
+         0, -1,
+         1, -1,
+        -1,  0,
+         1,  0,
+        -1,  1,
+         0,  1,
+         1,  1
+    };
 
     public static final byte[]
-        neighbourRectParams =
-        {
-            0,  0,  0,  0,   0,   0,  0,  0,
-            -1, -1,  0,  0, -16, -16,  0,  0,
-            0, -1,  0,  0,   0, -16,  0,  0,
-            0, -1, -1,  0,  16, -16,  0,  0,
-            -1,  0,  0,  0, -16,   0,  0,  0,
-            0,  0, -1,  0,  16,   0,  0,  0,
-            -1,  0,  0, -1, -16,  16,  0,  0,
-            0,  0,  0, -1,   0,  16,  0,  0,
-            0,  0, -1, -1,  16,  16,  0,  0
-        };
+    neighbourRectParams =
+    {
+         0,  0,  0,  0,   0,   0,  0,  0,
+        -1, -1,  0,  0, -16, -16,  0,  0,
+         0, -1,  0,  0,   0, -16,  0,  0,
+         0, -1, -1,  0,  16, -16,  0,  0,
+        -1,  0,  0,  0, -16,   0,  0,  0,
+         0,  0, -1,  0,  16,   0,  0,  0,
+        -1,  0,  0, -1, -16,  16,  0,  0,
+         0,  0,  0, -1,   0,  16,  0,  0,
+         0,  0, -1, -1,  16,  16,  0,  0
+    };
 
     public static int
     getNeighbourOffsetX(int chunkIndex)
