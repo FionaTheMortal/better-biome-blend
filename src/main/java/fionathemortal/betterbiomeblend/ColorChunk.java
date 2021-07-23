@@ -5,11 +5,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class ColorChunk
 {
     public byte[] data;
+    public long   key;
 
-    public long key;
-    public int  invalidationCounter;
-
-    public AtomicInteger refCount   = new AtomicInteger();
+    public AtomicInteger refCount = new AtomicInteger();
 
     public
     ColorChunk()

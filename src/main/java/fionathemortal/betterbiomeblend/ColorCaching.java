@@ -10,8 +10,8 @@ public final class ColorCaching
     {
         long result =
             ((long)(chunkZ & 0x7FFFFFFFL) << 31) |
-            ((long)(chunkX & 0x7FFFFFFFL))       |
-            ((long)colorType << 62);
+                ((long)(chunkX & 0x7FFFFFFFL))       |
+                ((long)colorType << 62);
 
         return result;
     }
@@ -33,7 +33,7 @@ public final class ColorCaching
     }
 
     public static void
-    setThreadLocalChunk(ThreadLocal<ColorChunk> threadLocal, ColorChunk chunk, ColorCache cache)
+    setThreadLocalChunk(ThreadLocal<ColorChunk> threadLocal, ColorChunk chunk, BlendCache cache)
     {
         ColorChunk local = threadLocal.get();
 
@@ -49,19 +49,19 @@ public final class ColorCaching
         int           colorType,
         int           chunkX,
         int           chunkZ,
-        ColorCache    cache,
-        ColorCache    rawCache,
+        BlendCache    blendCache,
+        ColorCache    colorCache,
         BiomeCache    biomeCache)
     {
-        ColorChunk chunk = cache.getChunk(chunkX, chunkZ, colorType);
+        ColorChunk chunk = blendCache.getChunk(chunkX, chunkZ, colorType);
 
         if (chunk == null)
         {
-            chunk = cache.newChunk(chunkX, chunkZ, colorType);
+            chunk = blendCache.newChunk(chunkX, chunkZ, colorType);
 
-            ColorBlending.generateBlendedColorChunk(world, colorResolverIn, colorType, chunkX, chunkZ, rawCache, biomeCache, chunk.data);
+            ColorBlending.generateBlendedColorChunk(world, colorResolverIn, colorType, chunkX, chunkZ, colorCache, biomeCache, chunk.data);
 
-            cache.putChunk(chunk);
+            blendCache.putChunk(chunk);
         }
 
         return chunk;

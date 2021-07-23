@@ -3,40 +3,29 @@ package fionathemortal.betterbiomeblend;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 
 import java.util.Arrays;
-import java.util.Stack;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class ColorCache
 {
     public final ReentrantLock                            lock;
     public final Long2ObjectLinkedOpenHashMap<ColorChunk> hash;
-    public final Stack<ColorChunk>                        freeStack;
-
-    public volatile int invalidationCounter;
 
     public
     ColorCache(int count)
     {
         lock      = new ReentrantLock();
         hash      = new Long2ObjectLinkedOpenHashMap<ColorChunk>(count);
-        freeStack = new Stack<ColorChunk>();
 
         for (int index = 0;
             index < count;
             ++index)
         {
-            freeStack.add(new ColorChunk());
-        }
-    }
+            ColorChunk chunk = new ColorChunk();
 
-    public void
-    releaseChunkWithoutLock(ColorChunk chunk)
-    {
-        int refCount = chunk.release();
+            chunk.acquire();
+            chunk.key -= index;
 
-        if (refCount == 0)
-        {
-            freeStack.push(chunk);
+            hash.put(chunk.key, chunk);
         }
     }
 
@@ -44,167 +33,17 @@ public final class ColorCache
     releaseChunk(ColorChunk chunk)
     {
         int refCount = chunk.release();
-
-        if (refCount == 0)
-        {
-            lock.lock();
-
-            freeStack.push(chunk);
-
-            lock.unlock();
-        }
-    }
-
-    public void
-    invalidateChunk(int chunkX, int chunkZ)
-    {
-        lock.lock();
-
-        ++invalidationCounter;
-
-        for (int colorType = BiomeColorType.FIRST;
-            colorType <= BiomeColorType.LAST;
-            ++colorType)
-        {
-            long key = ColorCaching.getChunkKey(chunkX, chunkZ, colorType);
-
-            ColorChunk chunk = hash.remove(key);
-
-            if (chunk != null)
-            {
-                releaseChunkWithoutLock(chunk);
-
-                chunk.markAsInvalid();
-            }
-        }
-
-        lock.unlock();
-    }
-
-    public void
-    invalidateNeighbourhood(int chunkX, int chunkZ)
-    {
-        lock.lock();
-
-        ++invalidationCounter;
-
-        for (int x = -1;
-            x <= 1;
-            ++x)
-        {
-            for (int z = -1;
-                z <= 1;
-                ++z)
-            {
-                for (int colorType = BiomeColorType.FIRST;
-                    colorType <= BiomeColorType.LAST;
-                    ++colorType)
-                {
-                    long key = ColorCaching.getChunkKey(chunkX + x, chunkZ + z, colorType);
-
-                    ColorChunk chunk = hash.remove(key);
-
-                    if (chunk != null)
-                    {
-                        releaseChunkWithoutLock(chunk);
-
-                        chunk.markAsInvalid();
-                    }
-                }
-            }
-        }
-
-        lock.unlock();
-    }
-
-    public void
-    invalidateAll()
-    {
-        lock.lock();
-
-        ++invalidationCounter;
-
-        for (ColorChunk chunk : hash.values())
-        {
-            releaseChunkWithoutLock(chunk);
-
-            chunk.markAsInvalid();
-        }
-
-        hash.clear();
-
-        lock.unlock();
     }
 
     public ColorChunk
-    getChunk(int chunkX, int chunkZ, int colorType)
+    getOrDefaultInitializeChunk(int chunkX, int chunkZ, int colorType)
     {
         long key = ColorCaching.getChunkKey(chunkX, chunkZ, colorType);
-
         lock.lock();
 
         ColorChunk result = hash.getAndMoveToFirst(key);
 
-        if (result != null)
-        {
-            result.acquire();
-        }
-
-        lock.unlock();
-
-        return result;
-    }
-
-    public void
-    putChunk(ColorChunk chunk)
-    {
-        chunk.acquire();
-
-        lock.lock();
-
-        ColorChunk prev = hash.getAndMoveToFirst(chunk.key);
-
-        if (prev == null)
-        {
-            hash.putAndMoveToFirst(chunk.key, chunk);
-        }
-        else
-        {
-            ColorChunk olderChunk;
-
-            if (chunk.invalidationCounter >= prev.invalidationCounter)
-            {
-                olderChunk = prev;
-
-                hash.put(chunk.key, chunk);
-            }
-            else
-            {
-                olderChunk = chunk;
-            }
-
-            releaseChunkWithoutLock(olderChunk);
-
-            olderChunk.markAsInvalid();
-        }
-
-        lock.unlock();
-    }
-
-    public ColorChunk
-    newChunk(int chunkX, int chunkZ, int colorType)
-    {
-        long key = ColorCaching.getChunkKey(chunkX, chunkZ, colorType);
-
-        lock.lock();
-
-        ColorChunk result = null;
-
-        if (!freeStack.empty())
-        {
-            result = freeStack.pop();
-        }
-        else
+        if (result == null)
         {
             for (;;)
             {
@@ -214,7 +53,6 @@ public final class ColorCache
 
                 if (result.getReferenceCount() == 1)
                 {
-                    result.release();
                     break;
                 }
                 else
@@ -222,70 +60,12 @@ public final class ColorCache
                     hash.putAndMoveToFirst(lastKey, result);
                 }
             }
-        }
-
-        result.invalidationCounter = invalidationCounter;
-
-        lock.unlock();
-
-        result.key = key;
-        result.acquire();
-
-        return result;
-    }
-
-    public ColorChunk
-    getOrDefaultInitializeChunk(int chunkX, int chunkZ, int colorType)
-    {
-        ColorChunk result;
-
-        long key = ColorCaching.getChunkKey(chunkX, chunkZ, colorType);
-
-        lock.lock();
-
-        result = hash.getAndMoveToFirst(key);
-
-        if (result == null)
-        {
-            if (!freeStack.empty())
-            {
-                result = freeStack.pop();
-            }
-            else
-            {
-                for (;;)
-                {
-                    long lastKey = hash.lastLongKey();
-
-                    result = hash.removeLast();
-
-                    if (result.getReferenceCount() == 1)
-                    {
-                        result.release();
-                        break;
-                    }
-                    else
-                    {
-                        hash.putAndMoveToFirst(lastKey, result);
-                    }
-                }
-            }
 
             result.key = key;
-            result.invalidationCounter = invalidationCounter;
 
             Arrays.fill(result.data, (byte)-1);
 
-            result.acquire();
-
-            ColorChunk prev = hash.putAndMoveToFirst(result.key, result);
-
-            if (prev != null)
-            {
-                releaseChunkWithoutLock(prev);
-
-                prev.markAsInvalid();
-            }
+            hash.putAndMoveToFirst(result.key, result);
         }
 
         result.acquire();
