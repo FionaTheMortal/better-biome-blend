@@ -6,6 +6,7 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.profiler.IProfiler;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.BiomeColors;
@@ -29,16 +30,16 @@ public abstract class MixinClientWorld extends World
         new Object2ObjectArrayMap<>();
 
     @Unique
-    private final ColorCache betterBiomeBlend$blendColorCache = new ColorCache(2048);
+    private final BlendCache betterBiomeBlend$blendColorCache = new BlendCache(2048);
 
     @Unique
-    private final ColorCache betterBiomeBlend$rawColorCache   = new ColorCache(512);
+    private final ColorCache betterBiomeBlend$chunkColorCache = new ColorCache(512);
 
     @Unique
-    private final BiomeCache betterBiomeBlend$biomeCache      = new BiomeCache(32);
+    private final BiomeCache betterBiomeBlend$chunkBiomeCache = new BiomeCache(32);
 
     @Unique
-    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalWaterChunk   =
+    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalWaterChunk =
         ThreadLocal.withInitial(
             () ->
             {
@@ -48,7 +49,7 @@ public abstract class MixinClientWorld extends World
             });
 
     @Unique
-    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalGrassChunk   =
+    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalGrassChunk =
         ThreadLocal.withInitial(
             () ->
             {
@@ -85,17 +86,13 @@ public abstract class MixinClientWorld extends World
     onClearColorCaches(CallbackInfo ci)
     {
         betterBiomeBlend$blendColorCache.invalidateAll();
-        betterBiomeBlend$rawColorCache.invalidateAll();
-        betterBiomeBlend$biomeCache.invalidateAll();
     }
 
     @Inject(method = "onChunkLoaded", at = @At("HEAD"))
     public void
     onOnChunkLoaded(int chunkX, int chunkZ, CallbackInfo ci)
     {
-        betterBiomeBlend$blendColorCache.invalidateNeighbourhood(chunkX, chunkZ);
-        betterBiomeBlend$rawColorCache.invalidateChunk(chunkX, chunkZ);
-        betterBiomeBlend$biomeCache.invalidateChunk(chunkX, chunkZ);
+        betterBiomeBlend$blendColorCache.invalidateChunk(chunkX, chunkZ);
     }
 
     @Overwrite
@@ -138,8 +135,8 @@ public abstract class MixinClientWorld extends World
                 chunkX,
                 chunkZ,
                 betterBiomeBlend$blendColorCache,
-                betterBiomeBlend$rawColorCache,
-                betterBiomeBlend$biomeCache);
+                betterBiomeBlend$chunkColorCache,
+                betterBiomeBlend$chunkBiomeCache);
 
             ColorCaching.setThreadLocalChunk(threadLocalChunk, chunk, betterBiomeBlend$blendColorCache);
         }
