@@ -14,6 +14,8 @@ public final class BlendCache
     public final Stack<ColorChunk>                        freeStack;
     public final ArrayList<ColorChunk>                    generating;
 
+    public int invalidationCounter;
+
     public
     BlendCache(int count)
     {
@@ -60,6 +62,8 @@ public final class BlendCache
     invalidateChunk(int chunkX, int chunkZ)
     {
         lock.lock();
+
+        ++invalidationCounter;
 
         for (int x = -1;
             x <= 1;
@@ -110,6 +114,8 @@ public final class BlendCache
     invalidateAll()
     {
         lock.lock();
+
+        ++invalidationCounter;
 
         for (ColorChunk chunk : hash.values())
         {
@@ -196,14 +202,29 @@ public final class BlendCache
 
             ColorChunk prev = hash.getAndMoveToFirst(chunk.key);
 
-            if (prev != null)
+            if (prev == null)
             {
-                releaseChunkWithoutLock(prev);
-
-                prev.markAsInvalid();
+                hash.putAndMoveToFirst(chunk.key, chunk);
             }
+            else
+            {
+                ColorChunk olderChunk;
 
-            hash.putAndMoveToFirst(chunk.key, chunk);
+                if (chunk.invalidationCounter >= prev.invalidationCounter)
+                {
+                    olderChunk = prev;
+
+                    hash.put(chunk.key, chunk);
+                }
+                else
+                {
+                    olderChunk = chunk;
+                }
+
+                releaseChunkWithoutLock(olderChunk);
+
+                olderChunk.markAsInvalid();
+            }
         }
 
         lock.unlock();

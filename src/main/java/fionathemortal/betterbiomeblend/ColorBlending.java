@@ -16,7 +16,7 @@ public final class ColorBlending
     public static final Stack<ColorBlendBuffer> freeBlendBuffers     = new Stack<>();
 
     public static final byte[]
-    neighbourOffsets =
+    neighborOffsets =
     {
          0,  0,
         -1, -1,
@@ -30,7 +30,7 @@ public final class ColorBlending
     };
 
     public static final byte[]
-    neighbourRectParams =
+    neighborRectParams =
     {
          0,  0,  0,  0,   0,   0,  0,  0,
         -1, -1,  0,  0, -16, -16,  0,  0,
@@ -44,17 +44,17 @@ public final class ColorBlending
     };
 
     public static int
-    getNeighbourOffsetX(int chunkIndex)
+    getNeighborOffsetX(int chunkIndex)
     {
-        int result = neighbourOffsets[2 * chunkIndex + 0];
+        int result = neighborOffsets[2 * chunkIndex + 0];
 
         return result;
     }
 
     public static int
-    getNeighbourOffsetZ(int chunkIndex)
+    getNeighborOffsetZ(int chunkIndex)
     {
-        int result = neighbourOffsets[2 * chunkIndex + 1];
+        int result = neighborOffsets[2 * chunkIndex + 1];
 
         return result;
     }
@@ -62,7 +62,7 @@ public final class ColorBlending
     public static int
     getNeighborPosX(int index, int chunkX)
     {
-        int offset = getNeighbourOffsetX(index);
+        int offset = getNeighborOffsetX(index);
         int result = chunkX + offset;
 
         return result;
@@ -71,62 +71,62 @@ public final class ColorBlending
     public static int
     getNeighborPosZ(int index, int chunkZ)
     {
-        int offset = getNeighbourOffsetZ(index);
+        int offset = getNeighborOffsetZ(index);
         int result = chunkZ + offset;
 
         return result;
     }
 
     public static int
-    getNeighbourRectMinX(int chunkIndex, int radius)
+    getNeighborRectMinX(int chunkIndex, int radius)
     {
         int offset = 8 * chunkIndex;
-        int result = neighbourRectParams[offset + 0] & (16 - radius);
+        int result = neighborRectParams[offset + 0] & (16 - radius);
 
         return result;
     }
 
     public static int
-    getNeighbourRectMinZ(int chunkIndex, int radius)
+    getNeighborRectMinZ(int chunkIndex, int radius)
     {
         int offset = 8 * chunkIndex;
-        int result = neighbourRectParams[offset + 1] & (16 - radius);
+        int result = neighborRectParams[offset + 1] & (16 - radius);
 
         return result;
     }
 
     public static int
-    getNeighbourRectMaxX(int chunkIndex, int radius)
+    getNeighborRectMaxX(int chunkIndex, int radius)
     {
         int offset = 8 * chunkIndex;
-        int result = (neighbourRectParams[offset + 2] & (radius - 16)) + 16;
+        int result = (neighborRectParams[offset + 2] & (radius - 16)) + 16;
 
         return result;
     }
 
     public static int
-    getNeighbourRectMaxZ(int chunkIndex, int radius)
+    getNeighborRectMaxZ(int chunkIndex, int radius)
     {
         int offset = 8 * chunkIndex;
-        int result = (neighbourRectParams[offset + 3] & (radius - 16)) + 16;
+        int result = (neighborRectParams[offset + 3] & (radius - 16)) + 16;
 
         return result;
     }
 
     public static int
-    getNeighbourRectBlendCacheMinX(int chunkIndex, int radius)
+    getNeighborRectBlendCacheMinX(int chunkIndex, int radius)
     {
         int offset = 8 * chunkIndex;
-        int result = Math.max(neighbourRectParams[offset + 4] + radius, 0);
+        int result = Math.max(neighborRectParams[offset + 4] + radius, 0);
 
         return result;
     }
 
     public static int
-    getNeighbourRectBlendCacheMinZ(int chunkIndex, int radius)
+    getNeighborRectBlendCacheMinZ(int chunkIndex, int radius)
     {
         int offset = 8 * chunkIndex;
-        int result = Math.max(neighbourRectParams[offset + 5] + radius, 0);
+        int result = Math.max(neighborRectParams[offset + 5] + radius, 0);
 
         return result;
     }
@@ -238,13 +238,13 @@ public final class ColorBlending
         int colorG = Color.RGBAGetG(defaultColor);
         int colorB = Color.RGBAGetB(defaultColor);
 
-        final int cacheMinX = getNeighbourRectMinX(neighborIndex, blendRadius);
-        final int cacheMinZ = getNeighbourRectMinZ(neighborIndex, blendRadius);
-        final int cacheMaxX = getNeighbourRectMaxX(neighborIndex, blendRadius);
-        final int cacheMaxZ = getNeighbourRectMaxZ(neighborIndex, blendRadius);
+        final int cacheMinX = getNeighborRectMinX(neighborIndex, blendRadius);
+        final int cacheMinZ = getNeighborRectMinZ(neighborIndex, blendRadius);
+        final int cacheMaxX = getNeighborRectMaxX(neighborIndex, blendRadius);
+        final int cacheMaxZ = getNeighborRectMaxZ(neighborIndex, blendRadius);
 
-        final int blendMinX = getNeighbourRectBlendCacheMinX(neighborIndex, blendRadius);
-        final int blendMinZ = getNeighbourRectBlendCacheMinZ(neighborIndex, blendRadius);
+        final int blendMinX = getNeighborRectBlendCacheMinX(neighborIndex, blendRadius);
+        final int blendMinZ = getNeighborRectBlendCacheMinZ(neighborIndex, blendRadius);
 
         final int blendDim = 16 + 2 * blendRadius;
 
@@ -288,13 +288,13 @@ public final class ColorBlending
     {
         BlockPos.Mutable blockPos = new BlockPos.Mutable();
 
-        final int cacheMinX = getNeighbourRectMinX(neighborIndex, blendRadius);
-        final int cacheMinZ = getNeighbourRectMinZ(neighborIndex, blendRadius);
-        final int cacheMaxX = getNeighbourRectMaxX(neighborIndex, blendRadius);
-        final int cacheMaxZ = getNeighbourRectMaxZ(neighborIndex, blendRadius);
+        final int cacheMinX = getNeighborRectMinX(neighborIndex, blendRadius);
+        final int cacheMinZ = getNeighborRectMinZ(neighborIndex, blendRadius);
+        final int cacheMaxX = getNeighborRectMaxX(neighborIndex, blendRadius);
+        final int cacheMaxZ = getNeighborRectMaxZ(neighborIndex, blendRadius);
 
-        final int blendMinX = getNeighbourRectBlendCacheMinX(neighborIndex, blendRadius);
-        final int blendMinZ = getNeighbourRectBlendCacheMinZ(neighborIndex, blendRadius);
+        final int blendMinX = getNeighborRectBlendCacheMinX(neighborIndex, blendRadius);
+        final int blendMinZ = getNeighborRectBlendCacheMinZ(neighborIndex, blendRadius);
 
         final int cacheDim = 16;
         final int blendDim = 16 + 2 * blendRadius;
@@ -392,13 +392,13 @@ public final class ColorBlending
     {
         BlockPos.Mutable blockPos = new BlockPos.Mutable();
 
-        final int cacheMinX = getNeighbourRectMinX(0, blendRadius) + 2;
-        final int cacheMinZ = getNeighbourRectMinZ(0, blendRadius) + 2;
-        final int cacheMaxX = getNeighbourRectMaxX(0, blendRadius) - 2;
-        final int cacheMaxZ = getNeighbourRectMaxZ(0, blendRadius) - 2;
+        final int cacheMinX = getNeighborRectMinX(0, blendRadius) + 2;
+        final int cacheMinZ = getNeighborRectMinZ(0, blendRadius) + 2;
+        final int cacheMaxX = getNeighborRectMaxX(0, blendRadius) - 2;
+        final int cacheMaxZ = getNeighborRectMaxZ(0, blendRadius) - 2;
 
-        final int blendMinX = getNeighbourRectBlendCacheMinX(0, blendRadius) + 2;
-        final int blendMinZ = getNeighbourRectBlendCacheMinZ(0, blendRadius) + 2;
+        final int blendMinX = getNeighborRectBlendCacheMinX(0, blendRadius) + 2;
+        final int blendMinZ = getNeighborRectBlendCacheMinZ(0, blendRadius) + 2;
 
         final int cacheDim = 16;
         final int blendDim = 16 + 2 * blendRadius;
@@ -493,8 +493,8 @@ public final class ColorBlending
     public static void
     fillCenterChunkBoundaryWithDefaultColor(int blendRadius, byte[] blendBuffer, int defaultColor)
     {
-        final int blendMinX = getNeighbourRectBlendCacheMinX(0, blendRadius);
-        final int blendMinZ = getNeighbourRectBlendCacheMinZ(0, blendRadius);
+        final int blendMinX = getNeighborRectBlendCacheMinX(0, blendRadius);
+        final int blendMinZ = getNeighborRectBlendCacheMinZ(0, blendRadius);
 
         final int blendDim = 16 + 2 * blendRadius;
 
@@ -572,7 +572,7 @@ public final class ColorBlending
 
         if (neighborsAreLoaded)
         {
-            gatherColors(world, colorResolver, chunkX, chunkZ, blendRadius, 0, colorChunk.data, biomeChunk.data, blendBuffer, neighborsAreLoaded, defaultColor);
+            gatherColors(world, colorResolver, chunkX, chunkZ, blendRadius, 0, colorChunk.data, biomeChunk.data, blendBuffer, true, defaultColor);
         }
         else
         {
