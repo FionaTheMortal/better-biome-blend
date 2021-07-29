@@ -85,6 +85,8 @@ public abstract class MixinClientWorld extends World
     onClearColorCaches(CallbackInfo ci)
     {
         betterBiomeBlend$blendColorCache.invalidateAll();
+        betterBiomeBlend$chunkColorCache.invalidateAll();
+        betterBiomeBlend$chunkBiomeCache.invalidateAll();
     }
 
     @Inject(method = "onChunkLoaded", at = @At("HEAD"))
@@ -92,6 +94,8 @@ public abstract class MixinClientWorld extends World
     onOnChunkLoaded(int chunkX, int chunkZ, CallbackInfo ci)
     {
         betterBiomeBlend$blendColorCache.invalidateChunk(chunkX, chunkZ);
+        betterBiomeBlend$chunkColorCache.invalidateSmallNeighborhood(chunkX, chunkZ);
+        betterBiomeBlend$chunkBiomeCache.invalidateSmallNeighborhood(chunkX, chunkZ);
     }
 
     @Overwrite
