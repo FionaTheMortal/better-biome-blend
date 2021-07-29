@@ -6,6 +6,7 @@ public final class ColorChunk
 {
     public byte[] data;
     public long   key;
+    public int    invalidationCounter;
 
     public AtomicInteger refCount = new AtomicInteger();
 
