@@ -4,9 +4,9 @@
   "compatibilityLevel": "JAVA_16",
   "refmap": "betterbiomeblend-refmap.json",
   "client": [
-    MixinClientWorld,
-    MixinVideoOptionsScreen,
-    AccessorDoubleOptionSliderWidget
+    "MixinClientWorld",
+    "MixinVideoOptionsScreen",
+    "AccessorDoubleOptionSliderWidget"
   ],
   "minVersion": "0.8",
   "injectors": {
