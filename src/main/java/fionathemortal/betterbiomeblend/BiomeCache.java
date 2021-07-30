@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.Stack;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class BiomeCache
+public final class BiomeCache
 {
     public final ReentrantLock                            lock;
     public final Long2ObjectLinkedOpenHashMap<BiomeChunk> hash;
