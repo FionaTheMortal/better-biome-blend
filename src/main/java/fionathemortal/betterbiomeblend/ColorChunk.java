@@ -1,6 +1,5 @@
 package fionathemortal.betterbiomeblend;
 
-import javax.swing.plaf.synth.ColorType;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class ColorChunk
