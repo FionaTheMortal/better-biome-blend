@@ -114,7 +114,7 @@ public final class ColorBlending
     }
 
     public static int
-    getNeighborRectBlendCacheMinX(int chunkIndex, int radius)
+    getNeighborRectBlendBufferMinX(int chunkIndex, int radius)
     {
         int offset = 8 * chunkIndex;
         int result = Math.max(neighborRectParams[offset + 4] + radius, 0);
@@ -123,7 +123,7 @@ public final class ColorBlending
     }
 
     public static int
-    getNeighborRectBlendCacheMinZ(int chunkIndex, int radius)
+    getNeighborRectBlendBufferMinZ(int chunkIndex, int radius)
     {
         int offset = 8 * chunkIndex;
         int result = Math.max(neighborRectParams[offset + 5] + radius, 0);
@@ -243,8 +243,8 @@ public final class ColorBlending
         final int cacheMaxX = getNeighborRectMaxX(neighborIndex, blendRadius);
         final int cacheMaxZ = getNeighborRectMaxZ(neighborIndex, blendRadius);
 
-        final int blendMinX = getNeighborRectBlendCacheMinX(neighborIndex, blendRadius);
-        final int blendMinZ = getNeighborRectBlendCacheMinZ(neighborIndex, blendRadius);
+        final int blendMinX = getNeighborRectBlendBufferMinX(neighborIndex, blendRadius);
+        final int blendMinZ = getNeighborRectBlendBufferMinZ(neighborIndex, blendRadius);
 
         final int blendDim = 16 + 2 * blendRadius;
 
@@ -293,8 +293,8 @@ public final class ColorBlending
         final int cacheMaxX = getNeighborRectMaxX(neighborIndex, blendRadius);
         final int cacheMaxZ = getNeighborRectMaxZ(neighborIndex, blendRadius);
 
-        final int blendMinX = getNeighborRectBlendCacheMinX(neighborIndex, blendRadius);
-        final int blendMinZ = getNeighborRectBlendCacheMinZ(neighborIndex, blendRadius);
+        final int blendMinX = getNeighborRectBlendBufferMinX(neighborIndex, blendRadius);
+        final int blendMinZ = getNeighborRectBlendBufferMinZ(neighborIndex, blendRadius);
 
         final int cacheDim = 16;
         final int blendDim = 16 + 2 * blendRadius;
@@ -397,8 +397,8 @@ public final class ColorBlending
         final int cacheMaxX = getNeighborRectMaxX(0, blendRadius) - 2;
         final int cacheMaxZ = getNeighborRectMaxZ(0, blendRadius) - 2;
 
-        final int blendMinX = getNeighborRectBlendCacheMinX(0, blendRadius) + 2;
-        final int blendMinZ = getNeighborRectBlendCacheMinZ(0, blendRadius) + 2;
+        final int blendMinX = getNeighborRectBlendBufferMinX(0, blendRadius) + 2;
+        final int blendMinZ = getNeighborRectBlendBufferMinZ(0, blendRadius) + 2;
 
         final int cacheDim = 16;
         final int blendDim = 16 + 2 * blendRadius;
@@ -493,8 +493,8 @@ public final class ColorBlending
     public static void
     fillCenterChunkBoundaryWithDefaultColor(int blendRadius, byte[] blendBuffer, int defaultColor)
     {
-        final int blendMinX = getNeighborRectBlendCacheMinX(0, blendRadius);
-        final int blendMinZ = getNeighborRectBlendCacheMinZ(0, blendRadius);
+        final int blendMinX = getNeighborRectBlendBufferMinX(0, blendRadius);
+        final int blendMinZ = getNeighborRectBlendBufferMinZ(0, blendRadius);
 
         final int blendDim = 16 + 2 * blendRadius;
 

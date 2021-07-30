@@ -43,7 +43,7 @@ public final class ColorChunk
     public void
     markAsInvalid()
     {
-        key = -1;
+        key = ColorCaching.INVALID_CHUNK_KEY;
     }
 
     public int

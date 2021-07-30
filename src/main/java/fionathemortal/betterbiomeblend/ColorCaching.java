@@ -5,6 +5,8 @@ import net.minecraft.world.level.ColorResolver;
 
 public final class ColorCaching
 {
+    public static final int INVALID_CHUNK_KEY = -1;
+
     public static long
     getChunkKey(int chunkX, int chunkZ, int colorType)
     {
@@ -61,7 +63,7 @@ public final class ColorCaching
 
             ColorBlending.generateBlendedColorChunk(world, colorResolverIn, colorType, chunkX, chunkZ, colorCache, biomeCache, chunk.data);
 
-            blendCache.putChunk(chunk);
+            chunk = blendCache.putChunk(chunk);
         }
 
         return chunk;
