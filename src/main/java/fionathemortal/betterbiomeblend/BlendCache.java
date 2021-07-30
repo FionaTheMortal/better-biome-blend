@@ -20,8 +20,8 @@ public final class BlendCache
     BlendCache(int count)
     {
         lock       = new ReentrantLock();
-        hash       = new Long2ObjectLinkedOpenHashMap<ColorChunk>(count);
-        freeStack  = new Stack<ColorChunk>();
+        hash       = new Long2ObjectLinkedOpenHashMap<>(count);
+        freeStack  = new Stack<>();
         generating = new ArrayList<>();
 
         for (int index = 0;
