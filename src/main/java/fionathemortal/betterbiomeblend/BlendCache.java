@@ -182,6 +182,7 @@ public final class BlendCache
         }
 
         result.key = key;
+        result.invalidationCounter = invalidationCounter;
         result.acquire();
 
         generating.add(result);
