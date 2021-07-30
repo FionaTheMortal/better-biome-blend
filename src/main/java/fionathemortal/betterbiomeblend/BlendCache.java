@@ -14,7 +14,7 @@ public final class BlendCache
     public final Stack<ColorChunk>                        freeStack;
     public final ArrayList<ColorChunk>                    generating;
 
-    public int invalidationCounter;
+    public int invalidationCounter = 0;
 
     public
     BlendCache(int count)
@@ -97,9 +97,9 @@ public final class BlendCache
 
                             if (generatingChunk.key == key)
                             {
-                                iterator.remove();
-
                                 generatingChunk.markAsInvalid();
+
+                                iterator.remove();
                             }
                         }
                     }
