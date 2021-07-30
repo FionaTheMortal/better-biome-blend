@@ -191,9 +191,11 @@ public final class BlendCache
         return result;
     }
 
-    public void
+    public ColorChunk
     putChunk(ColorChunk chunk)
     {
+        ColorChunk result = chunk;
+
         lock.lock();
 
         if (generating.remove(chunk))
@@ -219,6 +221,8 @@ public final class BlendCache
                 else
                 {
                     olderChunk = chunk;
+
+                    result = prev;
                 }
 
                 releaseChunkWithoutLock(olderChunk);
@@ -228,5 +232,7 @@ public final class BlendCache
         }
 
         lock.unlock();
+
+        return result;
     }
 }

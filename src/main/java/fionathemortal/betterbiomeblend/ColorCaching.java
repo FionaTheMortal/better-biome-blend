@@ -63,7 +63,7 @@ public final class ColorCaching
 
             ColorBlending.generateBlendedColorChunk(world, colorResolverIn, colorType, chunkX, chunkZ, colorCache, biomeCache, chunk.data);
 
-            blendCache.putChunk(chunk);
+            chunk = blendCache.putChunk(chunk);
         }
 
         return chunk;
