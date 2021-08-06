@@ -2,7 +2,6 @@ package fionathemortal.betterbiomeblend;
 
 import net.minecraft.world.level.ColorResolver;
 
-import javax.swing.plaf.synth.ColorType;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 

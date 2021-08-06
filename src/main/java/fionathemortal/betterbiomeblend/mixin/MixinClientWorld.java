@@ -2,7 +2,6 @@ package fionathemortal.betterbiomeblend.mixin;
 
 import fionathemortal.betterbiomeblend.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
-import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.minecraft.client.color.world.BiomeColors;
 import net.minecraft.client.world.BiomeColorCache;
 import net.minecraft.client.world.ClientWorld;
