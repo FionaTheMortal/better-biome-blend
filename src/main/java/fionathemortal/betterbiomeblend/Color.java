@@ -19,9 +19,9 @@ public final class Color
     makeRGBAWithFullAlpha(int R, int G, int B)
     {
         int result =
-            ((0xFF & R) <<  0) |
+            ((0xFF & R) << 16) |
             ((0xFF & G) <<  8) |
-            ((0xFF & B) << 16) |
+            ((0xFF & B) <<  0) |
             ((0xFF    ) << 24);
 
         return result;
@@ -30,7 +30,7 @@ public final class Color
     public static int
     RGBAGetR(int color)
     {
-        int result = color & 0xFF;
+        int result = (color >> 16) & 0xFF;
 
         return result;
     }
@@ -46,7 +46,7 @@ public final class Color
     public static int
     RGBAGetB(int color)
     {
-        int result = (color >> 16) & 0xFF;
+        int result = color & 0xFF;
 
         return result;
     }
