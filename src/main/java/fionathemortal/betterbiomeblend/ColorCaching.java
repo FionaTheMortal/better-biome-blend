@@ -11,9 +11,9 @@ public final class ColorCaching
     getChunkKey(int chunkX, int chunkZ, int colorType)
     {
         long result =
-            ((long)(chunkZ & 0x7FFFFFFFL) << 31) |
-            ((long)(chunkX & 0x7FFFFFFFL))       |
-            ((long)colorType << 62);
+            ((long)(chunkZ & 0x03FFFFFFL) << 26) |
+            ((long)(chunkX & 0x03FFFFFFL))       |
+            ((long)colorType << 52);
 
         return result;
     }

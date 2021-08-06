@@ -83,7 +83,7 @@ public final class ColorCache
             int offsetZ = ColorBlending.getNeighborOffsetZ(chunkIndex);
 
             for (int colorType = BiomeColorType.FIRST;
-                colorType <= BiomeColorType.LAST;
+                colorType < CustomColorResolverCompatibility.nextColorResolverID;
                 ++colorType)
             {
                 long key = ColorCaching.getChunkKey(chunkX + offsetX, chunkZ + offsetZ, colorType);

@@ -68,6 +68,16 @@ public abstract class MixinClientWorld extends World
                 return chunk;
             });
 
+    @Unique
+    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalGenericChunk =
+        ThreadLocal.withInitial(
+            () ->
+            {
+                ColorChunk chunk = new ColorChunk();
+                chunk.acquire();
+                return chunk;
+            });
+
 	protected
 	MixinClientWorld(
 			MutableWorldProperties worldInfo,
@@ -116,10 +126,15 @@ public abstract class MixinClientWorld extends World
             colorType        = BiomeColorType.WATER;
             threadLocalChunk = betterBiomeBlend$threadLocalWaterChunk;
         }
-        else
+        else if (colorResolverIn == BiomeColors.FOLIAGE_COLOR)
         {
             colorType        = BiomeColorType.FOLIAGE;
             threadLocalChunk = betterBiomeBlend$threadLocalFoliageChunk;
+        }
+        else
+        {
+            colorType        = CustomColorResolverCompatibility.getColorType(colorResolverIn);
+            threadLocalChunk = betterBiomeBlend$threadLocalGenericChunk;
         }
 
         int x = blockPosIn.getX();
