@@ -74,7 +74,7 @@ public final class BlendCache
                 ++z)
             {
                 for (int colorType = BiomeColorType.FIRST;
-                    colorType <= BiomeColorType.LAST;
+                    colorType < CustomColorResolverCompatibility.nextColorResolverID;
                     ++colorType)
                 {
                     long key = ColorCaching.getChunkKey(chunkX + x, chunkZ + z, colorType);
