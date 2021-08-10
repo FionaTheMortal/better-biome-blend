@@ -201,13 +201,13 @@ public final class BlendCache
 
         if (generating.remove(chunk))
         {
-            chunk.acquire();
-
             ColorChunk prev = hash.getAndMoveToFirst(chunk.key);
 
             if (prev == null)
             {
                 hash.putAndMoveToFirst(chunk.key, chunk);
+
+                chunk.acquire();
             }
             else
             {
@@ -218,12 +218,15 @@ public final class BlendCache
                     olderChunk = prev;
 
                     hash.put(chunk.key, chunk);
+
+                    chunk.acquire();
                 }
                 else
                 {
                     olderChunk = chunk;
 
                     result = prev;
+                    result.acquire();
                 }
 
                 releaseChunkWithoutLock(olderChunk);
