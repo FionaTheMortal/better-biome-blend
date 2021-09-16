@@ -1,7 +1,7 @@
 package fionathemortal.betterbiomeblend;
 
-import net.minecraft.world.World;
 import net.minecraft.world.level.ColorResolver;
+import net.minecraft.world.level.Level;
 
 public final class ColorCaching
 {
@@ -46,7 +46,7 @@ public final class ColorCaching
 
     public static ColorChunk
     getBlendedColorChunk(
-        World         world,
+        Level world,
         ColorResolver colorResolverIn,
         int           colorType,
         int           chunkX,

@@ -3,7 +3,7 @@ package fionathemortal.betterbiomeblend;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.ExtensionPoint;
+import net.minecraftforge.fml.IExtensionPoint;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import org.apache.commons.lang3.tuple.Pair;
@@ -17,8 +17,8 @@ public final class BetterBiomeBlend
     BetterBiomeBlend()
     {
         ModLoadingContext.get().registerExtensionPoint(
-            ExtensionPoint.DISPLAYTEST,
-            () -> Pair.of(
+            IExtensionPoint.DisplayTest.DisplayTest.class,
+            () -> new IExtensionPoint.DisplayTest(
                 () -> "client-only",
                 (v, n) -> n)
             );

@@ -2,15 +2,16 @@ package fionathemortal.betterbiomeblend.mixin;
 
 import fionathemortal.betterbiomeblend.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.profiler.IProfiler;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.DimensionType;
-import net.minecraft.world.World;
-import net.minecraft.world.biome.BiomeColors;
+import net.minecraft.client.color.block.BlockTintCache;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.BiomeColors;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.ColorResolver;
-import net.minecraft.world.storage.ISpawnWorldInfo;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.storage.WritableLevelData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -21,11 +22,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.function.Supplier;
 
-@Mixin(value = ClientWorld.class)
-public abstract class MixinClientWorld extends World
+@Mixin(value = ClientLevel.class)
+public abstract class MixinClientWorld extends Level
 {
     @Shadow
-    private final Object2ObjectArrayMap<ColorResolver, net.minecraft.client.renderer.color.ColorCache> colorCaches =
+    private final Object2ObjectArrayMap<ColorResolver, BlockTintCache> colorCaches =
         new Object2ObjectArrayMap<>();
 
     @Unique
@@ -79,18 +80,18 @@ public abstract class MixinClientWorld extends World
 
     protected
     MixinClientWorld(
-        ISpawnWorldInfo     worldInfo,
-        RegistryKey<World>  dimension,
-        DimensionType       dimensionType,
-        Supplier<IProfiler> profiler,
-        boolean             isRemote,
-        boolean             isDebug,
-        long                seed)
+        WritableLevelData        p_46450_,
+        ResourceKey<Level>       p_46451_,
+        final DimensionType      p_46452_,
+        Supplier<ProfilerFiller> p_46453_,
+        boolean                  p_46454_,
+        boolean                  p_46455_,
+        long                     p_46456_)
     {
-        super(worldInfo, dimension, dimensionType, profiler, isRemote, isDebug, seed);
+        super(p_46450_, p_46451_, p_46452_, p_46453_, p_46454_, p_46455_, p_46456_);
     }
 
-    @Inject(method = "clearColorCaches", at = @At("HEAD"))
+    @Inject(method = "clearTintCaches", at = @At("HEAD"))
     public void
     onClearColorCaches(CallbackInfo ci)
     {
@@ -110,22 +111,22 @@ public abstract class MixinClientWorld extends World
 
     @Overwrite
     public int
-    getBlockColor(BlockPos blockPosIn, ColorResolver colorResolverIn)
+    getBlockTint(BlockPos blockPosIn, ColorResolver colorResolverIn)
     {
         int                     colorType;
         ThreadLocal<ColorChunk> threadLocalChunk;
 
-        if (colorResolverIn == BiomeColors.GRASS_COLOR)
+        if (colorResolverIn == BiomeColors.GRASS_COLOR_RESOLVER)
         {
             colorType        = BiomeColorType.GRASS;
             threadLocalChunk = betterBiomeBlend$threadLocalGrassChunk;
         }
-        else if (colorResolverIn == BiomeColors.WATER_COLOR)
+        else if (colorResolverIn == BiomeColors.WATER_COLOR_RESOLVER)
         {
             colorType        = BiomeColorType.WATER;
             threadLocalChunk = betterBiomeBlend$threadLocalWaterChunk;
         }
-        else if (colorResolverIn == BiomeColors.FOLIAGE_COLOR)
+        else if (colorResolverIn == BiomeColors.FOLIAGE_COLOR_RESOLVER)
         {
             colorType        = BiomeColorType.FOLIAGE;
             threadLocalChunk = betterBiomeBlend$threadLocalFoliageChunk;

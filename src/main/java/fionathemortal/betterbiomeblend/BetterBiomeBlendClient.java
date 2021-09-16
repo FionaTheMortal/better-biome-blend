@@ -1,17 +1,18 @@
 package fionathemortal.betterbiomeblend;
 
 import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
-import net.minecraft.client.AbstractOption;
-import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.IGuiEventListener;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.VideoSettingsScreen;
-import net.minecraft.client.gui.widget.list.OptionsRowList;
-import net.minecraft.client.settings.SliderPercentageOption;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.Option;
+import net.minecraft.client.Options;
+import net.minecraft.client.ProgressOption;
+import net.minecraft.client.gui.components.AbstractSelectionList;
+import net.minecraft.client.gui.components.OptionsList;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.VideoSettingsScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.util.Mth;
 import net.minecraftforge.client.event.GuiScreenEvent.InitGuiEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
@@ -27,7 +28,7 @@ public final class BetterBiomeBlendClient
     public static final int BIOME_BLEND_RADIUS_MAX = 14;
     public static final int BIOME_BLEND_RADIUS_MIN = 0;
 
-    public static final SliderPercentageOption BIOME_BLEND_RADIUS = new SliderPercentageOption(
+    public static final ProgressOption BIOME_BLEND_RADIUS = new ProgressOption(
         "options.biomeBlendRadius",
         BIOME_BLEND_RADIUS_MIN,
         BIOME_BLEND_RADIUS_MAX,
@@ -36,7 +37,7 @@ public final class BetterBiomeBlendClient
         BetterBiomeBlendClient::biomeBlendRadiusOptionSetValue,
         BetterBiomeBlendClient::biomeBlendRadiusOptionGetDisplayText);
 
-    public static final GameSettings gameSettings = Minecraft.getInstance().gameSettings;
+    public static final Options gameSettings = Minecraft.getInstance().options;
 
     @SubscribeEvent
     public static void
@@ -64,15 +65,15 @@ public final class BetterBiomeBlendClient
     public static void
     replaceBiomeBlendRadiusOption(VideoSettingsScreen screen)
     {
-        List<? extends IGuiEventListener> children = screen.getEventListeners();
+        List<? extends GuiEventListener> children = screen.children();
 
-        for (IGuiEventListener child : children)
+        for (GuiEventListener child : children)
         {
-            if (child instanceof OptionsRowList)
+            if (child instanceof OptionsList)
             {
-                OptionsRowList rowList = (OptionsRowList)child;
+                OptionsList rowList = (OptionsList)child;
 
-                List<OptionsRowList.Row> rowListEntries = rowList.getEventListeners();
+                List<net.minecraft.client.gui.components.OptionsList.Entry> rowListEntries = rowList.children();
 
                 boolean replacedOption = false;
 
@@ -80,20 +81,20 @@ public final class BetterBiomeBlendClient
                     index < rowListEntries.size();
                     ++index)
                 {
-                    OptionsRowList.Row row = rowListEntries.get(index);
+                    net.minecraft.client.gui.components.OptionsList.Entry row = rowListEntries.get(index);
 
-                    List<? extends IGuiEventListener> rowChildren = row.getEventListeners();
+                    List<? extends GuiEventListener> rowChildren = row.children();
 
-                    for (IGuiEventListener rowChild : rowChildren)
+                    for (GuiEventListener rowChild : rowChildren)
                     {
                         if (rowChild instanceof AccessorOptionSlider)
                         {
                             AccessorOptionSlider accessor = (AccessorOptionSlider)rowChild;
 
-                            if (accessor.getOption() == AbstractOption.BIOME_BLEND_RADIUS)
+                            if (accessor.getOption() == Option.BIOME_BLEND_RADIUS)
                             {
-                                OptionsRowList.Row newRow = OptionsRowList.Row.create(
-                                    screen.getMinecraft().gameSettings,
+                                net.minecraft.client.gui.components.OptionsList.Entry newRow = net.minecraft.client.gui.components.OptionsList.Entry.big(
+                                    screen.getMinecraft().options,
                                     screen.width,
                                     BIOME_BLEND_RADIUS);
 
@@ -114,7 +115,7 @@ public final class BetterBiomeBlendClient
     }
 
     public static Double
-    biomeBlendRadiusOptionGetValue(GameSettings settings)
+    biomeBlendRadiusOptionGetValue(Options settings)
     {
         double result = (double)settings.biomeBlendRadius;
 
@@ -123,32 +124,32 @@ public final class BetterBiomeBlendClient
 
     @SuppressWarnings("resource")
     public static void
-    biomeBlendRadiusOptionSetValue(GameSettings settings, Double optionValues)
+    biomeBlendRadiusOptionSetValue(Options settings, Double optionValues)
     {
         /* NOTE: Concurrent modification exception with structure generation
          * But this code is a 1 to 1 copy of vanilla code so it might just be an unlikely bug on their end */
 
         int currentValue = (int)optionValues.doubleValue();
-        int newSetting   = MathHelper.clamp(currentValue, BIOME_BLEND_RADIUS_MIN, BIOME_BLEND_RADIUS_MAX);
+        int newSetting   = Mth.clamp(currentValue, BIOME_BLEND_RADIUS_MIN, BIOME_BLEND_RADIUS_MAX);
 
         if (settings.biomeBlendRadius != newSetting)
         {
             settings.biomeBlendRadius = newSetting;
 
-            Minecraft.getInstance().worldRenderer.loadRenderers();
+            Minecraft.getInstance().levelRenderer.allChanged();
         }
     }
 
-    public static ITextComponent
-    biomeBlendRadiusOptionGetDisplayText(GameSettings settings, SliderPercentageOption optionValues)
+    public static Component
+    biomeBlendRadiusOptionGetDisplayText(Options settings, ProgressOption optionValues)
     {
         int currentValue  = (int)optionValues.get(settings);
         int blendDiameter = 2 * currentValue + 1;
 
-        ITextComponent result = new TranslationTextComponent(
+        Component result = new TranslatableComponent(
             "options.generic_value",
-            new TranslationTextComponent("options.biomeBlendRadius"),
-            new TranslationTextComponent("options.biomeBlendRadius." + blendDiameter));
+            new TranslatableComponent("options.biomeBlendRadius"),
+            new TranslatableComponent("options.biomeBlendRadius." + blendDiameter));
 
         return result;
     }
@@ -168,7 +169,7 @@ public final class BetterBiomeBlendClient
 
                 enumOptionsField.setAccessible(true);
 
-                AbstractOption[] enumOptions = (AbstractOption[])enumOptionsField.get(null);
+                Option[] enumOptions = (Option[])enumOptionsField.get(null);
 
                 boolean found = false;
 
@@ -176,9 +177,9 @@ public final class BetterBiomeBlendClient
                     index < enumOptions.length;
                     ++index)
                 {
-                    AbstractOption option = enumOptions[index];
+                    Option option = enumOptions[index];
 
-                    if (option == AbstractOption.BIOME_BLEND_RADIUS)
+                    if (option == Option.BIOME_BLEND_RADIUS)
                     {
                         enumOptions[index] = BIOME_BLEND_RADIUS;
 

@@ -1,6 +1,6 @@
 package fionathemortal.betterbiomeblend;
 
-import net.minecraft.world.biome.Biome;
+import net.minecraft.world.level.biome.Biome;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

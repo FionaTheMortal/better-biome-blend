@@ -1,12 +1,11 @@
 package fionathemortal.betterbiomeblend;
 
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkStatus;
-import net.minecraft.world.chunk.IChunk;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.ColorResolver;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkStatus;
 
 import java.util.Stack;
 import java.util.concurrent.locks.ReentrantLock;
@@ -177,13 +176,13 @@ public final class ColorBlending
 
     public static void
     gatherRawColorsForChunk(
-        World         world,
+        Level         world,
         byte[]        result,
         int           chunkX,
         int           chunkZ,
         ColorResolver colorResolver)
     {
-        BlockPos.Mutable blockPos = new BlockPos.Mutable();
+        BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
 
         int blockX = 16 * chunkX;
         int blockZ = 16 * chunkZ;
@@ -205,7 +204,7 @@ public final class ColorBlending
                 x < 16;
                 ++x)
             {
-                blockPos.setPos(blockX + x, 0, blockZ + z);
+                blockPos.set(blockX + x, 0, blockZ + z);
 
                 int color = colorResolver.getColor(world.getBiome(blockPos), xF64, zF64);
 
@@ -228,7 +227,7 @@ public final class ColorBlending
 
     public static void
     fillBlendBufferWithDefaultColor(
-        World         world,
+        Level         world,
         ColorResolver colorResolver,
         int           blendRadius,
         int           neighborIndex,
@@ -275,7 +274,7 @@ public final class ColorBlending
 
     public static void
     gatherColors(
-        World         world,
+        Level         world,
         ColorResolver colorResolver,
         int           chunkX,
         int           chunkZ,
@@ -287,7 +286,7 @@ public final class ColorBlending
         boolean       genNewColors,
         int           defaultColor)
     {
-        BlockPos.Mutable blockPos = new BlockPos.Mutable();
+        BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
 
         final int cacheMinX = getNeighborRectMinX(neighborIndex, blendRadius);
         final int cacheMinZ = getNeighborRectMinZ(neighborIndex, blendRadius);
@@ -338,7 +337,7 @@ public final class ColorBlending
 
                         if (biome == null)
                         {
-                            blockPos.setPos(blockX + x, 0, blockZ + z);
+                            blockPos.set(blockX + x, 0, blockZ + z);
 
                             biome = world.getBiome(blockPos);
 
@@ -382,7 +381,7 @@ public final class ColorBlending
 
     public static int
     gatherColorsForCenterChunkSafeRegion(
-        World         world,
+        Level         world,
         ColorResolver colorResolver,
         int           chunkX,
         int           chunkZ,
@@ -391,7 +390,7 @@ public final class ColorBlending
         Biome[]       cachedBiomes,
         byte[]        blendBuffer)
     {
-        BlockPos.Mutable blockPos = new BlockPos.Mutable();
+        BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
 
         final int cacheMinX = getNeighborRectMinX(0, blendRadius) + 2;
         final int cacheMinZ = getNeighborRectMinZ(0, blendRadius) + 2;
@@ -444,7 +443,7 @@ public final class ColorBlending
 
                     if (biome == null)
                     {
-                        blockPos.setPos(blockX + x, 0, blockZ + z);
+                        blockPos.set(blockX + x, 0, blockZ + z);
 
                         biome = world.getBiome(blockPos);
 
@@ -534,7 +533,7 @@ public final class ColorBlending
 
     public static void
     gatherRawColorsToCaches(
-        World         world,
+        Level         world,
         ColorResolver colorResolver,
         int           colorType,
         int           chunkX,
@@ -544,8 +543,8 @@ public final class ColorBlending
         BiomeCache    biomeCache,
         byte[]        blendBuffer)
     {
-        boolean  neighborsAreLoaded = true;
-        IChunk[] neighbors          = new Chunk[9];
+        boolean       neighborsAreLoaded = true;
+        ChunkAccess[] neighbors          = new ChunkAccess[9];
 
         for (int index = 0;
             index < 9;
@@ -554,7 +553,7 @@ public final class ColorBlending
             int neighborX = getNeighborPosX(index, chunkX);
             int neighborZ = getNeighborPosZ(index, chunkZ);
 
-            IChunk chunk = world.getChunk(neighborX, neighborZ, ChunkStatus.BIOMES, false);
+            ChunkAccess chunk = world.getChunk(neighborX, neighborZ, ChunkStatus.BIOMES, false);
 
             if (chunk != null)
             {
@@ -610,7 +609,7 @@ public final class ColorBlending
     }
 
     public static void
-    blendColorsForChunk(World world, byte[] result, ColorBlendBuffer blendCache)
+    blendColorsForChunk(Level world, byte[] result, ColorBlendBuffer blendCache)
     {
         float[] R = blendCache.R;
         float[] G = blendCache.G;
@@ -700,7 +699,7 @@ public final class ColorBlending
 
     public static void
     generateBlendedColorChunk(
-        World         world,
+        Level         world,
         ColorResolver colorResolverIn,
         int           colorType,
         int           chunkX,

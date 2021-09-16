@@ -1,13 +1,13 @@
 package fionathemortal.betterbiomeblend.mixin;
 
-import net.minecraft.client.gui.widget.OptionSlider;
-import net.minecraft.client.settings.SliderPercentageOption;
+import net.minecraft.client.ProgressOption;
+import net.minecraft.client.gui.components.SliderButton;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(OptionSlider.class)
+@Mixin(SliderButton.class)
 public interface AccessorOptionSlider
 {
     @Accessor()
-    SliderPercentageOption getOption();
+    ProgressOption getOption();
 }
