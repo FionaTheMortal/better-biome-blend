@@ -3,7 +3,7 @@ loaderVersion="[32,)"
 license="Public Domain"
 [[mods]]
 modId="betterbiomeblend"
-version="${version}"
+version="1.17.1-1.2.9-forge"
 displayName="Better Biome Blend"
 authors="FionaTheMortal"
 description="    This mod increases the biome color blending radius and replaces the original blending algorithm with a more efficient one."

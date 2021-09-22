@@ -5,8 +5,8 @@
   "refmap": "betterbiomeblend.refmap.json",
   "priority": 100,
   "client": [
-	  "AccessorOptionSlider",
-	  "MixinClientWorld"
+    "AccessorOptionSlider",
+    "MixinClientWorld"
   ],
   "minVersion": "0.8.4",
   "injectors": {
