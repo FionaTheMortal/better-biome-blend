@@ -1,15 +1,12 @@
 {
   "required": true,
-  "package": "fionathemortal.betterbiomeblend.mixin",
+  "package": "${project.group}.mixin",
   "compatibilityLevel": "JAVA_16",
-  "refmap": "betterbiomeblend.refmap.json",
-  "priority": 100,
+  "refmap": "${mod_id}.refmap.json",
+  "mixins": [],
   "client": [
     "AccessorOptionSlider",
     "MixinClientWorld"
   ],
-  "minVersion": "0.8.4",
-  "injectors": {
-    "defaultRequire": 1
-  }
+  "minVersion": "0.8.4"
 }

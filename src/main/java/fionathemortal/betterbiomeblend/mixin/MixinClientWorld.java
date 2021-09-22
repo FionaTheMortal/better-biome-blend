@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.DimensionType;
@@ -26,7 +27,7 @@ import java.util.function.Supplier;
 public abstract class MixinClientWorld extends Level
 {
     @Shadow
-    private final Object2ObjectArrayMap<ColorResolver, BlockTintCache> colorCaches =
+    private final Object2ObjectArrayMap<ColorResolver, BlockTintCache> tintCaches =
         new Object2ObjectArrayMap<>();
 
     @Unique
@@ -102,8 +103,11 @@ public abstract class MixinClientWorld extends Level
 
     @Inject(method = "onChunkLoaded", at = @At("HEAD"))
     public void
-    onOnChunkLoaded(int chunkX, int chunkZ, CallbackInfo ci)
+    onOnChunkLoaded(ChunkPos chunkPos, CallbackInfo ci)
     {
+        int chunkX = chunkPos.x;
+        int chunkZ = chunkPos.z;
+
         betterBiomeBlend$blendColorCache.invalidateChunk(chunkX, chunkZ);
         betterBiomeBlend$chunkColorCache.invalidateSmallNeighborhood(chunkX, chunkZ);
         betterBiomeBlend$chunkBiomeCache.invalidateSmallNeighborhood(chunkX, chunkZ);
