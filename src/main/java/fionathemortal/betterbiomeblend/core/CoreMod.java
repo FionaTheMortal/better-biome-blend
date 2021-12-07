@@ -1,81 +1,43 @@
 package fionathemortal.betterbiomeblend.core;
 
-import net.minecraftforge.fml.relauncher.CoreModManager;
+import fionathemortal.betterbiomeblend.BetterBiomeBlend;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
-import org.apache.logging.log4j.LogManager;
 import org.spongepowered.asm.launch.MixinBootstrap;
+import org.spongepowered.asm.mixin.MixinEnvironment;
+import org.spongepowered.asm.mixin.Mixins;
 
 import javax.annotation.Nullable;
-import java.io.File;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.security.CodeSource;
 import java.util.Map;
 
-public class CoreMod implements IFMLLoadingPlugin 
-{
-    public CoreMod() 
-    {
-        MixinBootstrap.init();
-
-        CodeSource codeSource = this.getClass().getProtectionDomain().getCodeSource();
-        
-        if (codeSource != null) 
-        {
-            URL location = codeSource.getLocation();
-            
-            try 
-            {
-                File file = new File(location.toURI());
-                
-                if (file.isFile()) 
-                {
-                    CoreModManager.getReparseableCoremods().remove(file.getName());
-                }
-            } 
-            catch (URISyntaxException ignored) 
-            {
-            }
-        } 
-        else 
-        {
-            LogManager.getLogger().warn("No CodeSource, if this is not a development environment we might run into problems!");
-            LogManager.getLogger().warn(this.getClass().getProtectionDomain());
-        }
-    }
+@IFMLLoadingPlugin.MCVersion("1.12.2")
+@IFMLLoadingPlugin.Name("Better Biome Blend")
+public class CoreMod implements IFMLLoadingPlugin {
 
     @Override
-    public String[] 
-	getASMTransformerClass() 
-    {
+    public String[] getASMTransformerClass() {
         return new String[0];
     }
 
     @Override
-    public String 
-    getModContainerClass() 
-    {
+    public String getModContainerClass() {
         return null;
     }
 
     @Nullable
     @Override
-    public String 
-    getSetupClass() 
-    {
+    public String getSetupClass() {
         return null;
     }
 
     @Override
-    public void 
-    injectData(Map<String, Object> data) 
-    {
+    public void injectData(Map<String, Object> data) {
+        MixinBootstrap.init();
+        Mixins.addConfiguration("mixins." + BetterBiomeBlend.MOD_ID + ".json");
+        MixinEnvironment.getDefaultEnvironment().setObfuscationContext("searge");
     }
 
     @Override
-    public String
-    getAccessTransformerClass() 
-    {
+    public String getAccessTransformerClass() {
         return null;
     }
 }
