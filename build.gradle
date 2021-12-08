@@ -42,9 +42,13 @@ repositories {
 
 dependencies {
     implementation('org.spongepowered:mixin:0.7.11-SNAPSHOT') {
-        exclude module: 'guava'
-        exclude module: 'commons-io'
-        exclude module: 'gson'
+        exclude module: "asm-commons"
+        exclude module: "asm-tree"
+        exclude module: "launchwrapper"
+        exclude module: "guava"
+        exclude module: "log4j-core"
+        exclude module: "gson"
+        exclude module: "commons-io"
     }
 
     implementation files('libs/betterbiomeblend-1.1.5-optifine-api.jar')
@@ -82,8 +86,6 @@ jar {
         attributes "FMLCorePlugin": mod_core_plugin.replace('${mod_group}', mod_group)
         attributes "FMLCorePluginContainsFMLMod": "true"
         attributes "ForceLoadAsMod": "true"
-        attributes "TweakClass": "org.spongepowered.asm.launch.MixinTweaker"
-        attributes "TweakOrder": "0"
         attributes "MixinConfigs": mod_mixin_configs.replace('${mod_id}', mod_id)
         attributes "FMLAT": 'betterbiomeblend_at.cfg'
     }
