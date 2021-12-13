@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 public abstract class MixinBiomeColorHelper
 {
     @Overwrite
-    private static int
+    public static int
     getColorAtPos(IBlockAccess blockAccess, BlockPos pos, BiomeColorHelper.ColorResolver colorResolver)
     {
         int x = pos.getX();
