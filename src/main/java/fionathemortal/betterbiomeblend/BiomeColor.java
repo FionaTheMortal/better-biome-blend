@@ -1,16 +1,12 @@
 package fionathemortal.betterbiomeblend;
 
-import fionathemortal.betterbiomeblend.mixin.AccessorChunkCache;
-import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.BiomeColorHelper;
-import scala.tools.cmd.Opt;
 
 import java.util.Stack;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -524,11 +520,9 @@ public final class BiomeColor
         }
         else
         {
-            if (blockAccess instanceof AccessorChunkCache)
+            if (blockAccess instanceof ChunkCache)
             {
-                AccessorChunkCache chunkCache = (AccessorChunkCache)blockAccess;
-
-                result = chunkCache.getWorld();
+                result = ((ChunkCache) blockAccess).world;
             }
             else
             {
@@ -536,9 +530,9 @@ public final class BiomeColor
                 {
                     ChunkCache chunkCache = OptifineCompatibility.getChunkCacheFromChunkCacheOF(blockAccess);
 
-                    if (chunkCache instanceof AccessorChunkCache)
+                    if (chunkCache instanceof ChunkCache)
                     {
-                        result = ((AccessorChunkCache)chunkCache).getWorld();
+                        result = ((ChunkCache) blockAccess).world;
                     }
                 }
             }
