@@ -18,7 +18,24 @@ repositories {
     // for more information about repositories.
 }
 
+configurations.all {
+  resolutionStrategy.eachDependency { details ->
+    if (details.requested.group == 'org.apache.logging.log4j') {
+      details.useVersion '2.16.0'
+      details.because 'zero-day-exploits suck'
+    }
+  }
+}
+
 dependencies {
+	constraints{
+		implementation("org.apache.logging.log4j:log4j-core") {
+			version {
+				strictly("[2.16, 3[")
+				prefer("2.16.0")
+			}
+		}
+	}
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
