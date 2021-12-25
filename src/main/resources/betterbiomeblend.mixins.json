@@ -1,8 +1,8 @@
 {
   "required": true,
-  "package": "${project.group}.mixin",
+  "package": "fionathemortal.betterbiomeblend.mixin",
   "compatibilityLevel": "JAVA_16",
-  "refmap": "${mod_id}.refmap.json",
+  "refmap": "betterbiomeblend.refmap.json",
   "mixins": [],
   "client": [
     "AccessorOptionSlider",

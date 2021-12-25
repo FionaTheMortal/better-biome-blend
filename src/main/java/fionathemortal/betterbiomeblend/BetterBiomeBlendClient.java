@@ -13,7 +13,7 @@ import net.minecraft.client.gui.screens.VideoSettingsScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.util.Mth;
-import net.minecraftforge.client.event.GuiScreenEvent.InitGuiEvent;
+import net.minecraftforge.client.event.ScreenEvent.InitScreenEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,9 +41,9 @@ public final class BetterBiomeBlendClient
 
     @SubscribeEvent
     public static void
-    postInitGUIEvent(InitGuiEvent.Post event)
+    postInitGUIEvent(InitScreenEvent.Post event)
     {
-        Screen screen = event.getGui();
+        Screen screen = event.getScreen();
 
         if (screen instanceof VideoSettingsScreen)
         {
