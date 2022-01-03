@@ -1,5 +1,4 @@
 plugins {
-	id "com.autonomousapps.no-log4shell-settings" version "0.3"
 	id 'fabric-loom' version '0.10-SNAPSHOT'
 	id 'maven-publish'
 }
