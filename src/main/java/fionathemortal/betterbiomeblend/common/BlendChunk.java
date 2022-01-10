@@ -96,9 +96,13 @@ public final class BlendChunk
         int b6 = (4 - offsetX) * (    offsetZ) * (    offsetY) * (0xFF & data[3 * (sectionX +     4 * (sectionZ + 1) + 4 * 4 * (sectionY + 1)) + 2]);
         int b7 = (    offsetX) * (    offsetZ) * (    offsetY) * (0xFF & data[3 * (sectionX + 1 + 4 * (sectionZ + 1) + 4 * 4 * (sectionY + 1)) + 2]);
 
-        int r = (r0 + r1 + r2 + r3 + r4 + r5 + r6 + r7) / 64;
-        int g = (g0 + g1 + g2 + g3 + g4 + g5 + g6 + g7) / 64;
-        int b = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + b7) / 64;
+        // int r = (r0 + r1 + r2 + r3 + r4 + r5 + r6 + r7) / 64;
+        // int g = (g0 + g1 + g2 + g3 + g4 + g5 + g6 + g7) / 64;
+        // int b = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + b7) / 64;
+
+        int r = 0xFF & data[3 * (sectionX +     5 * (sectionZ)     + 5 * 5 * (sectionY    )) + 0];
+        int g = 0xFF & data[3 * (sectionX +     5 * (sectionZ)     + 5 * 5 * (sectionY    )) + 1];
+        int b = 0xFF & data[3 * (sectionX +     5 * (sectionZ)     + 5 * 5 * (sectionY    )) + 2];
 
         int result = Color.makeRGBAWithFullAlpha(r, g, b);
 

@@ -531,6 +531,8 @@ public final class ColorBlending
     public static void
     fillBlendBufferBoundaryWithEstimatedColors(byte[] blendBuffer)
     {
+        // TODO: This seems to be buggy but doesn't seem to be the bug I'm looking for rn.
+
         for (int y = 0;
             y < BLEND_BUFFER_DIM;
             ++y)
@@ -711,7 +713,7 @@ public final class ColorBlending
     {
         int BLEND_RADIUS = 3;
         int BLEND_DIM = 2 * BLEND_RADIUS + 1;
-        int BLEND_COUNT = BLEND_DIM * BLEND_DIM;
+        int BLEND_COUNT = BLEND_DIM * BLEND_DIM * BLEND_DIM;
         int BLEND_COLOR_CHUNK_DIM = 5;
 
         for (int y = 0;

@@ -54,7 +54,7 @@ public final class Color
     public static float
     byteToNormalizedFloat(int color)
     {
-        float result = (float)color / 255.0f;
+        float result = (float)(0xFF & color) / 255.0f;
 
         return result;
     }
@@ -104,7 +104,7 @@ public final class Color
     public static float
     sRGBByteToLinearFloat(int color)
     {
-        float result = sRGBLUT[color];
+        float result = sRGBLUT[0xFF & color];
 
         return result;
     }
