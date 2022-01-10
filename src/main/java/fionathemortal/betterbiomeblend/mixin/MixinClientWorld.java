@@ -1,6 +1,6 @@
 package fionathemortal.betterbiomeblend.mixin;
 
-import fionathemortal.betterbiomeblend.*;
+import fionathemortal.betterbiomeblend.common.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import net.minecraft.client.color.block.BlockTintCache;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -40,41 +40,41 @@ public abstract class MixinClientWorld extends Level
     private final BiomeCache betterBiomeBlend$chunkBiomeCache = new BiomeCache(32);
 
     @Unique
-    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalWaterChunk =
+    private final ThreadLocal<BlendChunk> betterBiomeBlend$threadLocalWaterChunk =
         ThreadLocal.withInitial(
             () ->
             {
-                ColorChunk chunk = new ColorChunk();
+                BlendChunk chunk = new BlendChunk();
                 chunk.acquire();
                 return chunk;
             });
 
     @Unique
-    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalGrassChunk =
+    private final ThreadLocal<BlendChunk> betterBiomeBlend$threadLocalGrassChunk =
         ThreadLocal.withInitial(
             () ->
             {
-                ColorChunk chunk = new ColorChunk();
+                BlendChunk chunk = new BlendChunk();
                 chunk.acquire();
                 return chunk;
             });
 
     @Unique
-    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalFoliageChunk =
+    private final ThreadLocal<BlendChunk> betterBiomeBlend$threadLocalFoliageChunk =
         ThreadLocal.withInitial(
             () ->
             {
-                ColorChunk chunk = new ColorChunk();
+                BlendChunk chunk = new BlendChunk();
                 chunk.acquire();
                 return chunk;
             });
 
     @Unique
-    private final ThreadLocal<ColorChunk> betterBiomeBlend$threadLocalGenericChunk =
+    private final ThreadLocal<BlendChunk> betterBiomeBlend$threadLocalGenericChunk =
         ThreadLocal.withInitial(
             () ->
             {
-                ColorChunk chunk = new ColorChunk();
+                BlendChunk chunk = new BlendChunk();
                 chunk.acquire();
                 return chunk;
             });
@@ -118,7 +118,7 @@ public abstract class MixinClientWorld extends Level
     getBlockTint(BlockPos blockPosIn, ColorResolver colorResolverIn)
     {
         int                     colorType;
-        ThreadLocal<ColorChunk> threadLocalChunk;
+        ThreadLocal<BlendChunk> threadLocalChunk;
 
         if (colorResolverIn == BiomeColors.GRASS_COLOR_RESOLVER)
         {
@@ -142,12 +142,14 @@ public abstract class MixinClientWorld extends Level
         }
 
         int x = blockPosIn.getX();
+        int y = blockPosIn.getY();
         int z = blockPosIn.getZ();
 
         int chunkX = x >> 4;
+        int chunkY = y >> 4;
         int chunkZ = z >> 4;
 
-        ColorChunk chunk = ColorCaching.getThreadLocalChunk(threadLocalChunk, chunkX, chunkZ, colorType);
+        BlendChunk chunk = ColorCaching.getThreadLocalChunk(threadLocalChunk, chunkX, chunkY, chunkZ, colorType);
 
         if (chunk == null)
         {
@@ -156,6 +158,7 @@ public abstract class MixinClientWorld extends Level
                 colorResolverIn,
                 colorType,
                 chunkX,
+                chunkY,
                 chunkZ,
                 betterBiomeBlend$blendColorCache,
                 betterBiomeBlend$chunkColorCache,
@@ -164,7 +167,7 @@ public abstract class MixinClientWorld extends Level
             ColorCaching.setThreadLocalChunk(threadLocalChunk, chunk, betterBiomeBlend$blendColorCache);
         }
 
-        int result = chunk.getColor(x, z);
+        int result = chunk.getColor(x, y, z);
 
         return result;
     }
