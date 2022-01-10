@@ -529,55 +529,6 @@ public final class ColorBlending
     }
 
     public static void
-    fillBlendBufferBoundaryWithEstimatedColors(byte[] blendBuffer)
-    {
-        // TODO: This seems to be buggy but doesn't seem to be the bug I'm looking for rn.
-
-        for (int y = 0;
-            y < BLEND_BUFFER_DIM;
-            ++y)
-        {
-            for (int x = 0;
-                 x < BLEND_BUFFER_DIM;
-                 ++x)
-            {
-                int z = BLEND_BUFFER_MAX;
-
-                int dstIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, x, y, z);
-                int srcIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, x, y, z - 1);
-
-                blendBuffer[3 * dstIndex + 0] = blendBuffer[3 * srcIndex + 0];
-                blendBuffer[3 * dstIndex + 1] = blendBuffer[3 * srcIndex + 1];
-                blendBuffer[3 * dstIndex + 2] = blendBuffer[3 * srcIndex + 2];
-            }
-
-            for (int z = 0;
-                 z < BLEND_BUFFER_DIM;
-                 ++z)
-            {
-                int x = BLEND_BUFFER_MAX;
-
-                int dstIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, x,     y, z);
-                int srcIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, x - 1, y, z);
-
-                blendBuffer[3 * dstIndex + 0] = blendBuffer[3 * srcIndex + 0];
-                blendBuffer[3 * dstIndex + 1] = blendBuffer[3 * srcIndex + 1];
-                blendBuffer[3 * dstIndex + 2] = blendBuffer[3 * srcIndex + 2];
-            }
-
-            int x = BLEND_BUFFER_MAX;
-            int z = BLEND_BUFFER_MAX;
-
-            int dstIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, x,     y, z);
-            int srcIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, x - 1, y, z - 1);
-
-            blendBuffer[3 * dstIndex + 0] = blendBuffer[3 * srcIndex + 0];
-            blendBuffer[3 * dstIndex + 1] = blendBuffer[3 * srcIndex + 1];
-            blendBuffer[3 * dstIndex + 2] = blendBuffer[3 * srcIndex + 2];
-        }
-    }
-
-    public static void
     gatherRawColorsToCaches(
         Level         world,
         ColorResolver colorResolver,
@@ -622,6 +573,8 @@ public final class ColorBlending
 
         BiomeChunk biomeChunk = biomeCache.getOrDefaultInitializeChunk(chunkX, chunkY, chunkZ);
         ColorChunk colorChunk = colorCache.getOrDefaultInitializeChunk(chunkX, chunkY, chunkZ, colorType);
+
+        // TODO: Check for bugs in default color handling
 
         final boolean skipBoundary = !neighborsAreLoaded;
 
@@ -704,8 +657,6 @@ public final class ColorBlending
                 ++neighborIndex;
             }
         }
-
-        // fillBlendBufferBoundaryWithEstimatedColors(blendBuffer);
     }
 
     public static void
