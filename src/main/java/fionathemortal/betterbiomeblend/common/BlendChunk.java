@@ -46,12 +46,6 @@ public final class BlendChunk
         key = ColorCaching.INVALID_CHUNK_KEY;
     }
 
-    private static byte[]
-    weights =
-    {
-
-    };
-
     public int
     getColor(int x, int y, int z)
     {
@@ -67,38 +61,47 @@ public final class BlendChunk
         int offsetY = blockY & 3;
         int offsetZ = blockZ & 3;
 
-        // TODO:
+        int weight0 = (4 - offsetX) * (4 - offsetZ) * (4 - offsetY);
+        int weight1 = (    offsetX) * (4 - offsetZ) * (4 - offsetY);
+        int weight2 = (4 - offsetX) * (    offsetZ) * (4 - offsetY);
+        int weight3 = (    offsetX) * (    offsetZ) * (4 - offsetY);
+        int weight4 = (4 - offsetX) * (4 - offsetZ) * (    offsetY);
+        int weight5 = (    offsetX) * (4 - offsetZ) * (    offsetY);
+        int weight6 = (4 - offsetX) * (    offsetZ) * (    offsetY);
+        int weight7 = (    offsetX) * (    offsetZ) * (    offsetY);
 
-        int r0 = (4 - offsetX) * (4 - offsetZ) * (4 - offsetY) * (0xFF & data[3 * (sectionX +     5 * (sectionZ)     + 5 * 5 * (sectionY    )) + 0]);
-        int r1 = (    offsetX) * (4 - offsetZ) * (4 - offsetY) * (0xFF & data[3 * (sectionX + 1 + 5 * (sectionZ)     + 5 * 5 * (sectionY    )) + 0]);
-        int r2 = (4 - offsetX) * (    offsetZ) * (4 - offsetY) * (0xFF & data[3 * (sectionX +     5 * (sectionZ + 1) + 5 * 5 * (sectionY    )) + 0]);
-        int r3 = (    offsetX) * (    offsetZ) * (4 - offsetY) * (0xFF & data[3 * (sectionX + 1 + 5 * (sectionZ + 1) + 5 * 5 * (sectionY    )) + 0]);
-        int r4 = (4 - offsetX) * (4 - offsetZ) * (    offsetY) * (0xFF & data[3 * (sectionX +     5 * (sectionZ)     + 5 * 5 * (sectionY + 1)) + 0]);
-        int r5 = (    offsetX) * (4 - offsetZ) * (    offsetY) * (0xFF & data[3 * (sectionX + 1 + 5 * (sectionZ)     + 5 * 5 * (sectionY + 1)) + 0]);
-        int r6 = (4 - offsetX) * (    offsetZ) * (    offsetY) * (0xFF & data[3 * (sectionX +     5 * (sectionZ + 1) + 5 * 5 * (sectionY + 1)) + 0]);
-        int r7 = (    offsetX) * (    offsetZ) * (    offsetY) * (0xFF & data[3 * (sectionX + 1 + 5 * (sectionZ + 1) + 5 * 5 * (sectionY + 1)) + 0]);
+        int index0 = 3 * ColorBlending.getCacheArrayIndex(5, sectionX, sectionY, sectionZ);
+        int index1 = index0 +  3;
+        int index2 = index0 + 15;
+        int index3 = index0 + 18;
+        int index4 = index0 + 75;
+        int index5 = index0 + 78;
+        int index6 = index0 + 90;
+        int index7 = index0 + 93;
 
-        int g0 = (4 - offsetX) * (4 - offsetZ) * (4 - offsetY) * (0xFF & data[3 * (sectionX +     5 * (sectionZ)     + 5 * 5 * (sectionY    )) + 1]);
-        int g1 = (    offsetX) * (4 - offsetZ) * (4 - offsetY) * (0xFF & data[3 * (sectionX + 1 + 5 * (sectionZ)     + 5 * 5 * (sectionY    )) + 1]);
-        int g2 = (4 - offsetX) * (    offsetZ) * (4 - offsetY) * (0xFF & data[3 * (sectionX +     5 * (sectionZ + 1) + 5 * 5 * (sectionY    )) + 1]);
-        int g3 = (    offsetX) * (    offsetZ) * (4 - offsetY) * (0xFF & data[3 * (sectionX + 1 + 5 * (sectionZ + 1) + 5 * 5 * (sectionY    )) + 1]);
-        int g4 = (4 - offsetX) * (4 - offsetZ) * (    offsetY) * (0xFF & data[3 * (sectionX +     5 * (sectionZ)     + 5 * 5 * (sectionY + 1)) + 1]);
-        int g5 = (    offsetX) * (4 - offsetZ) * (    offsetY) * (0xFF & data[3 * (sectionX + 1 + 5 * (sectionZ)     + 5 * 5 * (sectionY + 1)) + 1]);
-        int g6 = (4 - offsetX) * (    offsetZ) * (    offsetY) * (0xFF & data[3 * (sectionX +     5 * (sectionZ + 1) + 5 * 5 * (sectionY + 1)) + 1]);
-        int g7 = (    offsetX) * (    offsetZ) * (    offsetY) * (0xFF & data[3 * (sectionX + 1 + 5 * (sectionZ + 1) + 5 * 5 * (sectionY + 1)) + 1]);
+        long packed0 = ((long)(0xFF & data[index0 + 0])) | ((long)(0xFF & data[index0 + 1]) << 24) | ((long)(0xFF & data[index0 + 2]) << 48);
+        long packed1 = ((long)(0xFF & data[index1 + 0])) | ((long)(0xFF & data[index1 + 1]) << 24) | ((long)(0xFF & data[index1 + 2]) << 48);
+        long packed2 = ((long)(0xFF & data[index2 + 0])) | ((long)(0xFF & data[index2 + 1]) << 24) | ((long)(0xFF & data[index2 + 2]) << 48);
+        long packed3 = ((long)(0xFF & data[index3 + 0])) | ((long)(0xFF & data[index3 + 1]) << 24) | ((long)(0xFF & data[index3 + 2]) << 48);
+        long packed4 = ((long)(0xFF & data[index4 + 0])) | ((long)(0xFF & data[index4 + 1]) << 24) | ((long)(0xFF & data[index4 + 2]) << 48);
+        long packed5 = ((long)(0xFF & data[index5 + 0])) | ((long)(0xFF & data[index5 + 1]) << 24) | ((long)(0xFF & data[index5 + 2]) << 48);
+        long packed6 = ((long)(0xFF & data[index6 + 0])) | ((long)(0xFF & data[index6 + 1]) << 24) | ((long)(0xFF & data[index6 + 2]) << 48);
+        long packed7 = ((long)(0xFF & data[index7 + 0])) | ((long)(0xFF & data[index7 + 1]) << 24) | ((long)(0xFF & data[index7 + 2]) << 48);
 
-        int b0 = (4 - offsetX) * (4 - offsetZ) * (4 - offsetY) * (0xFF & data[3 * (sectionX +     5 * (sectionZ)     + 5 * 5 * (sectionY    )) + 2]);
-        int b1 = (    offsetX) * (4 - offsetZ) * (4 - offsetY) * (0xFF & data[3 * (sectionX + 1 + 5 * (sectionZ)     + 5 * 5 * (sectionY    )) + 2]);
-        int b2 = (4 - offsetX) * (    offsetZ) * (4 - offsetY) * (0xFF & data[3 * (sectionX +     5 * (sectionZ + 1) + 5 * 5 * (sectionY    )) + 2]);
-        int b3 = (    offsetX) * (    offsetZ) * (4 - offsetY) * (0xFF & data[3 * (sectionX + 1 + 5 * (sectionZ + 1) + 5 * 5 * (sectionY    )) + 2]);
-        int b4 = (4 - offsetX) * (4 - offsetZ) * (    offsetY) * (0xFF & data[3 * (sectionX +     5 * (sectionZ)     + 5 * 5 * (sectionY + 1)) + 2]);
-        int b5 = (    offsetX) * (4 - offsetZ) * (    offsetY) * (0xFF & data[3 * (sectionX + 1 + 5 * (sectionZ)     + 5 * 5 * (sectionY + 1)) + 2]);
-        int b6 = (4 - offsetX) * (    offsetZ) * (    offsetY) * (0xFF & data[3 * (sectionX +     5 * (sectionZ + 1) + 5 * 5 * (sectionY + 1)) + 2]);
-        int b7 = (    offsetX) * (    offsetZ) * (    offsetY) * (0xFF & data[3 * (sectionX + 1 + 5 * (sectionZ + 1) + 5 * 5 * (sectionY + 1)) + 2]);
+        long v0 = packed0 * weight0;
+        long v1 = packed1 * weight1;
+        long v2 = packed2 * weight2;
+        long v3 = packed3 * weight3;
+        long v4 = packed4 * weight4;
+        long v5 = packed5 * weight5;
+        long v6 = packed6 * weight6;
+        long v7 = packed7 * weight7;
 
-        int r = (r0 + r1 + r2 + r3 + r4 + r5 + r6 + r7) / 64;
-        int g = (g0 + g1 + g2 + g3 + g4 + g5 + g6 + g7) / 64;
-        int b = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + b7) / 64;
+        long packedResult = (v0 + v1 + v2 + v3 + v4 + v5 + v6 + v7) / 64;
+
+        int r = (int)(packedResult      ) & 0xFF;
+        int g = (int)(packedResult >> 24) & 0xFF;
+        int b = (int)(packedResult >> 48) & 0xFF;
 
         int result = Color.makeRGBAWithFullAlpha(r, g, b);
 
