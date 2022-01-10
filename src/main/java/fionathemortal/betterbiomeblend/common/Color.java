@@ -70,15 +70,17 @@ public final class Color
     public static float
     sRGBToLinear(float color)
     {
+        float clamped = Math.max(Math.min(color, 1.0f), 0.0f);
+
         float result;
 
-        if (color <= 0.0404482362771082f)
+        if (clamped <= 0.0404482362771082f)
         {
             result = color / 12.92f;
         }
         else
         {
-            result = (float)Math.pow((color + 0.055f) / 1.055f, 2.4f);
+            result = (float)Math.pow((clamped + 0.055f) / 1.055f, 2.4f);
         }
 
         return result;
@@ -87,15 +89,17 @@ public final class Color
     public static float
     linearTosRGB(float color)
     {
+        float clamped = Math.max(Math.min(color, 1.0f), 0.0f);
+
         float result;
 
-        if (color <= 0.00313066844250063f)
+        if (clamped <= 0.00313066844250063f)
         {
-            result = color * 12.92f;
+            result = clamped * 12.92f;
         }
         else
         {
-            result = 1.055f * (float)Math.pow(color, 1.0f / 2.4f) - 0.055f;
+            result = 1.055f * (float)Math.pow(clamped, 1.0f / 2.4f) - 0.055f;
         }
 
         return result;

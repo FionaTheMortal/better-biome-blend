@@ -18,7 +18,7 @@ public final class ColorBlending
     public static final int SECTION_MASK = SECTION_SIZE - 1;
     public static final int SECTION_OFFSET = 2;
 
-    public static final int BLEND_BUFFER_DIM = 12;
+    public static final int BLEND_BUFFER_DIM = 11;
     public static final int BLEND_BUFFER_MAX = BLEND_BUFFER_DIM - 1;
     public static final int COLOR_CHUNK_DIM = 4;
     public static final int COLOR_CHUNK_MAX = COLOR_CHUNK_DIM - 1;
@@ -705,7 +705,7 @@ public final class ColorBlending
             }
         }
 
-        fillBlendBufferBoundaryWithEstimatedColors(blendBuffer);
+        // fillBlendBufferBoundaryWithEstimatedColors(blendBuffer);
     }
 
     public static void
@@ -737,11 +737,11 @@ public final class ColorBlending
                         ++sourceY)
                     {
                         for (int sourceZ = 0;
-                             sourceZ <= BLEND_DIM;
+                             sourceZ < BLEND_DIM;
                              ++sourceZ)
                         {
                             for (int sourceX = 0;
-                                 sourceX <= BLEND_DIM;
+                                 sourceX < BLEND_DIM;
                                  ++sourceX)
                             {
                                 int blendX = x + sourceX;
@@ -763,9 +763,13 @@ public final class ColorBlending
                     float colorG = accumulatedG / BLEND_COUNT;
                     float colorB = accumulatedB / BLEND_COUNT;
 
-                    result[3 * cacheIndex + 0] = Color.linearFloatTosRGBByte(colorR);
-                    result[3 * cacheIndex + 1] = Color.linearFloatTosRGBByte(colorG);
-                    result[3 * cacheIndex + 2] = Color.linearFloatTosRGBByte(colorB);
+                    byte byteR = Color.linearFloatTosRGBByte(colorR);
+                    byte byteG = Color.linearFloatTosRGBByte(colorG);
+                    byte byteB = Color.linearFloatTosRGBByte(colorB);
+
+                    result[3 * cacheIndex + 0] = byteR;
+                    result[3 * cacheIndex + 1] = byteG;
+                    result[3 * cacheIndex + 2] = byteB;
                 }
             }
         }

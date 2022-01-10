@@ -55,9 +55,9 @@ public final class BlendChunk
     public int
     getColor(int x, int y, int z)
     {
-        int blockX = (x & 15) + 2;
-        int blockY = (y & 15) + 2;
-        int blockZ = (z & 15) + 2;
+        int blockX = (x & 15);
+        int blockY = (y & 15);
+        int blockZ = (z & 15);
 
         int sectionX = blockX >> 2;
         int sectionY = blockY >> 2;
