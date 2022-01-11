@@ -4,10 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import fionathemortal.betterbiomeblend.common.ColorBlending;
 import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.Option;
-import net.minecraft.client.Options;
-import net.minecraft.client.ProgressOption;
+import net.minecraft.client.*;
 import net.minecraft.client.gui.components.OptionsList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
@@ -137,7 +134,9 @@ public final class BetterBiomeBlendClient
                                     screen.width,
                                     BIOME_BLEND_RADIUS);
 
-                                rowListEntries.set(index, newRow);
+                                // rowListEntries.set(index, newRow);
+
+                                rowListEntries.remove(index);
 
                                 replacedOption = true;
                             }
