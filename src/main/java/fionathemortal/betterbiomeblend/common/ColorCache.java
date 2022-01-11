@@ -65,6 +65,9 @@ public final class ColorCache
         {
             releaseChunkWithoutLock(chunk);
 
+            chunk.prev = null;
+            chunk.next = null;
+
             chunk.markAsInvalid();
         }
 
@@ -102,6 +105,45 @@ public final class ColorCache
     }
 
     public void
+    addToInvalidationHash(ColorChunk chunk)
+    {
+        ColorChunk otherChunk = invalidationHash.get(chunk.invalidationKey);
+
+        if (otherChunk != null)
+        {
+            chunk.next = otherChunk.next;
+            chunk.prev = otherChunk;
+
+            if (otherChunk.next != null)
+            {
+                otherChunk.next.prev = chunk;
+            }
+
+            otherChunk.next = chunk;
+        }
+        else
+        {
+            invalidationHash.put(chunk.invalidationKey, chunk);
+        }
+    }
+
+    public void
+    removeFromInvalidationHash(ColorChunk chunk)
+    {
+        if (chunk.prev == null)
+        {
+            invalidationHash.remove(chunk.invalidationKey);
+
+            if (chunk.next != null)
+            {
+                invalidationHash.put(chunk.invalidationKey, chunk.next);
+            }
+        }
+
+        chunk.removeFromLinkedList();
+    }
+
+    public void
     invalidateSmallNeighborhood(int chunkX, int chunkZ)
     {
         lock.lock();
@@ -118,25 +160,22 @@ public final class ColorCache
 
                 ColorChunk first = invalidationHash.get(key);
 
-                if (x == 0 && z == 0)
-                {
-                    invalidationHash.remove(key);
-                }
-
-                ColorChunk next = null;
-
                 for (ColorChunk current = first;
                     current != null;
-                    current = next)
+                    )
                 {
-                    next = current.next;
+                    ColorChunk next = current.next;
+
+                    if (next == first)
+                    {
+                        int i = 0;
+                    }
 
                     if (x == 0 && z == 0)
                     {
                         hash.remove(current.key);
 
-                        current.prev = null;
-                        current.next = null;
+                        removeFromInvalidationHash(current);
 
                         releaseChunkWithoutLock(current);
 
@@ -175,43 +214,13 @@ public final class ColorCache
                             }
                         }
                     }
+
+                    current = next;
                 }
             }
         }
 
         lock.unlock();
-    }
-
-    public void
-    addToInvalidationHash(ColorChunk chunk)
-    {
-        ColorChunk otherChunk = invalidationHash.get(chunk.invalidationKey);
-
-        if (otherChunk != null)
-        {
-            chunk.next = otherChunk;
-            otherChunk.prev = chunk;
-        }
-        else
-        {
-            invalidationHash.put(chunk.invalidationKey, chunk);
-        }
-    }
-
-    public void
-    removeFromInvalidationHash(ColorChunk chunk)
-    {
-        if (chunk.prev == null)
-        {
-            invalidationHash.remove(chunk.invalidationKey);
-
-            if (chunk.next != null)
-            {
-                invalidationHash.put(chunk.invalidationKey, chunk.next);
-            }
-        }
-
-        chunk.removeFromLinkedList();
     }
 
     public ColorChunk
@@ -255,6 +264,14 @@ public final class ColorCache
 
             result.key = key;
             result.invalidationKey = invalidationKey;
+
+            if (result.prev != null || result.next != null)
+            {
+                int i = 0;
+            }
+
+            result.prev = null;
+            result.next = null;
 
             Arrays.fill(result.data, (byte)-1);
 

@@ -116,7 +116,7 @@ public abstract class MixinClientWorld extends Level
 
     @Overwrite
     public int
-    getBlockTint(@NotNull BlockPos blockPosIn, @NotNull ColorResolver colorResolverIn)
+    getBlockTint(BlockPos blockPosIn, ColorResolver colorResolverIn)
     {
         int                     colorType;
         ThreadLocal<BlendChunk> threadLocalChunk;

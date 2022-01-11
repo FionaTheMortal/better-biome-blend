@@ -11,6 +11,7 @@ public final class BiomeCache
     public final ReentrantLock                            lock;
     public final Long2ObjectLinkedOpenHashMap<BiomeChunk> hash;
     public final Stack<BiomeChunk>                        free;
+    public final Long2ObjectLinkedOpenHashMap<BiomeChunk> invalidationHash;
 
     public
     BiomeCache(int count)
@@ -18,6 +19,8 @@ public final class BiomeCache
         lock = new ReentrantLock();
         hash = new Long2ObjectLinkedOpenHashMap<>(count);
         free = new Stack<>();
+
+        invalidationHash = new Long2ObjectLinkedOpenHashMap<>(count / 2);
 
         for (int index = 0;
             index < count;
@@ -62,12 +65,82 @@ public final class BiomeCache
         {
             releaseChunkWithoutLock(chunk);
 
+            chunk.prev = null;
+            chunk.next = null;
+
             chunk.markAsInvalid();
         }
 
         hash.clear();
 
+        invalidationHash.clear();
+
         lock.unlock();
+    }
+
+    private static final byte[]
+    invalidationRectParams =
+    {
+            3, 4,
+            0, 4,
+            0, 0
+    };
+
+    public static int
+    getInvalidationRectMin(int index)
+    {
+        int offset = 2 * (index + 1);
+        int result = invalidationRectParams[offset + 0];
+
+        return result;
+    }
+
+    public static int
+    getInvalidationRectMax(int index)
+    {
+        int offset = 2 * (index + 1);
+        int result = invalidationRectParams[offset + 1];
+
+        return result;
+    }
+
+    public void
+    addToInvalidationHash(BiomeChunk chunk)
+    {
+        BiomeChunk otherChunk = invalidationHash.get(chunk.invalidationKey);
+
+        if (otherChunk != null)
+        {
+            chunk.next = otherChunk.next;
+            chunk.prev = otherChunk;
+
+            if (otherChunk.next != null)
+            {
+                otherChunk.next.prev = chunk;
+            }
+
+            otherChunk.next = chunk;
+        }
+        else
+        {
+            invalidationHash.put(chunk.invalidationKey, chunk);
+        }
+    }
+
+    public void
+    removeFromInvalidationHash(BiomeChunk chunk)
+    {
+        if (chunk.prev == null)
+        {
+            invalidationHash.remove(chunk.invalidationKey);
+
+            if (chunk.next != null)
+            {
+                invalidationHash.put(chunk.invalidationKey, chunk.next);
+            }
+        }
+
+        chunk.removeFromLinkedList();
     }
 
     public void
@@ -83,66 +156,64 @@ public final class BiomeCache
                  x <= 1;
                  ++x)
             {
-                // TODO: I mean this is real silly but it works. Find a better way to access chunks
+                long key = ColorCaching.getChunkKey(chunkX + x, 0, chunkZ + z, 0);
 
-                for (int y = 0;
-                     y <= 20;
-                     ++y)
+                BiomeChunk first = invalidationHash.get(key);
+
+                for (BiomeChunk current = first;
+                     current != null;
+                    )
                 {
-                    for (int colorType = BiomeColorType.FIRST;
-                         colorType < CustomColorResolverCompatibility.nextColorResolverID;
-                         ++colorType)
+                    BiomeChunk next = current.next;
+
+                    if (next == first)
                     {
-                        long key = ColorCaching.getChunkKey(chunkX + x, y, chunkZ + z, colorType);
+                        int i = 0;
+                    }
 
-                        if (x == 0 && z == 0)
+                    if (x == 0 && z == 0)
+                    {
+                        hash.remove(current.key);
+
+                        removeFromInvalidationHash(current);
+
+                        releaseChunkWithoutLock(current);
+
+                        current.markAsInvalid();
+                    }
+                    else
+                    {
+                        int minX = getInvalidationRectMin(x);
+                        int minY = 0;
+                        int minZ = getInvalidationRectMin(z);
+
+                        int maxX = getInvalidationRectMax(x);
+                        int maxY = 4;
+                        int maxZ = getInvalidationRectMax(z);
+
+                        int cacheDim = 4;
+
+                        for (int y1 = minY;
+                             y1 < maxY;
+                             ++y1)
                         {
-                            BiomeChunk chunk = hash.remove(key);
-
-                            if (chunk != null)
+                            for (int z1 = minZ;
+                                 z1 < maxZ;
+                                 ++z1)
                             {
-                                releaseChunkWithoutLock(chunk);
-
-                                chunk.markAsInvalid();
-                            }
-                        }
-                        else
-                        {
-                            BiomeChunk chunk = hash.get(key);
-
-                            if (chunk != null)
-                            {
-                                int minX = ColorBlending.getNeighborRectMin(x);
-                                int minY = 0;
-                                int minZ = ColorBlending.getNeighborRectMin(z);
-
-                                int maxX = ColorBlending.getNeighborRectMax(x);
-                                int maxY = 4;
-                                int maxZ = ColorBlending.getNeighborRectMax(z);
-
-                                int cacheDim = 4;
-
-                                for (int y1 = minY;
-                                     y1 < maxY;
-                                     ++y1)
+                                for (int x1 = minX;
+                                     x1 < maxX;
+                                     ++x1)
                                 {
-                                    for (int z1 = minZ;
-                                         z1 < maxZ;
-                                         ++z1)
-                                    {
-                                        for (int x1 = minX;
-                                             x1 < maxX;
-                                             ++x1)
-                                        {
-                                            int cacheIndex = x1 + z1 * cacheDim + y1 * cacheDim * cacheDim;
+                                    int cacheIndex = ColorBlending.getCacheArrayIndex(cacheDim, x1, y1, z1);
 
-                                            chunk.data[cacheIndex] = null;
-                                        }
-                                    }
+                                    current.data[cacheIndex] = null;
                                 }
                             }
                         }
                     }
+
+                    current = next;
                 }
             }
         }
@@ -183,15 +254,30 @@ public final class BiomeCache
                         hash.putAndMoveToFirst(lastKey, result);
                     }
                 }
+
+                removeFromInvalidationHash(result);
             }
 
+            long invalidationKey = ColorCaching.getChunkKey(chunkX, 0, chunkZ, 0);
+
             result.key = key;
+            result.invalidationKey = invalidationKey;
+
+            if (result.prev != null || result.next != null)
+            {
+                int i = 0;
+            }
+
+            result.prev = null;
+            result.next = null;
 
             Arrays.fill(result.data, null);
 
             result.acquire();
 
             hash.putAndMoveToFirst(result.key, result);
+
+            addToInvalidationHash(result);
         }
 
         result.acquire();

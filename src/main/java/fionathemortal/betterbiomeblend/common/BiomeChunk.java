@@ -11,6 +11,11 @@ public final class BiomeChunk
 
     public AtomicInteger refCount = new AtomicInteger();
 
+    public long   invalidationKey;
+
+    public BiomeChunk prev;
+    public BiomeChunk next;
+
     public
     BiomeChunk()
     {
@@ -45,5 +50,22 @@ public final class BiomeChunk
     markAsInvalid()
     {
         key = ColorCaching.INVALID_CHUNK_KEY;
+    }
+
+    public void
+    removeFromLinkedList()
+    {
+        if (this.prev != null)
+        {
+            this.prev.next = this.next;
+        }
+
+        if (this.next != null)
+        {
+            this.next.prev = this.prev;
+        }
+
+        this.prev = null;
+        this.next = null;
     }
 }
