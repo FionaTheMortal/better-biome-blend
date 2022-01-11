@@ -13,6 +13,7 @@ import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.storage.WritableLevelData;
+import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -115,7 +116,7 @@ public abstract class MixinClientWorld extends Level
 
     @Overwrite
     public int
-    getBlockTint(BlockPos blockPosIn, ColorResolver colorResolverIn)
+    getBlockTint(@NotNull BlockPos blockPosIn, @NotNull ColorResolver colorResolverIn)
     {
         int                     colorType;
         ThreadLocal<BlendChunk> threadLocalChunk;

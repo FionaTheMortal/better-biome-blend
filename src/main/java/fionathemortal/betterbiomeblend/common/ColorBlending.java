@@ -9,7 +9,10 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
 
 import java.util.Stack;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.StreamSupport;
 
 public final class ColorBlending
 {
@@ -726,6 +729,14 @@ public final class ColorBlending
         }
     }
 
+    public  static final AtomicLong    benchmarkStart   = new AtomicLong();
+    private static final AtomicLong    totalNanoseconds = new AtomicLong();
+    private static final AtomicInteger totalCallCount   = new AtomicInteger();
+
+    private static final AtomicLong    intervalNanoseconds = new AtomicLong();
+    private static final AtomicLong    intervalStart       = new AtomicLong();
+    private static final AtomicInteger intervalCallCount   = new AtomicInteger();
+
     public static void
     generateBlendedColorChunk(
         Level         world,
@@ -740,6 +751,20 @@ public final class ColorBlending
     {
         ColorBlendBuffer blendBuffer = acquireBlendBuffer();
 
+        boolean measureOverhead = BetterBiomeBlendClient.measureOverhead;
+        long    startClock = 0;
+
+        if (measureOverhead)
+        {
+            startClock = System.nanoTime();
+
+            if (benchmarkStart.get() == 0)
+            {
+                intervalStart.set(startClock);
+                benchmarkStart.set(startClock);
+            }
+        }
+
         gatherRawColorsToCaches(
             world,
             colorResolverIn,
@@ -752,6 +777,40 @@ public final class ColorBlending
             blendBuffer.color);
 
         blendColorsForChunk(result, blendBuffer.color);
+
+        if (measureOverhead)
+        {
+            long stopClock   = System.nanoTime();
+            long elapsedTime = stopClock - startClock;
+
+            long totalElapsedTime = intervalNanoseconds.addAndGet(elapsedTime);
+            int  totalCallCount   = intervalCallCount.incrementAndGet();
+
+            if (totalCallCount == 100)
+            {
+                intervalCallCount.addAndGet(-100);
+
+                long intervalStartClock            = intervalStart.get();
+                long elapsedTimeSinceIntervalStart = stopClock - intervalStartClock;
+
+                intervalStart.set(stopClock);
+                intervalNanoseconds.addAndGet(-totalElapsedTime);
+                intervalCallCount.addAndGet(-totalCallCount);
+
+                long elapsedTimeSinceIntervalStartInMicroseconds = elapsedTimeSinceIntervalStart / 1000;
+                long totalElapsedTimeInMicroseconds              = totalElapsedTime / 1000;
+
+                String infoString = String.format(
+                    "chunks, wall time, calls per second, cpu time, avrg cpu time: %d, %d, %f, %d, %d",
+                    totalCallCount,
+                    elapsedTimeSinceIntervalStartInMicroseconds,
+                    ((double)totalCallCount / (double)elapsedTimeSinceIntervalStartInMicroseconds * 1000000),
+                    totalElapsedTimeInMicroseconds,
+                    totalElapsedTimeInMicroseconds / totalCallCount);
+
+                BetterBiomeBlendClient.LOGGER.info(infoString);
+            }
+        }
 
         releaseBlendBuffer(blendBuffer);
     }

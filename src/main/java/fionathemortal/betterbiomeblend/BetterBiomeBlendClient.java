@@ -1,19 +1,25 @@
 package fionathemortal.betterbiomeblend;
 
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import fionathemortal.betterbiomeblend.common.ColorBlending;
 import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Option;
 import net.minecraft.client.Options;
 import net.minecraft.client.ProgressOption;
-import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.OptionsList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.VideoSettingsScreen;
+import net.minecraft.commands.CommandSource;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.util.Mth;
 import net.minecraftforge.client.event.ScreenEvent.InitScreenEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,6 +29,8 @@ import java.util.List;
 
 public final class BetterBiomeBlendClient
 {
+    public static volatile boolean measureOverhead = false;
+
     public static final Logger LOGGER = LogManager.getLogger(BetterBiomeBlend.MOD_ID);
 
     public static final int BIOME_BLEND_RADIUS_MAX = 14;
@@ -51,6 +59,37 @@ public final class BetterBiomeBlendClient
 
             replaceBiomeBlendRadiusOption(videoSettingsScreen);
         }
+    }
+
+    @SubscribeEvent
+    public static void
+    registerCommandsEvent(RegisterCommandsEvent event)
+    {
+       CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
+
+        LiteralArgumentBuilder<CommandSourceStack> benchmarkCommand = Commands
+            .literal("betterbiomeblend")
+            .then(Commands.literal("toggleBenchmark")
+                .executes(
+                    context ->
+                    {
+                        measureOverhead = !measureOverhead;
+
+                        if (measureOverhead)
+                        {
+                            LOGGER.info("Started benchmark");
+
+                            ColorBlending.benchmarkStart.set(0);
+                        }
+                        else
+                        {
+                            LOGGER.info("Stopped benchmark");
+                        }
+
+                        return 0;
+                    }));
+
+        dispatcher.register(benchmarkCommand);
     }
 
     public static int

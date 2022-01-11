@@ -6,9 +6,12 @@ public final class ColorChunk
 {
     public byte[] data;
     public long   key;
-    public int    invalidationCounter;
+    public long   invalidationKey;
 
     public AtomicInteger refCount = new AtomicInteger();
+
+    ColorChunk prev;
+    ColorChunk next;
 
     public
     ColorChunk()
@@ -44,5 +47,22 @@ public final class ColorChunk
     markAsInvalid()
     {
         key = ColorCaching.INVALID_CHUNK_KEY;
+    }
+
+    public void
+    removeFromLinkedList()
+    {
+        if (this.prev != null)
+        {
+            this.prev.next = this.next;
+        }
+
+        if (this.next != null)
+        {
+            this.next.prev = this.prev;
+        }
+
+        this.prev = null;
+        this.next = null;
     }
 }
