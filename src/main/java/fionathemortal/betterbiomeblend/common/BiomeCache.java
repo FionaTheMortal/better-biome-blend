@@ -20,7 +20,7 @@ public final class BiomeCache
         hash = new Long2ObjectLinkedOpenHashMap<>(count);
         free = new Stack<>();
 
-        invalidationHash = new Long2ObjectLinkedOpenHashMap<>(count / 2);
+        invalidationHash = new Long2ObjectLinkedOpenHashMap<>(count);
 
         for (int index = 0;
             index < count;

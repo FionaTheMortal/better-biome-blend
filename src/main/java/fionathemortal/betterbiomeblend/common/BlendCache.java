@@ -13,6 +13,7 @@ public final class BlendCache
     public final Long2ObjectLinkedOpenHashMap<BlendChunk> hash;
     public final Stack<BlendChunk>                        freeStack;
     public final ArrayList<BlendChunk>                    generating;
+    public final Long2ObjectLinkedOpenHashMap<BlendChunk> invalidationHash;
 
     public int invalidationCounter = 0;
 
@@ -23,6 +24,8 @@ public final class BlendCache
         hash       = new Long2ObjectLinkedOpenHashMap<>(count);
         freeStack  = new Stack<>();
         generating = new ArrayList<>();
+
+        invalidationHash = new Long2ObjectLinkedOpenHashMap<>(count / 2);
 
         for (int index = 0;
             index < count;
@@ -59,6 +62,69 @@ public final class BlendCache
     }
 
     public void
+    addToInvalidationHash(BlendChunk chunk)
+    {
+        BlendChunk otherChunk = invalidationHash.get(chunk.invalidationKey);
+
+        if (otherChunk != null)
+        {
+            chunk.next = otherChunk.next;
+            chunk.prev = otherChunk;
+
+            if (otherChunk.next != null)
+            {
+                otherChunk.next.prev = chunk;
+            }
+
+            otherChunk.next = chunk;
+        }
+        else
+        {
+            invalidationHash.put(chunk.invalidationKey, chunk);
+        }
+    }
+
+    public void
+    removeFromInvalidationHash(BlendChunk chunk)
+    {
+        if (chunk.prev == null)
+        {
+            invalidationHash.remove(chunk.invalidationKey);
+
+            if (chunk.next != null)
+            {
+                invalidationHash.put(chunk.invalidationKey, chunk.next);
+            }
+        }
+
+        chunk.removeFromLinkedList();
+    }
+
+    public void
+    invalidateAll()
+    {
+        lock.lock();
+
+        ++invalidationCounter;
+
+        for (BlendChunk chunk : hash.values())
+        {
+            releaseChunkWithoutLock(chunk);
+
+            chunk.prev = null;
+            chunk.next = null;
+
+            chunk.markAsInvalid();
+        }
+
+        hash.clear();
+
+        invalidationHash.clear();
+
+        lock.unlock();
+    }
+
+    public void
     invalidateChunk(int chunkX, int chunkZ)
     {
         lock.lock();
@@ -73,65 +139,42 @@ public final class BlendCache
                 z <= 1;
                 ++z)
             {
-                // TODO: Different access method probably
+                long key = ColorCaching.getChunkKey(chunkX + x, 0, chunkZ + z, 0);
 
-                for (int y = 0;
-                    y <= 20;
-                    ++y)
+                BlendChunk first = invalidationHash.get(key);
+
+                for (BlendChunk current = first;
+                     current != null;
+                    )
                 {
-                    for (int colorType = BiomeColorType.FIRST;
-                         colorType < CustomColorResolverCompatibility.nextColorResolverID;
-                         ++colorType)
+                    BlendChunk next = current.next;
+
+                    hash.remove(current.key);
+
+                    removeFromInvalidationHash(current);
+
+                    releaseChunkWithoutLock(current);
+
+                    current.markAsInvalid();
+
+                    current = next;
+                }
+
+                ListIterator<BlendChunk> iterator = generating.listIterator();
+
+                while (iterator.hasNext())
+                {
+                    BlendChunk generatingChunk = iterator.next();
+
+                    if (generatingChunk.invalidationKey == key)
                     {
-                        long key = ColorCaching.getChunkKey(chunkX + x, y, chunkZ + z, colorType);
+                        generatingChunk.markAsInvalid();
 
-                        BlendChunk chunk = hash.remove(key);
-
-                        if (chunk != null)
-                        {
-                            releaseChunkWithoutLock(chunk);
-
-                            chunk.markAsInvalid();
-                        }
-                        else
-                        {
-                            ListIterator<BlendChunk> iterator = generating.listIterator();
-
-                            while (iterator.hasNext())
-                            {
-                                BlendChunk generatingChunk = iterator.next();
-
-                                if (generatingChunk.key == key)
-                                {
-                                    generatingChunk.markAsInvalid();
-
-                                    iterator.remove();
-                                }
-                            }
-                        }
+                        iterator.remove();
                     }
                 }
             }
         }
-
-        lock.unlock();
-    }
-
-    public void
-    invalidateAll()
-    {
-        lock.lock();
-
-        ++invalidationCounter;
-
-        for (BlendChunk chunk : hash.values())
-        {
-            releaseChunkWithoutLock(chunk);
-
-            chunk.markAsInvalid();
-        }
-
-        hash.clear();
 
         lock.unlock();
     }
@@ -186,10 +229,19 @@ public final class BlendCache
                     hash.putAndMoveToFirst(lastKey, result);
                 }
             }
+
+            removeFromInvalidationHash(result);
         }
+
+        long invalidationKey = ColorCaching.getChunkKey(chunkX, 0, chunkZ, 0);
 
         result.key = key;
         result.invalidationCounter = invalidationCounter;
+        result.invalidationKey = invalidationKey;
+
+        result.prev = null;
+        result.next = null;
+
         result.acquire();
 
         generating.add(result);
@@ -214,6 +266,8 @@ public final class BlendCache
             {
                 hash.putAndMoveToFirst(chunk.key, chunk);
 
+                addToInvalidationHash(chunk);
+
                 chunk.acquire();
             }
             else
@@ -225,6 +279,9 @@ public final class BlendCache
                     olderChunk = prev;
 
                     hash.put(chunk.key, chunk);
+
+                    addToInvalidationHash(chunk);
+                    removeFromInvalidationHash(olderChunk);
 
                     chunk.acquire();
                 }

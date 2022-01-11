@@ -10,6 +10,11 @@ public final class BlendChunk
 
     public AtomicInteger refCount = new AtomicInteger();
 
+    public long invalidationKey;
+
+    BlendChunk prev;
+    BlendChunk next;
+
     public
     BlendChunk()
     {
@@ -106,5 +111,22 @@ public final class BlendChunk
         int result = Color.makeRGBAWithFullAlpha(r, g, b);
 
         return result;
+    }
+
+    public void
+    removeFromLinkedList()
+    {
+        if (this.prev != null)
+        {
+            this.prev.next = this.next;
+        }
+
+        if (this.next != null)
+        {
+            this.next.prev = this.prev;
+        }
+
+        this.prev = null;
+        this.next = null;
     }
 }
