@@ -265,11 +265,6 @@ public final class ColorCache
             result.key = key;
             result.invalidationKey = invalidationKey;
 
-            if (result.prev != null || result.next != null)
-            {
-                int i = 0;
-            }
-
             result.prev = null;
             result.next = null;
 

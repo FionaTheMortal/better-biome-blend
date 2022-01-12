@@ -129,13 +129,6 @@ public final class BetterBiomeBlendClient
 
                             if (accessor.getOption() == Option.BIOME_BLEND_RADIUS)
                             {
-                                net.minecraft.client.gui.components.OptionsList.Entry newRow = net.minecraft.client.gui.components.OptionsList.Entry.big(
-                                    screen.getMinecraft().options,
-                                    screen.width,
-                                    BIOME_BLEND_RADIUS);
-
-                                // rowListEntries.set(index, newRow);
-
                                 rowListEntries.remove(index);
 
                                 replacedOption = true;
@@ -219,7 +212,7 @@ public final class BetterBiomeBlendClient
 
                     if (option == Option.BIOME_BLEND_RADIUS)
                     {
-                        enumOptions[index] = BIOME_BLEND_RADIUS;
+                        // enumOptions[index] = BIOME_BLEND_RADIUS;
 
                         found = true;
 
