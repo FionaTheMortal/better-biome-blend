@@ -1,5 +1,7 @@
 package fionathemortal.betterbiomeblend.common;
 
+import fionathemortal.betterbiomeblend.common.cache.BiomeCache;
+import fionathemortal.betterbiomeblend.common.cache.ColorCache;
 import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.Level;
 

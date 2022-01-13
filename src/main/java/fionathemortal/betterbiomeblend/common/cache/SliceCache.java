@@ -1,83 +1,14 @@
-package fionathemortal.betterbiomeblend.common;
+package fionathemortal.betterbiomeblend.common.cache;
 
+import fionathemortal.betterbiomeblend.common.ColorCaching;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 
-import java.util.Arrays;
 import java.util.Stack;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
-public final class ColorCache
+public class SliceCache<T extends Slice>
 {
-    public final ReentrantLock                            lock;
-    public final Long2ObjectLinkedOpenHashMap<ColorChunk> hash;
-    public final Stack<ColorChunk>                        free;
-    public final Long2ObjectLinkedOpenHashMap<ColorChunk> invalidationHash;
-
-    public
-    ColorCache(int count)
-    {
-        lock = new ReentrantLock();
-        hash = new Long2ObjectLinkedOpenHashMap<>(count);
-        free = new Stack<>();
-
-        invalidationHash = new Long2ObjectLinkedOpenHashMap<>(count / 2);
-
-        for (int index = 0;
-            index < count;
-            ++index)
-        {
-            free.add(new ColorChunk());
-        }
-    }
-
-    public void
-    releaseChunkWithoutLock(ColorChunk chunk)
-    {
-        int refCount = chunk.release();
-
-        if (refCount == 0)
-        {
-            free.push(chunk);
-        }
-    }
-
-    public void
-    releaseChunk(ColorChunk chunk)
-    {
-        int refCount = chunk.release();
-
-        if (refCount == 0)
-        {
-            lock.lock();
-
-            free.push(chunk);
-
-            lock.unlock();
-        }
-    }
-
-    public void
-    invalidateAll()
-    {
-        lock.lock();
-
-        for (ColorChunk chunk : hash.values())
-        {
-            releaseChunkWithoutLock(chunk);
-
-            chunk.prev = null;
-            chunk.next = null;
-
-            chunk.markAsInvalid();
-        }
-
-        hash.clear();
-
-        invalidationHash.clear();
-
-        lock.unlock();
-    }
-
     private static final byte[]
     invalidationRectParams =
     {
@@ -85,6 +16,11 @@ public final class ColorCache
         0, 4,
         0, 0
     };
+
+    public final ReentrantLock                   lock;
+    public final Long2ObjectLinkedOpenHashMap<T> hash;
+    public final Stack<T>                        free;
+    public final Long2ObjectLinkedOpenHashMap<T> invalidationHash;
 
     public static int
     getInvalidationRectMin(int index)
@@ -104,10 +40,75 @@ public final class ColorCache
         return result;
     }
 
-    public void
-    addToInvalidationHash(ColorChunk chunk)
+    public
+    SliceCache(int count, Supplier<T> supplier)
     {
-        ColorChunk otherChunk = invalidationHash.get(chunk.invalidationKey);
+        lock = new ReentrantLock();
+        hash = new Long2ObjectLinkedOpenHashMap<>(count);
+        free = new Stack<>();
+
+        invalidationHash = new Long2ObjectLinkedOpenHashMap<>(count);
+
+        for (int index = 0;
+             index < count;
+             ++index)
+        {
+            free.add(supplier.get());
+        }
+    }
+
+    public final void
+    releaseChunkWithoutLock(T chunk)
+    {
+        int refCount = chunk.release();
+
+        if (refCount == 0)
+        {
+            free.push(chunk);
+        }
+    }
+
+    public final void
+    releaseChunk(T chunk)
+    {
+        int refCount = chunk.release();
+
+        if (refCount == 0)
+        {
+            lock.lock();
+
+            free.push(chunk);
+
+            lock.unlock();
+        }
+    }
+
+    public final void
+    invalidateAll()
+    {
+        lock.lock();
+
+        for (T chunk : hash.values())
+        {
+            releaseChunkWithoutLock(chunk);
+
+            chunk.prev = null;
+            chunk.next = null;
+
+            chunk.markAsInvalid();
+        }
+
+        hash.clear();
+
+        invalidationHash.clear();
+
+        lock.unlock();
+    }
+
+    public final void
+    addToInvalidationHash(T chunk)
+    {
+        T otherChunk = invalidationHash.get(chunk.invalidationKey);
 
         if (otherChunk != null)
         {
@@ -127,8 +128,8 @@ public final class ColorCache
         }
     }
 
-    public void
-    removeFromInvalidationHash(ColorChunk chunk)
+    public final void
+    removeFromInvalidationHash(T chunk)
     {
         if (chunk.prev == null)
         {
@@ -136,35 +137,35 @@ public final class ColorCache
 
             if (chunk.next != null)
             {
-                invalidationHash.put(chunk.invalidationKey, chunk.next);
+                invalidationHash.put(chunk.invalidationKey, (T)chunk.next);
             }
         }
 
         chunk.removeFromLinkedList();
     }
 
-    public void
+    public final void
     invalidateSmallNeighborhood(int chunkX, int chunkZ)
     {
         lock.lock();
 
         for (int z = -1;
-            z <= 0;
-            ++z)
+             z <= 0;
+             ++z)
         {
             for (int x = -1;
-                x <= 0;
-                ++x)
+                 x <= 0;
+                 ++x)
             {
                 long key = ColorCaching.getChunkKey(chunkX + x, 0, chunkZ + z, 0);
 
-                ColorChunk first = invalidationHash.get(key);
+                T first = invalidationHash.get(key);
 
-                for (ColorChunk current = first;
-                    current != null;
-                    )
+                for (T current = first;
+                     current != null;
+                )
                 {
-                    ColorChunk next = current.next;
+                    T next = (T)current.next;
 
                     if (next == first)
                     {
@@ -191,28 +192,7 @@ public final class ColorCache
                         int maxY = 4;
                         int maxZ = getInvalidationRectMax(z);
 
-                        int cacheDim = 4;
-
-                        for (int y1 = minY;
-                             y1 < maxY;
-                             ++y1)
-                        {
-                            for (int z1 = minZ;
-                                 z1 < maxZ;
-                                 ++z1)
-                            {
-                                for (int x1 = minX;
-                                     x1 < maxX;
-                                     ++x1)
-                                {
-                                    int cacheIndex = ColorBlending.getCacheArrayIndex(cacheDim, x1, y1, z1);
-
-                                    current.data[3 * cacheIndex + 0] = (byte)-1;
-                                    current.data[3 * cacheIndex + 1] = (byte)-1;
-                                    current.data[3 * cacheIndex + 2] = (byte)-1;
-                                }
-                            }
-                        }
+                        current.invalidateRegion(minX, minY, minZ, maxX, maxY, maxZ);
                     }
 
                     current = next;
@@ -223,14 +203,14 @@ public final class ColorCache
         lock.unlock();
     }
 
-    public ColorChunk
+    public final T
     getOrDefaultInitializeChunk(int chunkX, int chunkY, int chunkZ, int colorType)
     {
         long key = ColorCaching.getChunkKey(chunkX, chunkY, chunkZ, colorType);
 
         lock.lock();
 
-        ColorChunk result = hash.getAndMoveToFirst(key);
+        T result = hash.getAndMoveToFirst(key);
 
         if (result == null)
         {
@@ -268,7 +248,7 @@ public final class ColorCache
             result.prev = null;
             result.next = null;
 
-            Arrays.fill(result.data, (byte)-1);
+            result.invalidateData();
 
             result.acquire();
 

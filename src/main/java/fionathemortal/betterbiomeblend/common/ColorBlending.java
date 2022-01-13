@@ -1,6 +1,10 @@
 package fionathemortal.betterbiomeblend.common;
 
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
+import fionathemortal.betterbiomeblend.common.cache.BiomeCache;
+import fionathemortal.betterbiomeblend.common.cache.BiomeSlice;
+import fionathemortal.betterbiomeblend.common.cache.ColorCache;
+import fionathemortal.betterbiomeblend.common.cache.ColorSlice;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
@@ -574,8 +578,8 @@ public final class ColorBlending
             }
         }
 
-        BiomeChunk biomeChunk = biomeCache.getOrDefaultInitializeChunk(chunkX, chunkY, chunkZ);
-        ColorChunk colorChunk = colorCache.getOrDefaultInitializeChunk(chunkX, chunkY, chunkZ, colorType);
+        BiomeSlice biomeChunk = biomeCache.getOrDefaultInitializeChunk(chunkX, chunkY, chunkZ, 0);
+        ColorSlice colorChunk = colorCache.getOrDefaultInitializeChunk(chunkX, chunkY, chunkZ, colorType);
 
         // TODO: Check for bugs in default color handling
 
@@ -622,8 +626,8 @@ public final class ColorBlending
 
                         if (neighbors[neighborIndex] != null)
                         {
-                            BiomeChunk neighborBiomeChunk = biomeCache.getOrDefaultInitializeChunk(neighborX, neighborY, neighborZ);
-                            ColorChunk neighborColorChunk = colorCache.getOrDefaultInitializeChunk(neighborX, neighborY, neighborZ, colorType);
+                            BiomeSlice neighborBiomeChunk = biomeCache.getOrDefaultInitializeChunk(neighborX, neighborY, neighborZ, 0);
+                            ColorSlice neighborColorChunk = colorCache.getOrDefaultInitializeChunk(neighborX, neighborY, neighborZ, colorType);
 
                             final boolean genNewColors = neighborsAreLoaded;
 

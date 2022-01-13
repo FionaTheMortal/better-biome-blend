@@ -1,27 +1,29 @@
-package fionathemortal.betterbiomeblend.common;
+package fionathemortal.betterbiomeblend.common.cache;
+
+import fionathemortal.betterbiomeblend.common.ColorCaching;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class ColorChunk
+public abstract class Slice
 {
-    public byte[] data;
-    public long   key;
-    public long   invalidationKey;
+    public long key;
+    public long invalidationKey;
+
+    public Slice prev;
+    public Slice next;
 
     public AtomicInteger refCount = new AtomicInteger();
 
-    ColorChunk prev;
-    ColorChunk next;
-
     public
-    ColorChunk()
+    Slice()
     {
-        this.data = new byte[4 * 4 * 4 * 3];
-
         this.markAsInvalid();
     }
 
-    public int
+    public abstract void invalidateRegion(int minX, int minY, int minZ, int maxX, int maxY, int maxZ);
+    public abstract void invalidateData();
+
+    public final int
     getReferenceCount()
     {
         int result = refCount.get();
@@ -29,7 +31,7 @@ public final class ColorChunk
         return result;
     }
 
-    public int
+    public final int
     release()
     {
         int result = refCount.decrementAndGet();
@@ -37,19 +39,19 @@ public final class ColorChunk
         return result;
     }
 
-    public void
+    public final void
     acquire()
     {
         refCount.incrementAndGet();
     }
 
-    public void
+    public final void
     markAsInvalid()
     {
         key = ColorCaching.INVALID_CHUNK_KEY;
     }
 
-    public void
+    public final void
     removeFromLinkedList()
     {
         if (this.prev != null)

@@ -1,6 +1,11 @@
 package fionathemortal.betterbiomeblend.mixin;
 
 import fionathemortal.betterbiomeblend.common.*;
+import fionathemortal.betterbiomeblend.common.cache.BiomeCache;
+import fionathemortal.betterbiomeblend.common.cache.BiomeSlice;
+import fionathemortal.betterbiomeblend.common.cache.ColorCache;
+import fionathemortal.betterbiomeblend.common.cache.ColorSlice;
+import fionathemortal.betterbiomeblend.common.cache.SliceCache;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import net.minecraft.client.color.block.BlockTintCache;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -13,7 +18,6 @@ import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.storage.WritableLevelData;
-import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
