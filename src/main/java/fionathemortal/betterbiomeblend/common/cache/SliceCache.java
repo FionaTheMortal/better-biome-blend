@@ -2,40 +2,113 @@ package fionathemortal.betterbiomeblend.common.cache;
 
 import fionathemortal.betterbiomeblend.common.ColorCaching;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
-import java.util.Stack;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 public class SliceCache<T extends Slice>
 {
+    public final ReentrantLock                   lock;
+    public final Long2ObjectLinkedOpenHashMap<T> hash;
+    public final Long2ObjectOpenHashMap<T>       invalidationHash;
+    public       T                               firstFree;
+
     private static final byte[]
-    invalidationRectParams =
+    invalidatedRectParams =
     {
         3, 4,
         0, 4,
         0, 0
     };
 
-    public final ReentrantLock                   lock;
-    public final Long2ObjectLinkedOpenHashMap<T> hash;
-    public final Stack<T>                        free;
-    public final Long2ObjectLinkedOpenHashMap<T> invalidationHash;
-
     public static int
-    getInvalidationRectMin(int index)
+    getInvalidatedRectMin(int index)
     {
         int offset = 2 * (index + 1);
-        int result = invalidationRectParams[offset + 0];
+        int result = invalidatedRectParams[offset + 0];
 
         return result;
     }
 
     public static int
-    getInvalidationRectMax(int index)
+    getInvalidatedRectMax(int index)
     {
         int offset = 2 * (index + 1);
-        int result = invalidationRectParams[offset + 1];
+        int result = invalidatedRectParams[offset + 1];
+
+        return result;
+    }
+
+    public static void
+    linkedListUnlink(Slice slice)
+    {
+        if (slice.prev != null)
+        {
+            slice.prev.next = slice.next;
+        }
+
+        if (slice.next != null)
+        {
+            slice.next.prev = slice.prev;
+        }
+
+        slice.prev = null;
+        slice.next = null;
+    }
+
+    public static void
+    linkedListLinkAfter(Slice list, Slice slice)
+    {
+        slice.next = list.next;
+        slice.prev = list;
+
+        if (list.next != null)
+        {
+            list.next.prev = slice;
+        }
+
+        list.next = slice;
+    }
+
+    public boolean
+    freeListEmpty()
+    {
+        boolean result = (this.firstFree == null);
+
+        return result;
+    }
+
+    public void
+    freeListPush(T slice)
+    {
+        slice.prev = null;
+        slice.next = this.firstFree;
+
+        if (this.firstFree != null)
+        {
+            this.firstFree.prev = slice;
+        }
+
+        this.firstFree = slice;
+    }
+
+    public T
+    freeListPop()
+    {
+        T result = this.firstFree;
+
+        if (result != null)
+        {
+            this.firstFree = (T)result.next;
+
+            if (this.firstFree != null)
+            {
+                this.firstFree.prev = null;
+            }
+
+            result.next = null;
+        }
 
         return result;
     }
@@ -45,15 +118,16 @@ public class SliceCache<T extends Slice>
     {
         lock = new ReentrantLock();
         hash = new Long2ObjectLinkedOpenHashMap<>(count);
-        free = new Stack<>();
 
-        invalidationHash = new Long2ObjectLinkedOpenHashMap<>(count);
+        invalidationHash = new Long2ObjectOpenHashMap<>(count);
 
         for (int index = 0;
              index < count;
              ++index)
         {
-            free.add(supplier.get());
+            T slice = supplier.get();
+
+            freeListPush(slice);
         }
     }
 
@@ -64,7 +138,7 @@ public class SliceCache<T extends Slice>
 
         if (refCount == 0)
         {
-            free.push(chunk);
+            freeListPush(chunk);
         }
     }
 
@@ -77,7 +151,7 @@ public class SliceCache<T extends Slice>
         {
             lock.lock();
 
-            free.push(chunk);
+            freeListPush(chunk);
 
             lock.unlock();
         }
@@ -108,23 +182,15 @@ public class SliceCache<T extends Slice>
     public final void
     addToInvalidationHash(T chunk)
     {
-        T otherChunk = invalidationHash.get(chunk.invalidationKey);
+        T otherChunk = invalidationHash.get(chunk.columnKey);
 
         if (otherChunk != null)
         {
-            chunk.next = otherChunk.next;
-            chunk.prev = otherChunk;
-
-            if (otherChunk.next != null)
-            {
-                otherChunk.next.prev = chunk;
-            }
-
-            otherChunk.next = chunk;
+            linkedListLinkAfter(otherChunk, chunk);
         }
         else
         {
-            invalidationHash.put(chunk.invalidationKey, chunk);
+            invalidationHash.put(chunk.columnKey, chunk);
         }
     }
 
@@ -133,15 +199,15 @@ public class SliceCache<T extends Slice>
     {
         if (chunk.prev == null)
         {
-            invalidationHash.remove(chunk.invalidationKey);
+            invalidationHash.remove(chunk.columnKey);
 
             if (chunk.next != null)
             {
-                invalidationHash.put(chunk.invalidationKey, (T)chunk.next);
+                invalidationHash.put(chunk.columnKey, (T)chunk.next);
             }
         }
 
-        chunk.removeFromLinkedList();
+        linkedListUnlink(chunk);
     }
 
     public final void
@@ -184,13 +250,13 @@ public class SliceCache<T extends Slice>
                     }
                     else
                     {
-                        int minX = getInvalidationRectMin(x);
+                        int minX = getInvalidatedRectMin(x);
                         int minY = 0;
-                        int minZ = getInvalidationRectMin(z);
+                        int minZ = getInvalidatedRectMin(z);
 
-                        int maxX = getInvalidationRectMax(x);
+                        int maxX = getInvalidatedRectMax(x);
                         int maxY = 4;
-                        int maxZ = getInvalidationRectMax(z);
+                        int maxZ = getInvalidatedRectMax(z);
 
                         current.invalidateRegion(minX, minY, minZ, maxX, maxY, maxZ);
                     }
@@ -214,9 +280,9 @@ public class SliceCache<T extends Slice>
 
         if (result == null)
         {
-            if (!free.empty())
+            if (!freeListEmpty())
             {
-                result = free.pop();
+                result = freeListPop();
             }
             else
             {
@@ -243,7 +309,7 @@ public class SliceCache<T extends Slice>
             long invalidationKey = ColorCaching.getChunkKey(chunkX, 0, chunkZ, 0);
 
             result.key = key;
-            result.invalidationKey = invalidationKey;
+            result.columnKey = invalidationKey;
 
             result.prev = null;
             result.next = null;

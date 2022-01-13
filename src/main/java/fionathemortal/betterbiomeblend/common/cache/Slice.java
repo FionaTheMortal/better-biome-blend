@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class Slice
 {
     public long key;
-    public long invalidationKey;
+    public long columnKey;
 
     public Slice prev;
     public Slice next;
@@ -49,22 +49,5 @@ public abstract class Slice
     markAsInvalid()
     {
         key = ColorCaching.INVALID_CHUNK_KEY;
-    }
-
-    public final void
-    removeFromLinkedList()
-    {
-        if (this.prev != null)
-        {
-            this.prev.next = this.next;
-        }
-
-        if (this.next != null)
-        {
-            this.next.prev = this.prev;
-        }
-
-        this.prev = null;
-        this.next = null;
     }
 }
