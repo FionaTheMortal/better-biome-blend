@@ -3,7 +3,10 @@ package fionathemortal.betterbiomeblend;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import fionathemortal.betterbiomeblend.common.ColorBlending;
+import fionathemortal.betterbiomeblend.common.debug.Debug;
+import fionathemortal.betterbiomeblend.common.debug.DebugSummary;
 import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
+import net.minecraft.Util;
 import net.minecraft.client.*;
 import net.minecraft.client.gui.components.OptionsList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -13,8 +16,10 @@ import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.event.ScreenEvent.InitScreenEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -26,21 +31,7 @@ import java.util.List;
 
 public final class BetterBiomeBlendClient
 {
-    public static volatile boolean measureOverhead = false;
-
     public static final Logger LOGGER = LogManager.getLogger(BetterBiomeBlend.MOD_ID);
-
-    public static final int BIOME_BLEND_RADIUS_MAX = 14;
-    public static final int BIOME_BLEND_RADIUS_MIN = 0;
-
-    public static final ProgressOption BIOME_BLEND_RADIUS = new ProgressOption(
-        "options.biomeBlendRadius",
-        BIOME_BLEND_RADIUS_MIN,
-        BIOME_BLEND_RADIUS_MAX,
-        1.0F,
-        BetterBiomeBlendClient::biomeBlendRadiusOptionGetValue,
-        BetterBiomeBlendClient::biomeBlendRadiusOptionSetValue,
-        BetterBiomeBlendClient::biomeBlendRadiusOptionGetDisplayText);
 
     public static final Options gameSettings = Minecraft.getInstance().options;
 
@@ -70,17 +61,46 @@ public final class BetterBiomeBlendClient
                 .executes(
                     context ->
                     {
-                        measureOverhead = !measureOverhead;
+                        boolean benchmarking = Debug.toggleBenchmark();
 
-                        if (measureOverhead)
+                        Player player = Minecraft.getInstance().player;
+
+                        if (benchmarking)
                         {
-                            LOGGER.info("Started benchmark");
-
-                            ColorBlending.benchmarkStart.set(0);
+                            if (player != null)
+                            {
+                                player.sendMessage(
+                                    new TextComponent("Started benchmark. Stop with /betterbiomeblend toggleBenchmark"),
+                                    Util.NIL_UUID);
+                            }
                         }
                         else
                         {
-                            LOGGER.info("Stopped benchmark");
+                            if (player != null)
+                            {
+                                player.sendMessage(new TextComponent("Stopped benchmark"), Util.NIL_UUID);
+                            }
+
+                            DebugSummary summary = Debug.collateDebugEvents();
+
+                            String[] lines =
+                            {
+                                String.format("Call Count: %d"  , summary.totalCalls),
+                                String.format("Wall Time: %.2f"  , summary.elapsedWallTimeInSeconds),
+                                String.format("Calls/sec: %.2f", summary.callsPerSecond),
+                                String.format("Avg. CPU Time: %.2f", summary.averageTime),
+                                String.format("Avg. 1%%: %.2f", summary.averageOnePercentTime),
+                            };
+
+                            if (player != null)
+                            {
+                                for (String line : lines)
+                                {
+                                    player.sendMessage(new TextComponent(line), Util.NIL_UUID);
+                                }
+                            }
+
+                            Debug.teardown();
                         }
 
                         return 0;
@@ -143,46 +163,6 @@ public final class BetterBiomeBlendClient
                 }
             }
         }
-    }
-
-    public static Double
-    biomeBlendRadiusOptionGetValue(Options settings)
-    {
-        double result = (double)settings.biomeBlendRadius;
-
-        return result;
-    }
-
-    @SuppressWarnings("resource")
-    public static void
-    biomeBlendRadiusOptionSetValue(Options settings, Double optionValues)
-    {
-        /* NOTE: Concurrent modification exception with structure generation
-         * But this code is a 1 to 1 copy of vanilla code so it might just be an unlikely bug on their end */
-
-        int currentValue = (int)optionValues.doubleValue();
-        int newSetting   = Mth.clamp(currentValue, BIOME_BLEND_RADIUS_MIN, BIOME_BLEND_RADIUS_MAX);
-
-        if (settings.biomeBlendRadius != newSetting)
-        {
-            settings.biomeBlendRadius = newSetting;
-
-            Minecraft.getInstance().levelRenderer.allChanged();
-        }
-    }
-
-    public static Component
-    biomeBlendRadiusOptionGetDisplayText(Options settings, ProgressOption optionValues)
-    {
-        int currentValue  = (int)optionValues.get(settings);
-        int blendDiameter = 2 * currentValue + 1;
-
-        Component result = new TranslatableComponent(
-            "options.generic_value",
-            new TranslatableComponent("options.biomeBlendRadius"),
-            new TranslatableComponent("options.biomeBlendRadius." + blendDiameter));
-
-        return result;
     }
 
     public static void

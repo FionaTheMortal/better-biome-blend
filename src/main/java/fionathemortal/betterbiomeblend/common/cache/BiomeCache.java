@@ -1,6 +1,6 @@
 package fionathemortal.betterbiomeblend.common.cache;
 
-public class BiomeCache extends SliceCache<BiomeSlice>
+public final class BiomeCache extends SliceCache<BiomeSlice>
 {
     public
     BiomeCache(int count)

@@ -1,10 +1,11 @@
 package fionathemortal.betterbiomeblend.common;
 
-import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
 import fionathemortal.betterbiomeblend.common.cache.BiomeCache;
 import fionathemortal.betterbiomeblend.common.cache.BiomeSlice;
 import fionathemortal.betterbiomeblend.common.cache.ColorCache;
 import fionathemortal.betterbiomeblend.common.cache.ColorSlice;
+import fionathemortal.betterbiomeblend.common.debug.Debug;
+import fionathemortal.betterbiomeblend.common.debug.DebugEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
@@ -16,7 +17,6 @@ import java.util.Stack;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.StreamSupport;
 
 public final class ColorBlending
 {
@@ -120,57 +120,6 @@ public final class ColorBlending
         int result = SECTION_OFFSET + (section << SECTION_SIZE_LOG2) + offset;
 
         return result;
-    }
-
-    public static void
-    gatherRawColorsForChunk(
-        Level         world,
-        byte[]        result,
-        int           chunkX,
-        int           chunkZ,
-        ColorResolver colorResolver)
-    {
-        BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
-
-        int blockX = 16 * chunkX;
-        int blockZ = 16 * chunkZ;
-
-        int dstIndex = 0;
-
-        double baseXF64 = (double)blockX;
-        double baseZF64 = (double)blockZ;
-
-        double zF64 = baseZF64;
-
-        for (int z = 0;
-            z < 16;
-            ++z)
-        {
-            double xF64 = baseXF64;
-
-            for (int x = 0;
-                x < 16;
-                ++x)
-            {
-                blockPos.set(blockX + x, 0, blockZ + z);
-
-                int color = colorResolver.getColor(world.getBiome(blockPos), xF64, zF64);
-
-                int colorR = Color.RGBAGetR(color);
-                int colorG = Color.RGBAGetG(color);
-                int colorB = Color.RGBAGetB(color);
-
-                result[3 * dstIndex + 0] = (byte)colorR;
-                result[3 * dstIndex + 1] = (byte)colorG;
-                result[3 * dstIndex + 2] = (byte)colorB;
-
-                ++dstIndex;
-
-                xF64 += 1.0;
-            }
-
-            zF64 += 1.0;
-        }
     }
 
     public static void
@@ -732,15 +681,7 @@ public final class ColorBlending
             }
         }
     }
-
-    public  static final AtomicLong    benchmarkStart   = new AtomicLong();
-    private static final AtomicLong    totalNanoseconds = new AtomicLong();
-    private static final AtomicInteger totalCallCount   = new AtomicInteger();
-
-    private static final AtomicLong    intervalNanoseconds = new AtomicLong();
-    private static final AtomicLong    intervalStart       = new AtomicLong();
-    private static final AtomicInteger intervalCallCount   = new AtomicInteger();
-
+    
     public static void
     generateBlendedColorChunk(
         Level         world,
@@ -755,18 +696,12 @@ public final class ColorBlending
     {
         ColorBlendBuffer blendBuffer = acquireBlendBuffer();
 
-        boolean measureOverhead = BetterBiomeBlendClient.measureOverhead;
-        long    startClock = 0;
+        boolean    debugEnabled = Debug.measurePerformance;
+        DebugEvent debugEvent   = null;
 
-        if (measureOverhead)
+        if (debugEnabled)
         {
-            startClock = System.nanoTime();
-
-            if (benchmarkStart.get() == 0)
-            {
-                intervalStart.set(startClock);
-                benchmarkStart.set(startClock);
-            }
+            debugEvent = Debug.pushGenBegin(chunkX, chunkY, chunkZ, colorType);
         }
 
         gatherRawColorsToCaches(
@@ -782,38 +717,9 @@ public final class ColorBlending
 
         blendColorsForChunk(result, blendBuffer.color);
 
-        if (measureOverhead)
+        if (debugEnabled)
         {
-            long stopClock   = System.nanoTime();
-            long elapsedTime = stopClock - startClock;
-
-            long totalElapsedTime = intervalNanoseconds.addAndGet(elapsedTime);
-            int  totalCallCount   = intervalCallCount.incrementAndGet();
-
-            if (totalCallCount == 100)
-            {
-                intervalCallCount.addAndGet(-100);
-
-                long intervalStartClock            = intervalStart.get();
-                long elapsedTimeSinceIntervalStart = stopClock - intervalStartClock;
-
-                intervalStart.set(stopClock);
-                intervalNanoseconds.addAndGet(-totalElapsedTime);
-                intervalCallCount.addAndGet(-totalCallCount);
-
-                long elapsedTimeSinceIntervalStartInMicroseconds = elapsedTimeSinceIntervalStart / 1000;
-                long totalElapsedTimeInMicroseconds              = totalElapsedTime / 1000;
-
-                String infoString = String.format(
-                    "chunks, wall time, calls per second, cpu time, avrg cpu time: %d, %d, %f, %d, %d",
-                    totalCallCount,
-                    elapsedTimeSinceIntervalStartInMicroseconds,
-                    ((double)totalCallCount / (double)elapsedTimeSinceIntervalStartInMicroseconds * 1000000),
-                    totalElapsedTimeInMicroseconds,
-                    totalElapsedTimeInMicroseconds / totalCallCount);
-
-                BetterBiomeBlendClient.LOGGER.info(infoString);
-            }
+            Debug.pushGenEnd(debugEvent);
         }
 
         releaseBlendBuffer(blendBuffer);

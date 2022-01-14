@@ -1,6 +1,7 @@
 package fionathemortal.betterbiomeblend.common;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 import java.util.ArrayList;
 import java.util.ListIterator;
@@ -13,7 +14,7 @@ public final class BlendCache
     public final Long2ObjectLinkedOpenHashMap<BlendChunk> hash;
     public final Stack<BlendChunk>                        freeStack;
     public final ArrayList<BlendChunk>                    generating;
-    public final Long2ObjectLinkedOpenHashMap<BlendChunk> invalidationHash;
+    public final Long2ObjectOpenHashMap<BlendChunk>       invalidationHash;
 
     public int invalidationCounter = 0;
 
@@ -25,7 +26,7 @@ public final class BlendCache
         freeStack  = new Stack<>();
         generating = new ArrayList<>();
 
-        invalidationHash = new Long2ObjectLinkedOpenHashMap<>(count / 2);
+        invalidationHash = new Long2ObjectOpenHashMap<>(count);
 
         for (int index = 0;
             index < count;

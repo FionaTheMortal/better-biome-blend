@@ -16,6 +16,7 @@ public final class BiomeSlice extends Slice
 
         this.data = new Biome[4 * 4 * 4];
     }
+
     @Override
     public void
     invalidateRegion(int minX, int minY, int minZ, int maxX, int maxY, int maxZ)

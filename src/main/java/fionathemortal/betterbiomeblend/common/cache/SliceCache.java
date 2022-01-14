@@ -71,6 +71,24 @@ public class SliceCache<T extends Slice>
         list.next = slice;
     }
 
+    public
+    SliceCache(int count, Supplier<T> supplier)
+    {
+        lock = new ReentrantLock();
+        hash = new Long2ObjectLinkedOpenHashMap<>(count);
+
+        invalidationHash = new Long2ObjectOpenHashMap<>(count);
+
+        for (int index = 0;
+             index < count;
+             ++index)
+        {
+            T slice = supplier.get();
+
+            freeListPush(slice);
+        }
+    }
+
     public boolean
     freeListEmpty()
     {
@@ -113,26 +131,8 @@ public class SliceCache<T extends Slice>
         return result;
     }
 
-    public
-    SliceCache(int count, Supplier<T> supplier)
-    {
-        lock = new ReentrantLock();
-        hash = new Long2ObjectLinkedOpenHashMap<>(count);
-
-        invalidationHash = new Long2ObjectOpenHashMap<>(count);
-
-        for (int index = 0;
-             index < count;
-             ++index)
-        {
-            T slice = supplier.get();
-
-            freeListPush(slice);
-        }
-    }
-
     public final void
-    releaseChunkWithoutLock(T chunk)
+    releaseChunkWithoutLocking(T chunk)
     {
         int refCount = chunk.release();
 
@@ -164,10 +164,7 @@ public class SliceCache<T extends Slice>
 
         for (T chunk : hash.values())
         {
-            releaseChunkWithoutLock(chunk);
-
-            chunk.prev = null;
-            chunk.next = null;
+            releaseChunkWithoutLocking(chunk);
 
             chunk.markAsInvalid();
         }
@@ -229,7 +226,7 @@ public class SliceCache<T extends Slice>
 
                 for (T current = first;
                      current != null;
-                )
+                    )
                 {
                     T next = (T)current.next;
 
@@ -244,7 +241,7 @@ public class SliceCache<T extends Slice>
 
                         removeFromInvalidationHash(current);
 
-                        releaseChunkWithoutLock(current);
+                        releaseChunkWithoutLocking(current);
 
                         current.markAsInvalid();
                     }
