@@ -99,12 +99,13 @@ public final class Debug
 
         DebugSummary result = new DebugSummary();
 
-        result.averageTime              = averageTime;
-        result.averageOnePercentTime    = averageOnePercent;
-        result.callsPerSecond           = (double)(count) / (double)(elapsedTime) * 1e9;
-        result.totalCalls               = count;
-        result.elapsedWallTime          = elapsedTime;
-        result.elapsedWallTimeInSeconds = (double)elapsedTime * 1e-9;
+        result.averageTime                = averageTime;
+        result.averageOnePercentTime      = averageOnePercent;
+        result.callsPerSecond             = (double)(count) / (double)(elapsedTime) * 1e9;
+        result.totalCalls                 = count;
+        result.elapsedWallTime            = elapsedTime;
+        result.elapsedWallTimeInSeconds   = (double)elapsedTime * 1e-9;
+        result.totalCPUTimeInMilliseconds = (double)averageTime * (double)count * 1e-6;
 
         return result;
     }

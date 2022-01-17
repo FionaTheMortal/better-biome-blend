@@ -9,4 +9,6 @@ public class DebugSummary
 
     public double averageTime;
     public double averageOnePercentTime;
+
+    public double totalCPUTimeInMilliseconds;
 }

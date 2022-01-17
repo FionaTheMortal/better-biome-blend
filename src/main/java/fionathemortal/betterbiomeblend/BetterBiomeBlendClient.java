@@ -85,11 +85,14 @@ public final class BetterBiomeBlendClient
 
                             String[] lines =
                             {
+                                "",
                                 String.format("Call Count: %d"  , summary.totalCalls),
                                 String.format("Wall Time: %.2f"  , summary.elapsedWallTimeInSeconds),
                                 String.format("Calls/sec: %.2f", summary.callsPerSecond),
                                 String.format("Avg. CPU Time: %.2f", summary.averageTime),
                                 String.format("Avg. 1%%: %.2f", summary.averageOnePercentTime),
+                                String.format("Total CPU time: %.2f ms", summary.totalCPUTimeInMilliseconds),
+                                ""
                             };
 
                             if (player != null)
