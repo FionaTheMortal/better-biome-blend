@@ -1,23 +1,23 @@
 package fionathemortal.betterbiomeblend.mixin;
 
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.option.GameOptionsScreen;
-import net.minecraft.client.gui.screen.option.VideoOptionsScreen;
-import net.minecraft.client.option.GameOptions;
-import net.minecraft.text.Text;
+import net.minecraft.client.Options;
+import net.minecraft.client.gui.screens.OptionsSubScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.VideoSettingsScreen;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(VideoOptionsScreen.class)
-public abstract class MixinVideoOptionsScreen extends GameOptionsScreen
+@Mixin(VideoSettingsScreen.class)
+public abstract class MixinVideoOptionsScreen extends OptionsSubScreen
 {
     public
-    MixinVideoOptionsScreen(Screen parent, GameOptions gameOptions, Text title)
+    MixinVideoOptionsScreen(Screen screen, Options options, Component component)
     {
-        super(parent, gameOptions, title);
+        super(screen, options, component);
     }
 
     @Inject(method = "init", at = @At("TAIL"))

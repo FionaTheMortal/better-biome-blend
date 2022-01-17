@@ -11,5 +11,7 @@ public class BetterBiomeBlend implements ModInitializer
     onInitialize()
     {
         BetterBiomeBlendClient.overwriteOptifineGUIBlendRadiusOption();
+
+        BetterBiomeBlendClient.registerCommands();
     }
 }

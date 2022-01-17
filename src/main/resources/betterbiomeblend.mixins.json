@@ -1,15 +1,16 @@
 {
-  "required": true,
-  "package": "fionathemortal.betterbiomeblend.mixin",
-  "compatibilityLevel": "JAVA_16",
-  "refmap": "betterbiomeblend-refmap.json",
-  "client": [
-    "MixinClientWorld",
-    "MixinVideoOptionsScreen",
-    "AccessorDoubleOptionSliderWidget"
-  ],
-  "minVersion": "0.8",
-  "injectors": {
-      "defaultRequire": 1
-  }
+	"required": true,
+	"package": "fionathemortal.betterbiomeblend.mixin",
+	"compatibilityLevel": "JAVA_17",
+	"refmap": "betterbiomeblend-refmap.json",
+	"client": [
+		"MixinClientWorld",
+		"MixinVideoOptionsScreen",
+		"AccessorOptionSlider"
+	],
+	"minVersion": "0.8",
+	"injectors": {
+    	"defaultRequire": 1
+	}
 }
+

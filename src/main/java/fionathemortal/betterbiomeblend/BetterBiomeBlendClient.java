@@ -1,16 +1,22 @@
 package fionathemortal.betterbiomeblend;
 
-import fionathemortal.betterbiomeblend.mixin.AccessorDoubleOptionSliderWidget;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonListWidget;
-import net.minecraft.client.option.DoubleOption;
-import net.minecraft.client.option.GameOptions;
-import net.minecraft.client.option.Option;
-import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
-import net.minecraft.util.math.MathHelper;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import fionathemortal.betterbiomeblend.common.debug.Debug;
+import fionathemortal.betterbiomeblend.common.debug.DebugSummary;
+import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
+import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
+import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Option;
+import net.minecraft.client.gui.components.OptionsList;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.screens.OptionsSubScreen;
+import net.minecraft.client.gui.screens.VideoSettingsScreen;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.world.entity.player.Player;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,108 +27,116 @@ public final class BetterBiomeBlendClient
 {
     public static final Logger LOGGER = LogManager.getLogger(BetterBiomeBlend.MOD_ID);
 
-    public static final int BIOME_BLEND_RADIUS_MAX = 14;
-    public static final int BIOME_BLEND_RADIUS_MIN = 0;
-
-    public static final DoubleOption BIOME_BLEND_RADIUS = new DoubleOption(
-        "options.biomeBlendRadius",
-        BIOME_BLEND_RADIUS_MIN,
-        BIOME_BLEND_RADIUS_MAX,
-        1.0F,
-        BetterBiomeBlendClient::biomeBlendRadiusOptionGetValue,
-        BetterBiomeBlendClient::biomeBlendRadiusOptionSetValue,
-        BetterBiomeBlendClient::biomeBlendRadiusOptionGetDisplayText);
-
-    public static GameOptions gameOptions;
-
-    @SuppressWarnings("resource")
     public static void
-    replaceBiomeBlendRadiusOption(Screen screen)
+    registerCommands()
     {
-        List<? extends Element> children = screen.children();
-
-        for (Element child : children)
-        {
-            if (child instanceof ButtonListWidget)
-            {
-                ButtonListWidget rowList = (ButtonListWidget)child;
-
-                List<ButtonListWidget.ButtonEntry> rowListEntries = rowList.children();
-
-                boolean replacedOption = false;
-
-                for (int index = 0;
-                    index < rowListEntries.size();
-                    ++index)
+        LiteralArgumentBuilder<CommandSourceStack> benchmarkCommand = Commands
+            .literal("betterbiomeblend")
+            .then(Commands.literal("toggleBenchmark")
+            .executes(
+                context ->
                 {
-                    ButtonListWidget.ButtonEntry row = rowListEntries.get(index);
+                    boolean benchmarking = Debug.toggleBenchmark();
 
-                    List<? extends Element> rowChildren = row.children();
+                    Player player = Minecraft.getInstance().player;
 
-                    for (Element rowChild : rowChildren)
+                    if (benchmarking)
                     {
-                        if (rowChild instanceof AccessorDoubleOptionSliderWidget)
+                        if (player != null)
                         {
-                            AccessorDoubleOptionSliderWidget accessor = (AccessorDoubleOptionSliderWidget)rowChild;
-
-                            if (accessor.getOption() == Option.BIOME_BLEND_RADIUS)
-                            {
-                                ButtonListWidget.ButtonEntry newRow = ButtonListWidget.ButtonEntry.create(
-                                    MinecraftClient.getInstance().options,
-                                    screen.width,
-                                    BIOME_BLEND_RADIUS);
-
-                                rowListEntries.set(index, newRow);
-
-                                replacedOption = true;
-                            }
+                            player.sendMessage(
+                                    new TextComponent("Started benchmark. Stop with /betterbiomeblend toggleBenchmark"),
+                                    Util.NIL_UUID);
                         }
                     }
-
-                    if (replacedOption)
+                    else
                     {
-                        break;
+                        if (player != null)
+                        {
+                            player.sendMessage(new TextComponent("Stopped benchmark"), Util.NIL_UUID);
+                        }
+
+                        DebugSummary summary = Debug.collateDebugEvents();
+
+                        String[] lines =
+                        {
+                            "",
+                            String.format("Call Count: %d"  , summary.totalCalls),
+                            String.format("Wall Time: %.2f s"  , summary.elapsedWallTimeInSeconds),
+                            String.format("Calls/sec: %.2f", summary.callsPerSecond),
+                            String.format("Avg. CPU Time: %.2f ns", summary.averageTime),
+                            String.format("Avg. 1%%: %.2f ns", summary.averageOnePercentTime),
+                            String.format("Total CPU time: %.2f ms", summary.totalCPUTimeInMilliseconds),
+                            ""
+                        };
+
+                        if (player != null)
+                        {
+                            for (String line : lines)
+                            {
+                                player.sendMessage(new TextComponent(line), Util.NIL_UUID);
+                            }
+                        }
+
+                        Debug.teardown();
+                    }
+
+                    return 0;
+                }));
+
+        CommandRegistrationCallback.EVENT.register(((dispatcher, dedicated) -> dispatcher.register(benchmarkCommand)));
+    }
+
+    public static void
+    replaceBiomeBlendRadiusOption(OptionsSubScreen input)
+    {
+        if (input instanceof VideoSettingsScreen)
+        {
+            VideoSettingsScreen screen = (VideoSettingsScreen)input;
+
+            List<? extends GuiEventListener> children = screen.children();
+
+            for (GuiEventListener child : children)
+            {
+                if (child instanceof OptionsList)
+                {
+                    OptionsList rowList = (OptionsList)child;
+
+                    List<net.minecraft.client.gui.components.OptionsList.Entry> rowListEntries = rowList.children();
+
+                    boolean replacedOption = false;
+
+                    for (int index = 0;
+                         index < rowListEntries.size();
+                         ++index)
+                    {
+                        net.minecraft.client.gui.components.OptionsList.Entry row = rowListEntries.get(index);
+
+                        List<? extends GuiEventListener> rowChildren = row.children();
+
+                        for (GuiEventListener rowChild : rowChildren)
+                        {
+                            if (rowChild instanceof AccessorOptionSlider)
+                            {
+                                AccessorOptionSlider accessor = (AccessorOptionSlider)rowChild;
+
+                                if (accessor.getOption() == Option.BIOME_BLEND_RADIUS)
+                                {
+                                    rowListEntries.remove(index);
+
+                                    replacedOption = true;
+                                }
+                            }
+                        }
+
+                        if (replacedOption)
+                        {
+                            break;
+                        }
                     }
                 }
             }
         }
-    }
-
-    public static Double
-    biomeBlendRadiusOptionGetValue(GameOptions settings)
-    {
-        double result = (double)settings.biomeBlendRadius;
-
-        return result;
-    }
-
-    @SuppressWarnings("resource")
-    public static void
-    biomeBlendRadiusOptionSetValue(GameOptions settings, Double optionValues)
-    {
-        int currentValue = (int)optionValues.doubleValue();
-        int newSetting   = MathHelper.clamp(currentValue, BIOME_BLEND_RADIUS_MIN, BIOME_BLEND_RADIUS_MAX);
-
-        if (settings.biomeBlendRadius != newSetting)
-        {
-            settings.biomeBlendRadius = newSetting;
-
-            MinecraftClient.getInstance().worldRenderer.reload();
-        }
-    }
-
-    public static Text
-    biomeBlendRadiusOptionGetDisplayText(GameOptions settings, DoubleOption optionValues)
-    {
-        int currentValue  = (int)optionValues.get(settings);
-        int blendDiameter = 2 * currentValue + 1;
-
-        Text result = new TranslatableText(
-            "options.generic_value",
-            new TranslatableText("options.biomeBlendRadius"),
-            new TranslatableText("options.biomeBlendRadius." + blendDiameter));
-
-        return result;
     }
 
     public static void
@@ -133,8 +147,6 @@ public final class BetterBiomeBlendClient
         try
         {
             Class<?> guiDetailSettingsOFClass = Class.forName("net.optifine.gui.GuiDetailSettingsOF");
-
-            BetterBiomeBlendClient.LOGGER.info("Optifine is installed");
 
             try
             {
@@ -147,14 +159,14 @@ public final class BetterBiomeBlendClient
                 boolean found = false;
 
                 for (int index = 0;
-                    index < enumOptions.length;
-                    ++index)
+                     index < enumOptions.length;
+                     ++index)
                 {
                     Option option = enumOptions[index];
 
                     if (option == Option.BIOME_BLEND_RADIUS)
                     {
-                        enumOptions[index] = BIOME_BLEND_RADIUS;
+                        // enumOptions[index] = BIOME_BLEND_RADIUS;
 
                         found = true;
 
@@ -166,39 +178,24 @@ public final class BetterBiomeBlendClient
                 {
                     success = true;
                 }
+                else
+                {
+                    BetterBiomeBlendClient.LOGGER.warn("Optifine GUI option was not found.");
+                }
             }
             catch (Exception e)
             {
-                BetterBiomeBlendClient.LOGGER.info("Optifine failed to overwrite GUI Option");
+                BetterBiomeBlendClient.LOGGER.warn(e);
             }
         }
         catch (ClassNotFoundException e)
         {
-            BetterBiomeBlendClient.LOGGER.info("Optifine is not installed");
+            BetterBiomeBlendClient.LOGGER.info("Otifine does not seem to be loaded, so no need to overwrite anything.");
         }
 
         if (success)
         {
-            BetterBiomeBlendClient.LOGGER.info("Optifine GUI option was successfully replaced");
+            BetterBiomeBlendClient.LOGGER.info("Optifine GUI option was successfully replaced.");
         }
-    }
-
-    @SuppressWarnings("resource")
-    public static int
-    getBlendRadiusSetting()
-    {
-        int result = 0;
-
-        if (gameOptions == null)
-        {
-            gameOptions = MinecraftClient.getInstance().options;
-        }
-
-        if (gameOptions != null)
-        {
-            result = gameOptions.biomeBlendRadius;
-        }
-
-        return result;
     }
 }
