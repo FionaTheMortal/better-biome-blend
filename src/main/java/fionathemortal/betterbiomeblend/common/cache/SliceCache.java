@@ -230,11 +230,6 @@ public class SliceCache<T extends Slice>
                 {
                     T next = (T)current.next;
 
-                    if (next == first)
-                    {
-                        int i = 0;
-                    }
-
                     if (x == 0 && z == 0)
                     {
                         hash.remove(current.key);

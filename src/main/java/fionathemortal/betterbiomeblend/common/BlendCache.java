@@ -1,5 +1,6 @@
 package fionathemortal.betterbiomeblend.common;
 
+import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
@@ -132,13 +133,13 @@ public final class BlendCache
 
         ++invalidationCounter;
 
-        for (int x = -1;
-            x <= 1;
-            ++x)
+        for (int z = -1;
+             z <= 1;
+             ++z)
         {
-            for (int z = -1;
-                z <= 1;
-                ++z)
+            for (int x = -1;
+                x <= 1;
+                ++x)
             {
                 long key = ColorCaching.getChunkKey(chunkX + x, 0, chunkZ + z, 0);
 

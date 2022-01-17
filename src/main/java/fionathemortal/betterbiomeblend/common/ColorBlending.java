@@ -348,8 +348,6 @@ public final class ColorBlending
         float accumulatedG = 0;
         float accumulatedB = 0;
 
-        // TODO: Think about the order of loops.
-
         for (int y = 0;
              y < cacheSizeY;
              ++y)
@@ -501,13 +499,13 @@ public final class ColorBlending
 
         int neighborIndex = 0;
 
-        for (int x = -1;
-            x <= 1;
-            ++x)
+        for (int z = -1;
+             z <= 1;
+             ++z)
         {
-            for (int z = -1;
-                z <= 1;
-                ++z)
+            for (int x = -1;
+                x <= 1;
+                ++x)
             {
                 int neighborX = chunkX + x;
                 int neighborZ = chunkZ + z;
@@ -529,8 +527,6 @@ public final class ColorBlending
 
         BiomeSlice biomeChunk = biomeCache.getOrDefaultInitializeChunk(chunkX, chunkY, chunkZ, 0);
         ColorSlice colorChunk = colorCache.getOrDefaultInitializeChunk(chunkX, chunkY, chunkZ, colorType);
-
-        // TODO: Check for bugs in default color handling
 
         final boolean skipBoundary = !neighborsAreLoaded;
 
@@ -555,13 +551,13 @@ public final class ColorBlending
 
         neighborIndex = 0;
 
-        for (int x = -1;
-             x <= 1;
-             ++x)
+        for (int z = -1;
+             z <= 1;
+             ++z)
         {
-            for (int z = -1;
-                 z <= 1;
-                 ++z)
+            for (int x = -1;
+                 x <= 1;
+                 ++x)
             {
                 for (int y = -1;
                     y <= 1;
@@ -681,7 +677,7 @@ public final class ColorBlending
             }
         }
     }
-    
+
     public static void
     generateBlendedColorChunk(
         Level         world,
