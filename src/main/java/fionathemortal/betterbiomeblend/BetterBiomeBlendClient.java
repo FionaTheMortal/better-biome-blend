@@ -37,14 +37,14 @@ public final class BetterBiomeBlendClient
     private static final Component biomeBlendOptionTooltip = new TranslatableComponent("options.biomeBlendRadiusTooltip");
 
     private static final ProgressOption BIOME_BLEND_RADIUS = new ProgressOption(
-            "options.biomeBlendRadius",
-            0,
-            7,
-            1.0F,
-            BetterBiomeBlendClient::biomeBlendRadiusOptionGetValue,
-            BetterBiomeBlendClient::biomeBlendRadiusOptionSetValue,
-            BetterBiomeBlendClient::biomeBlendRadiusOptionGetDisplayText,
-            BetterBiomeBlendClient::biomeBlendRadiusOptionGetFormattedTooltip);
+        "options.biomeBlendRadius",
+        0,
+        7,
+        1.0F,
+        BetterBiomeBlendClient::biomeBlendRadiusOptionGetValue,
+        BetterBiomeBlendClient::biomeBlendRadiusOptionSetValue,
+        BetterBiomeBlendClient::biomeBlendRadiusOptionGetDisplayText,
+        BetterBiomeBlendClient::biomeBlendRadiusOptionGetFormattedTooltip);
 
     public static List<FormattedCharSequence>
     biomeBlendRadiusOptionGetFormattedTooltip(Minecraft instance)
