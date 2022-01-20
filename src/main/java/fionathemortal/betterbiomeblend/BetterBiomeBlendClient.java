@@ -1,6 +1,5 @@
 package fionathemortal.betterbiomeblend;
 
-import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import fionathemortal.betterbiomeblend.common.debug.Debug;
 import fionathemortal.betterbiomeblend.common.debug.DebugSummary;
@@ -9,13 +8,18 @@ import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Option;
+import net.minecraft.client.Options;
+import net.minecraft.client.ProgressOption;
 import net.minecraft.client.gui.components.OptionsList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.screens.OptionsSubScreen;
 import net.minecraft.client.gui.screens.VideoSettingsScreen;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,6 +30,66 @@ import java.util.List;
 public final class BetterBiomeBlendClient
 {
     public static final Logger LOGGER = LogManager.getLogger(BetterBiomeBlend.MOD_ID);
+
+    private static final Component biomeBlendOptionTooltip = new TranslatableComponent("options.biomeBlendRadiusTooltip");
+
+    private static final ProgressOption BIOME_BLEND_RADIUS = new ProgressOption(
+        "options.biomeBlendRadius",
+        0,
+        7,
+        1.0F,
+        BetterBiomeBlendClient::biomeBlendRadiusOptionGetValue,
+        BetterBiomeBlendClient::biomeBlendRadiusOptionSetValue,
+        BetterBiomeBlendClient::biomeBlendRadiusOptionGetDisplayText,
+        BetterBiomeBlendClient::biomeBlendRadiusOptionGetFormattedTooltip);
+
+    public static List<FormattedCharSequence>
+    biomeBlendRadiusOptionGetFormattedTooltip(Minecraft instance)
+    {
+        List<FormattedCharSequence> result = instance.font.split(biomeBlendOptionTooltip, 200);
+
+        return result;
+    }
+
+    public static Double
+    biomeBlendRadiusOptionGetValue(Options settings)
+    {
+        double result = (double)settings.biomeBlendRadius;
+
+        return result;
+    }
+
+    @SuppressWarnings("resource")
+    public static void
+    biomeBlendRadiusOptionSetValue(Options settings, Double optionValues)
+    {
+        /* NOTE: Concurrent modification exception with structure generation
+         * But this code is a 1 to 1 copy of vanilla code so it might just be an unlikely bug on their end */
+
+        int currentValue = (int)optionValues.doubleValue();
+        int newSetting   = Mth.clamp(currentValue, 0, 7);
+
+        if (settings.biomeBlendRadius != newSetting)
+        {
+            settings.biomeBlendRadius = newSetting;
+
+            Minecraft.getInstance().levelRenderer.allChanged();
+        }
+    }
+
+    public static Component
+    biomeBlendRadiusOptionGetDisplayText(Options settings, ProgressOption optionValues)
+    {
+        int currentValue  = (int)optionValues.get(settings);
+        int blendDiameter = 2 * currentValue + 1;
+
+        Component result = new TranslatableComponent(
+            "options.generic_value",
+            new TranslatableComponent("options.biomeBlendRadius"),
+            new TranslatableComponent("options.biomeBlendRadius." + blendDiameter));
+
+        return result;
+    }
 
     public static void
     registerCommands()
@@ -88,51 +152,51 @@ public final class BetterBiomeBlendClient
     }
 
     public static void
-    replaceBiomeBlendRadiusOption(OptionsSubScreen input)
+    replaceBiomeBlendRadiusOption(VideoSettingsScreen screen, Minecraft client)
     {
-        if (input instanceof VideoSettingsScreen)
+        List<? extends GuiEventListener> children = screen.children();
+
+        for (GuiEventListener child : children)
         {
-            VideoSettingsScreen screen = (VideoSettingsScreen)input;
-
-            List<? extends GuiEventListener> children = screen.children();
-
-            for (GuiEventListener child : children)
+            if (child instanceof OptionsList)
             {
-                if (child instanceof OptionsList)
+                OptionsList rowList = (OptionsList) child;
+
+                List<net.minecraft.client.gui.components.OptionsList.Entry> rowListEntries = rowList.children();
+
+                boolean replacedOption = false;
+
+                for (int index = 0;
+                     index < rowListEntries.size();
+                     ++index)
                 {
-                    OptionsList rowList = (OptionsList)child;
+                    net.minecraft.client.gui.components.OptionsList.Entry row = rowListEntries.get(index);
 
-                    List<net.minecraft.client.gui.components.OptionsList.Entry> rowListEntries = rowList.children();
+                    List<? extends GuiEventListener> rowChildren = row.children();
 
-                    boolean replacedOption = false;
-
-                    for (int index = 0;
-                         index < rowListEntries.size();
-                         ++index)
+                    for (GuiEventListener rowChild : rowChildren)
                     {
-                        net.minecraft.client.gui.components.OptionsList.Entry row = rowListEntries.get(index);
-
-                        List<? extends GuiEventListener> rowChildren = row.children();
-
-                        for (GuiEventListener rowChild : rowChildren)
+                        if (rowChild instanceof AccessorOptionSlider)
                         {
-                            if (rowChild instanceof AccessorOptionSlider)
+                            AccessorOptionSlider accessor = (AccessorOptionSlider) rowChild;
+
+                            if (accessor.getOption() == Option.BIOME_BLEND_RADIUS)
                             {
-                                AccessorOptionSlider accessor = (AccessorOptionSlider)rowChild;
+                                OptionsList.Entry newRow = OptionsList.Entry.big(
+                                    client.options,
+                                    screen.width,
+                                    BIOME_BLEND_RADIUS);
 
-                                if (accessor.getOption() == Option.BIOME_BLEND_RADIUS)
-                                {
-                                    rowListEntries.remove(index);
+                                rowListEntries.set(index, newRow);
 
-                                    replacedOption = true;
-                                }
+                                replacedOption = true;
                             }
                         }
+                    }
 
-                        if (replacedOption)
-                        {
-                            break;
-                        }
+                    if (replacedOption)
+                    {
+                        break;
                     }
                 }
             }

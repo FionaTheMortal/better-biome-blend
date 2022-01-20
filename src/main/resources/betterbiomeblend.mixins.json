@@ -5,7 +5,6 @@
 	"refmap": "betterbiomeblend-refmap.json",
 	"client": [
 		"MixinClientWorld",
-		"MixinVideoOptionsScreen",
 		"AccessorOptionSlider"
 	],
 	"minVersion": "0.8",
