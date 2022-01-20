@@ -1,8 +1,8 @@
 package fionathemortal.betterbiomeblend;
 
+import com.mojang.authlib.minecraft.client.MinecraftClient;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import fionathemortal.betterbiomeblend.common.ColorBlending;
 import fionathemortal.betterbiomeblend.common.debug.Debug;
 import fionathemortal.betterbiomeblend.common.debug.DebugSummary;
 import fionathemortal.betterbiomeblend.mixin.AccessorOptionSlider;
@@ -12,12 +12,12 @@ import net.minecraft.client.gui.components.OptionsList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.VideoSettingsScreen;
-import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.event.ScreenEvent.InitScreenEvent;
@@ -33,7 +33,66 @@ public final class BetterBiomeBlendClient
 {
     public static final Logger LOGGER = LogManager.getLogger(BetterBiomeBlend.MOD_ID);
 
-    public static final Options gameSettings = Minecraft.getInstance().options;
+    private static final Options   gameSettings = Minecraft.getInstance().options;
+    private static final Component biomeBlendOptionTooltip = new TranslatableComponent("options.biomeBlendRadiusTooltip");
+
+    private static final ProgressOption BIOME_BLEND_RADIUS = new ProgressOption(
+            "options.biomeBlendRadius",
+            0,
+            7,
+            1.0F,
+            BetterBiomeBlendClient::biomeBlendRadiusOptionGetValue,
+            BetterBiomeBlendClient::biomeBlendRadiusOptionSetValue,
+            BetterBiomeBlendClient::biomeBlendRadiusOptionGetDisplayText,
+            BetterBiomeBlendClient::biomeBlendRadiusOptionGetFormattedTooltip);
+
+    public static List<FormattedCharSequence>
+    biomeBlendRadiusOptionGetFormattedTooltip(Minecraft instance)
+    {
+        List<FormattedCharSequence> result = instance.font.split(biomeBlendOptionTooltip, 200);
+
+        return result;
+    }
+
+    public static Double
+    biomeBlendRadiusOptionGetValue(Options settings)
+    {
+        double result = (double)settings.biomeBlendRadius;
+
+        return result;
+    }
+
+    @SuppressWarnings("resource")
+    public static void
+    biomeBlendRadiusOptionSetValue(Options settings, Double optionValues)
+    {
+        /* NOTE: Concurrent modification exception with structure generation
+         * But this code is a 1 to 1 copy of vanilla code so it might just be an unlikely bug on their end */
+
+        int currentValue = (int)optionValues.doubleValue();
+        int newSetting   = Mth.clamp(currentValue, 0, 7);
+
+        if (settings.biomeBlendRadius != newSetting)
+        {
+            settings.biomeBlendRadius = newSetting;
+
+            Minecraft.getInstance().levelRenderer.allChanged();
+        }
+    }
+
+    public static Component
+    biomeBlendRadiusOptionGetDisplayText(Options settings, ProgressOption optionValues)
+    {
+        int currentValue  = (int)optionValues.get(settings);
+        int blendDiameter = 2 * currentValue + 1;
+
+        Component result = new TranslatableComponent(
+            "options.generic_value",
+            new TranslatableComponent("options.biomeBlendRadius"),
+            new TranslatableComponent("options.biomeBlendRadius." + blendDiameter));
+
+        return result;
+    }
 
     @SubscribeEvent
     public static void
@@ -152,7 +211,12 @@ public final class BetterBiomeBlendClient
 
                             if (accessor.getOption() == Option.BIOME_BLEND_RADIUS)
                             {
-                                rowListEntries.remove(index);
+                                OptionsList.Entry newRow = OptionsList.Entry.big(
+                                    gameSettings,
+                                    screen.width,
+                                    BIOME_BLEND_RADIUS);
+
+                                rowListEntries.set(index, newRow);
 
                                 replacedOption = true;
                             }
