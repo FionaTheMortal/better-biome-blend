@@ -11,6 +11,7 @@ import net.minecraft.client.color.block.BlockTintCache;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.ChunkPos;
@@ -33,7 +34,7 @@ public abstract class MixinClientWorld extends Level
 {
     @Shadow
     private final Object2ObjectArrayMap<ColorResolver, BlockTintCache> tintCaches =
-            new Object2ObjectArrayMap<>();
+        new Object2ObjectArrayMap<>();
 
     @Unique
     private final BlendCache betterBiomeBlend$blendColorCache = new BlendCache(2048);
@@ -46,53 +47,53 @@ public abstract class MixinClientWorld extends Level
 
     @Unique
     private final ThreadLocal<BlendChunk> betterBiomeBlend$threadLocalWaterChunk =
-            ThreadLocal.withInitial(
-                    () ->
-                    {
-                        BlendChunk chunk = new BlendChunk();
-                        chunk.acquire();
-                        return chunk;
-                    });
+        ThreadLocal.withInitial(
+            () ->
+            {
+                BlendChunk chunk = new BlendChunk();
+                chunk.acquire();
+                return chunk;
+            });
 
     @Unique
     private final ThreadLocal<BlendChunk> betterBiomeBlend$threadLocalGrassChunk =
-            ThreadLocal.withInitial(
-                    () ->
-                    {
-                        BlendChunk chunk = new BlendChunk();
-                        chunk.acquire();
-                        return chunk;
-                    });
+        ThreadLocal.withInitial(
+            () ->
+            {
+                BlendChunk chunk = new BlendChunk();
+                chunk.acquire();
+                return chunk;
+            });
 
     @Unique
     private final ThreadLocal<BlendChunk> betterBiomeBlend$threadLocalFoliageChunk =
-            ThreadLocal.withInitial(
-                    () ->
-                    {
-                        BlendChunk chunk = new BlendChunk();
-                        chunk.acquire();
-                        return chunk;
-                    });
+        ThreadLocal.withInitial(
+            () ->
+            {
+                BlendChunk chunk = new BlendChunk();
+                chunk.acquire();
+                return chunk;
+            });
 
     @Unique
     private final ThreadLocal<BlendChunk> betterBiomeBlend$threadLocalGenericChunk =
-            ThreadLocal.withInitial(
-                    () ->
-                    {
-                        BlendChunk chunk = new BlendChunk();
-                        chunk.acquire();
-                        return chunk;
-                    });
+        ThreadLocal.withInitial(
+            () ->
+            {
+                BlendChunk chunk = new BlendChunk();
+                chunk.acquire();
+                return chunk;
+            });
 
     protected
     MixinClientWorld(
-            WritableLevelData        p_46450_,
-            ResourceKey<Level>       p_46451_,
-            final DimensionType      p_46452_,
-            Supplier<ProfilerFiller> p_46453_,
-            boolean                  p_46454_,
-            boolean                  p_46455_,
-            long                     p_46456_)
+        WritableLevelData        p_46450_,
+        ResourceKey<Level>       p_46451_,
+        Holder<DimensionType>    p_46452_,
+        Supplier<ProfilerFiller> p_46453_,
+        boolean                  p_46454_,
+        boolean                  p_46455_,
+        long                     p_46456_)
     {
         super(p_46450_, p_46451_, p_46452_, p_46453_, p_46454_, p_46455_, p_46456_);
     }
@@ -159,15 +160,15 @@ public abstract class MixinClientWorld extends Level
         if (chunk == null)
         {
             chunk = ColorCaching.getBlendedColorChunk(
-                    this,
-                    colorResolverIn,
-                    colorType,
-                    chunkX,
-                    chunkY,
-                    chunkZ,
-                    betterBiomeBlend$blendColorCache,
-                    betterBiomeBlend$chunkColorCache,
-                    betterBiomeBlend$chunkBiomeCache);
+                this,
+                colorResolverIn,
+                colorType,
+                chunkX,
+                chunkY,
+                chunkZ,
+                betterBiomeBlend$blendColorCache,
+                betterBiomeBlend$chunkColorCache,
+                betterBiomeBlend$chunkBiomeCache);
 
             ColorCaching.setThreadLocalChunk(threadLocalChunk, chunk, betterBiomeBlend$blendColorCache);
         }

@@ -7,15 +7,16 @@ import fionathemortal.betterbiomeblend.common.cache.ColorSlice;
 import fionathemortal.betterbiomeblend.common.debug.Debug;
 import fionathemortal.betterbiomeblend.common.debug.DebugEvent;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.ColorResolver;
+import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
 
 import java.util.Stack;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class ColorBlending
@@ -267,7 +268,7 @@ public final class ColorBlending
                             {
                                 blockPos.set(sampleX, sampleY, sampleZ);
 
-                                biome = world.getBiome(blockPos);
+                                biome = getBiomeAtPositionOrDefaultOrThrow(world, blockPos);
 
                                 cachedBiomes[cacheIndex] = biome;
                             }
@@ -299,6 +300,43 @@ public final class ColorBlending
                 }
             }
         }
+    }
+
+    public static Biome
+    getBiomeAtPositionOrDefault(Level world, BlockPos blockPosition)
+    {
+        Holder<Biome> biomeHolder = world.getBiome(blockPosition);
+
+        Biome result = null;
+
+        if (biomeHolder.isBound())
+        {
+            result = biomeHolder.value();
+        }
+        else
+        {
+            biomeHolder = world.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getHolderOrThrow(Biomes.PLAINS);
+
+            if (biomeHolder.isBound())
+            {
+                result = biomeHolder.value();
+            }
+        }
+
+        return result;
+    }
+
+    public static Biome
+    getBiomeAtPositionOrDefaultOrThrow(Level world, BlockPos blockPos)
+    {
+        Biome result = getBiomeAtPositionOrDefault(world, blockPos);
+
+        if (result == null)
+        {
+            throw new IllegalStateException("Biome could not be retrieved for block position.");
+        }
+
+        return result;
     }
 
     public static int
@@ -394,7 +432,7 @@ public final class ColorBlending
                         {
                             blockPos.set(sampleX, sampleY, sampleZ);
 
-                            biome = world.getBiome(blockPos);
+                            biome = getBiomeAtPositionOrDefaultOrThrow(world, blockPos);
 
                             cachedBiomes[cacheIndex] = biome;
                         }
