@@ -2,10 +2,10 @@ package fionathemortal.betterbiomeblend.common;
 
 public final class ColorBlendBuffer
 {
-    public byte[] color;
+    public float[] color;
 
     public ColorBlendBuffer()
     {
-        this.color = new byte[3 * ColorBlending.BLEND_BUFFER_DIM * ColorBlending.BLEND_BUFFER_DIM * ColorBlending.BLEND_BUFFER_DIM];
+        this.color = new float[3 * ColorBlending.BLEND_BUFFER_DIM * ColorBlending.BLEND_BUFFER_DIM * ColorBlending.BLEND_BUFFER_DIM];
     }
 }
