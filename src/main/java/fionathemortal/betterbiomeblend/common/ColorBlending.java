@@ -7,15 +7,16 @@ import fionathemortal.betterbiomeblend.common.cache.ColorSlice;
 import fionathemortal.betterbiomeblend.common.debug.Debug;
 import fionathemortal.betterbiomeblend.common.debug.DebugEvent;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.ColorResolver;
+import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
 
 import java.util.Stack;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class ColorBlending
@@ -128,7 +129,7 @@ public final class ColorBlending
         int           indexY,
         int           indexZ,
         int           defaultColor,
-        byte[]        blendBuffer)
+        float[]       blendBuffer)
     {
         int colorR = Color.RGBAGetR(defaultColor);
         int colorG = Color.RGBAGetG(defaultColor);
@@ -170,9 +171,9 @@ public final class ColorBlending
 
                     int blendIndex = getCacheArrayIndex(blendDim, blendX, blendY, blendZ);
 
-                    blendBuffer[3 * blendIndex + 0] = (byte)colorR;
-                    blendBuffer[3 * blendIndex + 1] = (byte)colorG;
-                    blendBuffer[3 * blendIndex + 2] = (byte)colorB;
+                    blendBuffer[3 * blendIndex + 0] = Color.sRGBByteToLinearFloat((byte)colorR);
+                    blendBuffer[3 * blendIndex + 1] = Color.sRGBByteToLinearFloat((byte)colorG);
+                    blendBuffer[3 * blendIndex + 2] = Color.sRGBByteToLinearFloat((byte)colorB);
                 }
             }
         }
@@ -190,7 +191,7 @@ public final class ColorBlending
         int           indexZ,
         byte[]        cachedColors,
         Biome[]       cachedBiomes,
-        byte[]        blendBuffer,
+        float[]       blendBuffer,
         boolean       genNewColors,
         int           defaultColor)
     {
@@ -267,7 +268,7 @@ public final class ColorBlending
                             {
                                 blockPos.set(sampleX, sampleY, sampleZ);
 
-                                biome = world.getBiome(blockPos);
+                                biome = getBiomeAtPositionOrDefaultOrThrow(world, blockPos);
 
                                 cachedBiomes[cacheIndex] = biome;
                             }
@@ -293,12 +294,49 @@ public final class ColorBlending
                         }
                     }
 
-                    blendBuffer[3 * blendIndex + 0] = (byte)cachedR;
-                    blendBuffer[3 * blendIndex + 1] = (byte)cachedG;
-                    blendBuffer[3 * blendIndex + 2] = (byte)cachedB;
+                    blendBuffer[3 * blendIndex + 0] = Color.sRGBByteToLinearFloat((byte)cachedR);
+                    blendBuffer[3 * blendIndex + 1] = Color.sRGBByteToLinearFloat((byte)cachedG);
+                    blendBuffer[3 * blendIndex + 2] = Color.sRGBByteToLinearFloat((byte)cachedB);
                 }
             }
         }
+    }
+
+    public static Biome
+    getBiomeAtPositionOrDefault(Level world, BlockPos blockPosition)
+    {
+        Holder<Biome> biomeHolder = world.getBiome(blockPosition);
+
+        Biome result = null;
+
+        if (biomeHolder.isBound())
+        {
+            result = biomeHolder.value();
+        }
+        else
+        {
+            biomeHolder = world.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getHolderOrThrow(Biomes.PLAINS);
+
+            if (biomeHolder.isBound())
+            {
+                result = biomeHolder.value();
+            }
+        }
+
+        return result;
+    }
+
+    public static Biome
+    getBiomeAtPositionOrDefaultOrThrow(Level world, BlockPos blockPos)
+    {
+        Biome result = getBiomeAtPositionOrDefault(world, blockPos);
+
+        if (result == null)
+        {
+            throw new IllegalStateException("Biome could not be retrieved for block position.");
+        }
+
+        return result;
     }
 
     public static int
@@ -310,7 +348,7 @@ public final class ColorBlending
         int           chunkZ,
         byte[]        cachedColors,
         Biome[]       cachedBiomes,
-        byte[]        blendBuffer,
+        float[]       blendBuffer,
         boolean       skipBoundary)
     {
         BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
@@ -394,7 +432,7 @@ public final class ColorBlending
                         {
                             blockPos.set(sampleX, sampleY, sampleZ);
 
-                            biome = world.getBiome(blockPos);
+                            biome = getBiomeAtPositionOrDefaultOrThrow(world, blockPos);
 
                             cachedBiomes[cacheIndex] = biome;
                         }
@@ -417,9 +455,9 @@ public final class ColorBlending
                     accumulatedG += Color.sRGBByteToLinearFloat(cachedG);
                     accumulatedB += Color.sRGBByteToLinearFloat(cachedB);
 
-                    blendBuffer[3 * blendIndex + 0] = (byte)cachedR;
-                    blendBuffer[3 * blendIndex + 1] = (byte)cachedG;
-                    blendBuffer[3 * blendIndex + 2] = (byte)cachedB;
+                    blendBuffer[3 * blendIndex + 0] = Color.sRGBByteToLinearFloat((byte)cachedR);
+                    blendBuffer[3 * blendIndex + 1] = Color.sRGBByteToLinearFloat((byte)cachedG);
+                    blendBuffer[3 * blendIndex + 2] = Color.sRGBByteToLinearFloat((byte)cachedB);
                 }
             }
         }
@@ -440,7 +478,7 @@ public final class ColorBlending
     }
 
     public static void
-    fillCenterChunkBoundaryWithDefaultColor(byte[] blendBuffer, int defaultColor)
+    fillCenterChunkBoundaryWithDefaultColor(float[] blendBuffer, int defaultColor)
     {
         final int blendMinX = getNeighborRectBlendBufferMin(0);
         final int blendMinY = getNeighborRectBlendBufferMin(0);
@@ -473,9 +511,9 @@ public final class ColorBlending
 
                         int blendIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, blendX, blendY, blendZ);
 
-                        blendBuffer[blendIndex + 0] = (byte)defaultR;
-                        blendBuffer[blendIndex + 1] = (byte)defaultG;
-                        blendBuffer[blendIndex + 2] = (byte)defaultB;
+                        blendBuffer[blendIndex + 0] = Color.sRGBByteToLinearFloat((byte)defaultR);
+                        blendBuffer[blendIndex + 1] = Color.sRGBByteToLinearFloat((byte)defaultG);
+                        blendBuffer[blendIndex + 2] = Color.sRGBByteToLinearFloat((byte)defaultB);
                     }
                 }
             }
@@ -492,7 +530,7 @@ public final class ColorBlending
         int           chunkZ,
         ColorCache    colorCache,
         BiomeCache    biomeCache,
-        byte[]        blendBuffer)
+        float[]       blendBuffer)
     {
         boolean       neighborsAreLoaded = true;
         ChunkAccess[] neighbors          = new ChunkAccess[9];
@@ -612,7 +650,7 @@ public final class ColorBlending
     }
 
     public static void
-    blendColorsForChunk(byte[] result, byte[] colors)
+    blendColorsForChunk(byte[] result, float[] colors)
     {
         int BLEND_RADIUS = 3;
         int BLEND_DIM = 2 * BLEND_RADIUS + 1;
@@ -620,59 +658,163 @@ public final class ColorBlending
         int BLEND_COLOR_CHUNK_DIM = 5;
 
         for (int y = 0;
-             y < BLEND_COLOR_CHUNK_DIM;
-             ++y)
+            y < BLEND_BUFFER_DIM;
+            ++y)
         {
             for (int z = 0;
-                 z < BLEND_COLOR_CHUNK_DIM;
-                 ++z)
+                z < BLEND_BUFFER_DIM;
+                ++z)
             {
+                float accumulatedR = 0.0f;
+                float accumulatedG = 0.0f;
+                float accumulatedB = 0.0f;
+
                 for (int x = 0;
-                     x < BLEND_COLOR_CHUNK_DIM;
-                     ++x)
+                    x < BLEND_DIM;
+                    ++x)
                 {
-                    float accumulatedR = 0;
-                    float accumulatedG = 0;
-                    float accumulatedB = 0;
+                    int blendIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, x, y, z);
 
-                    for (int sourceY = 0;
-                        sourceY < BLEND_DIM;
-                        ++sourceY)
+                    accumulatedR += colors[3 * blendIndex + 0];
+                    accumulatedG += colors[3 * blendIndex + 1];
+                    accumulatedB += colors[3 * blendIndex + 2];
+                }
+
+                for (int x = 0;
+                    x < BLEND_COLOR_CHUNK_DIM;
+                    ++x)
+                {
+                    int delIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, x, y, z);
+                    int addIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, x + BLEND_DIM, y, z);
+
+                    float delR = colors[3 * delIndex + 0];
+                    float delG = colors[3 * delIndex + 1];
+                    float delB = colors[3 * delIndex + 2];
+
+                    int outIndex = delIndex;
+
+                    colors[3 * outIndex + 0] = accumulatedR;
+                    colors[3 * outIndex + 1] = accumulatedG;
+                    colors[3 * outIndex + 2] = accumulatedB;
+
+                    if (x < BLEND_COLOR_CHUNK_DIM - 1)
                     {
-                        for (int sourceZ = 0;
-                             sourceZ < BLEND_DIM;
-                             ++sourceZ)
-                        {
-                            for (int sourceX = 0;
-                                 sourceX < BLEND_DIM;
-                                 ++sourceX)
-                            {
-                                int blendX = x + sourceX;
-                                int blendY = y + sourceY;
-                                int blendZ = z + sourceZ;
+                        accumulatedR -= delR;
+                        accumulatedG -= delG;
+                        accumulatedB -= delB;
 
-                                int blendIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, blendX, blendY, blendZ);
-
-                                accumulatedR += Color.sRGBByteToLinearFloat(0xFF & colors[3 * blendIndex + 0]);
-                                accumulatedG += Color.sRGBByteToLinearFloat(0xFF & colors[3 * blendIndex + 1]);
-                                accumulatedB += Color.sRGBByteToLinearFloat(0xFF & colors[3 * blendIndex + 2]);
-                            }
-                        }
+                        accumulatedR += colors[3 * addIndex + 0];
+                        accumulatedG += colors[3 * addIndex + 1];
+                        accumulatedB += colors[3 * addIndex + 2];
                     }
+                }
+            }
+        }
 
-                    int cacheIndex = getCacheArrayIndex(BLEND_COLOR_CHUNK_DIM, x, y, z);
+        for (int y = 0;
+             y < BLEND_BUFFER_DIM;
+             ++y)
+        {
+            for (int x = 0;
+                 x < BLEND_COLOR_CHUNK_DIM;
+                 ++x)
+            {
+                float accumulatedR = 0.0f;
+                float accumulatedG = 0.0f;
+                float accumulatedB = 0.0f;
 
-                    float colorR = accumulatedR / BLEND_COUNT;
-                    float colorG = accumulatedG / BLEND_COUNT;
-                    float colorB = accumulatedB / BLEND_COUNT;
+                for (int z = 0;
+                     z < BLEND_DIM;
+                     ++z)
+                {
+                    int blendIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, x, y, z);
 
-                    byte byteR = Color.linearFloatTosRGBByte(colorR);
-                    byte byteG = Color.linearFloatTosRGBByte(colorG);
-                    byte byteB = Color.linearFloatTosRGBByte(colorB);
+                    accumulatedR += colors[3 * blendIndex + 0];
+                    accumulatedG += colors[3 * blendIndex + 1];
+                    accumulatedB += colors[3 * blendIndex + 2];
+                }
 
-                    result[3 * cacheIndex + 0] = byteR;
-                    result[3 * cacheIndex + 1] = byteG;
-                    result[3 * cacheIndex + 2] = byteB;
+                for (int z = 0;
+                     z < BLEND_COLOR_CHUNK_DIM;
+                     ++z)
+                {
+                    int delIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, x, y, z);
+                    int addIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, x, y, z + BLEND_DIM);
+
+                    float delR = colors[3 * delIndex + 0];
+                    float delG = colors[3 * delIndex + 1];
+                    float delB = colors[3 * delIndex + 2];
+
+                    int outIndex = delIndex;
+
+                    colors[3 * outIndex + 0] = accumulatedR;
+                    colors[3 * outIndex + 1] = accumulatedG;
+                    colors[3 * outIndex + 2] = accumulatedB;
+
+                    if (z < BLEND_COLOR_CHUNK_DIM - 1)
+                    {
+                        accumulatedR -= delR;
+                        accumulatedG -= delG;
+                        accumulatedB -= delB;
+
+                        accumulatedR += colors[3 * addIndex + 0];
+                        accumulatedG += colors[3 * addIndex + 1];
+                        accumulatedB += colors[3 * addIndex + 2];
+                    }
+                }
+            }
+        }
+
+        for (int z = 0;
+             z < BLEND_COLOR_CHUNK_DIM;
+             ++z)
+        {
+            for (int x = 0;
+                 x < BLEND_COLOR_CHUNK_DIM;
+                 ++x)
+            {
+                float accumulatedR = 0.0f;
+                float accumulatedG = 0.0f;
+                float accumulatedB = 0.0f;
+
+                for (int y = 0;
+                     y < BLEND_DIM;
+                     ++y)
+                {
+                    int blendIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, x, y, z);
+
+                    accumulatedR += colors[3 * blendIndex + 0];
+                    accumulatedG += colors[3 * blendIndex + 1];
+                    accumulatedB += colors[3 * blendIndex + 2];
+                }
+
+                for (int y = 0;
+                     y < BLEND_COLOR_CHUNK_DIM;
+                     ++y)
+                {
+                    int delIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, x, y, z);
+                    int addIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, x, y + BLEND_DIM, z);
+
+                    float delR = colors[3 * delIndex + 0];
+                    float delG = colors[3 * delIndex + 1];
+                    float delB = colors[3 * delIndex + 2];
+
+                    int outIndex = getCacheArrayIndex(BLEND_COLOR_CHUNK_DIM, x, y, z);
+
+                    result[3 * outIndex + 0] = Color.linearFloatTosRGBByte(accumulatedR / BLEND_COUNT);
+                    result[3 * outIndex + 1] = Color.linearFloatTosRGBByte(accumulatedG / BLEND_COUNT);
+                    result[3 * outIndex + 2] = Color.linearFloatTosRGBByte(accumulatedB / BLEND_COUNT);
+
+                    if (y < BLEND_COLOR_CHUNK_DIM - 1)
+                    {
+                        accumulatedR -= delR;
+                        accumulatedG -= delG;
+                        accumulatedB -= delB;
+
+                        accumulatedR += colors[3 * addIndex + 0];
+                        accumulatedG += colors[3 * addIndex + 1];
+                        accumulatedB += colors[3 * addIndex + 2];
+                    }
                 }
             }
         }

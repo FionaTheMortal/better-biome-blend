@@ -11,6 +11,7 @@ import net.minecraft.client.color.block.BlockTintCache;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.ChunkPos;
@@ -88,7 +89,7 @@ public abstract class MixinClientWorld extends Level
     MixinClientWorld(
         WritableLevelData        p_46450_,
         ResourceKey<Level>       p_46451_,
-        final DimensionType      p_46452_,
+        Holder<DimensionType>    p_46452_,
         Supplier<ProfilerFiller> p_46453_,
         boolean                  p_46454_,
         boolean                  p_46455_,
