@@ -511,9 +511,9 @@ public final class ColorBlending
 
                         int blendIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, blendX, blendY, blendZ);
 
-                        blendBuffer[blendIndex + 0] = Color.sRGBByteToLinearFloat((byte)defaultR);
-                        blendBuffer[blendIndex + 1] = Color.sRGBByteToLinearFloat((byte)defaultG);
-                        blendBuffer[blendIndex + 2] = Color.sRGBByteToLinearFloat((byte)defaultB);
+                        blendBuffer[3 * blendIndex + 0] = Color.sRGBByteToLinearFloat((byte)defaultR);
+                        blendBuffer[3 * blendIndex + 1] = Color.sRGBByteToLinearFloat((byte)defaultG);
+                        blendBuffer[3 * blendIndex + 2] = Color.sRGBByteToLinearFloat((byte)defaultB);
                     }
                 }
             }
