@@ -473,9 +473,9 @@ public final class ColorBlending
 
                         int blendIndex = getCacheArrayIndex(BLEND_BUFFER_DIM, blendX, blendY, blendZ);
 
-                        blendBuffer[blendIndex + 0] = (byte)defaultR;
-                        blendBuffer[blendIndex + 1] = (byte)defaultG;
-                        blendBuffer[blendIndex + 2] = (byte)defaultB;
+                        blendBuffer[3 * blendIndex + 0] = (byte)defaultR;
+                        blendBuffer[3 * blendIndex + 1] = (byte)defaultG;
+                        blendBuffer[3 * blendIndex + 2] = (byte)defaultB;
                     }
                 }
             }
