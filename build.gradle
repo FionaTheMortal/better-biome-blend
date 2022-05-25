@@ -114,6 +114,8 @@ dependencies {
     minecraft 'net.minecraftforge:forge:1.18.2-40.0.1'
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
+    compileOnly files("libs/better-biome-blend-sodium-api-0.4.1-dev.jar")
 }
 
 def resourceTargets = ['META-INF/mods.toml', 'pack.mcmeta', "${mod_id}.mixins.json".toString()]
