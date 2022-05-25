@@ -26,6 +26,8 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+	compileOnly files("libs/better-biome-blend-sodium-api-0.4.1-dev.jar")
 }
 
 processResources {

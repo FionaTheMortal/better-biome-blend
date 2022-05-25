@@ -31,9 +31,9 @@ public final class ColorBlending
     public static final int COLOR_CHUNK_DIM = 4;
     public static final int COLOR_CHUNK_MAX = COLOR_CHUNK_DIM - 1;
 
-    public static final int SAMPLE_SEED_X = 0;
-    public static final int SAMPLE_SEED_Y = 0;
-    public static final int SAMPLE_SEED_Z = 0;
+    public static final int SAMPLE_SEED_X = 1664525;
+    public static final int SAMPLE_SEED_Y = 214013;
+    public static final int SAMPLE_SEED_Z = 16807;
 
     public static final ReentrantLock           freeBlendBuffersLock = new ReentrantLock();
     public static final Stack<ColorBlendBuffer> freeBlendBuffers     = new Stack<>();
@@ -260,9 +260,9 @@ public final class ColorBlending
                         {
                             Biome biome = cachedBiomes[cacheIndex];
 
-                            int sampleX = getRandomSamplePosition(sectionX, SAMPLE_SEED_X);
-                            int sampleY = getRandomSamplePosition(sectionY, SAMPLE_SEED_Y);
-                            int sampleZ = getRandomSamplePosition(sectionZ, SAMPLE_SEED_Z);
+                            int sampleX = getRandomSamplePosition(sectionX + x, SAMPLE_SEED_X);
+                            int sampleY = getRandomSamplePosition(sectionY + y, SAMPLE_SEED_Y);
+                            int sampleZ = getRandomSamplePosition(sectionZ + z, SAMPLE_SEED_Z);
 
                             if (biome == null)
                             {
@@ -424,9 +424,9 @@ public final class ColorBlending
                     {
                         Biome biome = cachedBiomes[cacheIndex];
 
-                        int sampleX = getRandomSamplePosition(sectionX, SAMPLE_SEED_X);
-                        int sampleY = getRandomSamplePosition(sectionY, SAMPLE_SEED_Y);
-                        int sampleZ = getRandomSamplePosition(sectionZ, SAMPLE_SEED_Z);
+                        int sampleX = getRandomSamplePosition(sectionX + x, SAMPLE_SEED_X);
+                        int sampleY = getRandomSamplePosition(sectionY + y, SAMPLE_SEED_Y);
+                        int sampleZ = getRandomSamplePosition(sectionZ + z, SAMPLE_SEED_Z);
 
                         if (biome == null)
                         {

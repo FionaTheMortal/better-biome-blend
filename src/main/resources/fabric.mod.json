@@ -22,7 +22,8 @@
     ]
   },
   "mixins": [
-    "betterbiomeblend.mixins.json"
+    "betterbiomeblend.mixins.json",
+    "betterbiomeblend.mixins.sodium.json"
   ],
 
   "depends": {

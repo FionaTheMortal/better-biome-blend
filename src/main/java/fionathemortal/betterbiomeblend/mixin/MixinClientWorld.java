@@ -37,13 +37,13 @@ public abstract class MixinClientWorld extends Level
         new Object2ObjectArrayMap<>();
 
     @Unique
-    private final BlendCache betterBiomeBlend$blendColorCache = new BlendCache(2048);
+    public final BlendCache betterBiomeBlend$blendColorCache = new BlendCache(2048);
 
     @Unique
-    private final ColorCache betterBiomeBlend$chunkColorCache = new ColorCache(512);
+    public final ColorCache betterBiomeBlend$chunkColorCache = new ColorCache(512);
 
     @Unique
-    private final BiomeCache betterBiomeBlend$chunkBiomeCache = new BiomeCache(32);
+    public final BiomeCache betterBiomeBlend$chunkBiomeCache = new BiomeCache(32);
 
     @Unique
     private final ThreadLocal<BlendChunk> betterBiomeBlend$threadLocalWaterChunk =
