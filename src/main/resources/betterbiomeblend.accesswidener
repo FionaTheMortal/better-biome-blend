@@ -1,6 +1,4 @@
 accessWidener	v1	named
 
-accessible class net/minecraft/client/gui/components/OptionsList$Entry
-
-mutable field net/minecraft/client/ProgressOption tooltipSupplier Ljava/util/function/Function;
-accessible field net/minecraft/client/ProgressOption tooltipSupplier Ljava/util/function/Function;
+mutable    field net/minecraft/client/Options biomeBlendRadius Lnet/minecraft/client/OptionInstance;
+accessible field net/minecraft/client/Options biomeBlendRadius Lnet/minecraft/client/OptionInstance;

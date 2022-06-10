@@ -12,18 +12,14 @@ public class BetterBiomeBlend implements ModInitializer
     public void
     onInitialize()
     {
-        // BetterBiomeBlendClient.overwriteOptifineGUIBlendRadiusOption();
-
         BetterBiomeBlendClient.registerCommands();
 
-        ScreenEvents.AFTER_INIT.register(
+        ScreenEvents.BEFORE_INIT.register(
             (client, screen, scaledWidth, scaledHeight) ->
             {
                 if (screen instanceof VideoSettingsScreen)
                 {
-                    VideoSettingsScreen videoSettingsScreen = (VideoSettingsScreen)screen;
-
-                    BetterBiomeBlendClient.replaceBiomeBlendRadiusOption(videoSettingsScreen, client);
+                    BetterBiomeBlendClient.replaceBiomeBlendRadiusOption(client);
                 }
             });
     }
