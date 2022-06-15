@@ -1,6 +1,6 @@
 modLoader="javafml"
-loaderVersion="[39,)"
-license="All rights reserved"
+loaderVersion="[41,)"
+license="Public Domain"
 issueTrackerURL="https://github.com/FionaTheMortal/better-biome-blend/issues"
 [[mods]]
 modId="${mod_id}"
@@ -12,12 +12,12 @@ description="    This mod increases the biome color blending radius and replaces
 [[dependencies.examplemod]]
     modId="forge"
     mandatory=true
-    versionRange="[39,)"
+    versionRange="[41,)"
     ordering="NONE"
     side="BOTH"
 [[dependencies.examplemod]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.18.1,1.19)"
+    versionRange="[1.19.1,1.20)"
     ordering="NONE"
     side="BOTH"

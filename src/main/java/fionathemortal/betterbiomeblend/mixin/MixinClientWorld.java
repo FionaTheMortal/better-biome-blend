@@ -2,10 +2,7 @@ package fionathemortal.betterbiomeblend.mixin;
 
 import fionathemortal.betterbiomeblend.common.*;
 import fionathemortal.betterbiomeblend.common.cache.BiomeCache;
-import fionathemortal.betterbiomeblend.common.cache.BiomeSlice;
 import fionathemortal.betterbiomeblend.common.cache.ColorCache;
-import fionathemortal.betterbiomeblend.common.cache.ColorSlice;
-import fionathemortal.betterbiomeblend.common.cache.SliceCache;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import net.minecraft.client.color.block.BlockTintCache;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -87,15 +84,16 @@ public abstract class MixinClientWorld extends Level
 
     protected
     MixinClientWorld(
-        WritableLevelData        p_46450_,
-        ResourceKey<Level>       p_46451_,
-        Holder<DimensionType>    p_46452_,
-        Supplier<ProfilerFiller> p_46453_,
-        boolean                  p_46454_,
-        boolean                  p_46455_,
-        long                     p_46456_)
+        WritableLevelData        writableLevelData,
+        ResourceKey<Level>       resourceKey,
+        Holder<DimensionType>    holder,
+        Supplier<ProfilerFiller> supplier,
+        boolean                  bl,
+        boolean                  bl2,
+        long                     l,
+        int                      i)
     {
-        super(p_46450_, p_46451_, p_46452_, p_46453_, p_46454_, p_46455_, p_46456_);
+        super(writableLevelData, resourceKey, holder, supplier, bl, bl2, l, i);
     }
 
     @Inject(method = "clearTintCaches", at = @At("HEAD"))
@@ -176,17 +174,5 @@ public abstract class MixinClientWorld extends Level
         int result = chunk.getColor(x, y, z);
 
         return result;
-    }
-
-    public ColorCache
-    getColorCache()
-    {
-        return this.betterBiomeBlend$chunkColorCache;
-    }
-
-    public BiomeCache
-    getBiomeCache()
-    {
-        return this.betterBiomeBlend$chunkBiomeCache;
     }
 }

@@ -29,8 +29,6 @@ public final class BetterBiomeBlend
                 () ->
                 {
                     MinecraftForge.EVENT_BUS.register(BetterBiomeBlendClient.class);
-
-                    BetterBiomeBlendClient.overwriteOptifineGUIBlendRadiusOption();
                 }
             );
     }

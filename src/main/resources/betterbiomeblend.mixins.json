@@ -5,7 +5,6 @@
   "refmap": "betterbiomeblend.refmap.json",
   "mixins": [],
   "client": [
-    "AccessorOptionSlider",
     "MixinClientWorld",
     "MixinBlockColorCache"
   ],
