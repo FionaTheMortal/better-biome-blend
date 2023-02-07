@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "fionathemortal.betterbiomeblend.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "MixinClientWorld"
+  ],
+  "mixins": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

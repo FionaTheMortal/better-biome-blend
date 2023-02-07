@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "betterbiomeblend",
+  "version": "${version}",
+  "name": "Better Biome Blend",
+  "description": "    This mod increases the biome color blending radius and replaces the original blending algorithm with a more efficient one.",
+  "authors": [
+    "FionaTheMortal"
+  ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/FabricMC/fabric-example-mod"
+  },
+  "license": "LGPL",
+  "icon": "assets/betterbiomeblend/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "fionathemortal.betterbiomeblend.fabric.BetterBiomeBlendFabric"
+    ]
+  },
+  "mixins": [
+    "betterbiomeblend.mixins.json",
+    "betterbiomeblend-common.mixins.json"
+  ],
+  "depends": {
+    "fabric": "*",
+    "minecraft": ">=1.19.2"
+  }
+}
