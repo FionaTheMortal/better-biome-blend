@@ -1,43 +1,50 @@
 package fionathemortal.betterbiomeblend.common.cache;
 
+import fionathemortal.betterbiomeblend.common.BlendConfig;
 import fionathemortal.betterbiomeblend.common.ColorCaching;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Supplier;
 
-public class SliceCache<T extends Slice>
+public abstract class SliceCache<T extends Slice>
 {
     public final ReentrantLock                   lock;
+
     public final Long2ObjectLinkedOpenHashMap<T> hash;
     public final Long2ObjectOpenHashMap<T>       invalidationHash;
     public       T                               firstFree;
 
-    private static final byte[]
-    invalidatedRectParams =
-    {
-        3, 4,
-        0, 4,
-        0, 0
-    };
+    public final int                             sliceCount;
+    public       int                             sliceSize;
 
-    public static int
-    getInvalidatedRectMin(int index)
-    {
-        int offset = 2 * (index + 1);
-        int result = invalidatedRectParams[offset + 0];
+    public abstract T newSlice(int sliceSize);
 
-        return result;
+    public
+    SliceCache(int count)
+    {
+        lock             = new ReentrantLock();
+        hash             = new Long2ObjectLinkedOpenHashMap<>(count);
+        invalidationHash = new Long2ObjectOpenHashMap<>(count);
+
+        sliceCount       = count;
+
+        allocateSlices(sliceSize);
     }
 
-    public static int
-    getInvalidatedRectMax(int index)
+    public final void
+    allocateSlices(int sliceSize)
     {
-        int offset = 2 * (index + 1);
-        int result = invalidatedRectParams[offset + 1];
+        this.sliceSize  = sliceSize;
 
-        return result;
+        for (int index = 0;
+             index < this.sliceCount;
+             ++index)
+        {
+            T slice = newSlice(sliceSize);
+
+            freeListPush(slice);
+        }
     }
 
     public static void
@@ -71,22 +78,10 @@ public class SliceCache<T extends Slice>
         list.next = slice;
     }
 
-    public
-    SliceCache(int count, Supplier<T> supplier)
+    public final void
+    clearFreeList()
     {
-        lock = new ReentrantLock();
-        hash = new Long2ObjectLinkedOpenHashMap<>(count);
-
-        invalidationHash = new Long2ObjectOpenHashMap<>(count);
-
-        for (int index = 0;
-             index < count;
-             ++index)
-        {
-            T slice = supplier.get();
-
-            freeListPush(slice);
-        }
+        this.firstFree = null;
     }
 
     public boolean
@@ -132,41 +127,47 @@ public class SliceCache<T extends Slice>
     }
 
     public final void
-    releaseChunkWithoutLocking(T chunk)
+    releaseSlice(T slice)
     {
-        int refCount = chunk.release();
-
-        if (refCount == 0)
-        {
-            freeListPush(chunk);
-        }
-    }
-
-    public final void
-    releaseChunk(T chunk)
-    {
-        int refCount = chunk.release();
+        int refCount = slice.release();
 
         if (refCount == 0)
         {
             lock.lock();
 
-            freeListPush(chunk);
+            if (slice.size == this.sliceSize)
+            {
+                freeListPush(slice);
+            }
 
             lock.unlock();
         }
     }
 
     public final void
-    invalidateAll()
+    invalidateAll(int blendRadius)
     {
         lock.lock();
 
         for (T chunk : hash.values())
         {
-            releaseChunkWithoutLocking(chunk);
+            int refCount = chunk.release();
+
+            if (refCount == 0)
+            {
+                freeListPush(chunk);
+            }
 
             chunk.markAsInvalid();
+        }
+
+        int sliceSize = BlendConfig.getSliceSize(blendRadius);
+
+        if (sliceSize != this.sliceSize)
+        {
+            clearFreeList();
+
+            allocateSlices(sliceSize);
         }
 
         hash.clear();
@@ -207,117 +208,76 @@ public class SliceCache<T extends Slice>
         linkedListUnlink(chunk);
     }
 
-    public final void
-    invalidateSmallNeighborhood(int chunkX, int chunkZ)
-    {
-        lock.lock();
-
-        for (int z = -1;
-             z <= 0;
-             ++z)
-        {
-            for (int x = -1;
-                 x <= 0;
-                 ++x)
-            {
-                long key = ColorCaching.getChunkKey(chunkX + x, 0, chunkZ + z, 0);
-
-                T first = invalidationHash.get(key);
-
-                for (T current = first;
-                     current != null;
-                    )
-                {
-                    T next = (T)current.next;
-
-                    if (x == 0 && z == 0)
-                    {
-                        hash.remove(current.key);
-
-                        removeFromInvalidationHash(current);
-
-                        releaseChunkWithoutLocking(current);
-
-                        current.markAsInvalid();
-                    }
-                    else
-                    {
-                        int minX = getInvalidatedRectMin(x);
-                        int minY = 0;
-                        int minZ = getInvalidatedRectMin(z);
-
-                        int maxX = getInvalidatedRectMax(x);
-                        int maxY = 4;
-                        int maxZ = getInvalidatedRectMax(z);
-
-                        current.invalidateRegion(minX, minY, minZ, maxX, maxY, maxZ);
-                    }
-
-                    current = next;
-                }
-            }
-        }
-
-        lock.unlock();
-    }
-
     public final T
-    getOrDefaultInitializeChunk(int chunkX, int chunkY, int chunkZ, int colorType)
+    getOrDefaultInitializeSlice(int blendRadius, int sliceX, int sliceY, int sliceZ, int colorType)
     {
-        long key = ColorCaching.getChunkKey(chunkX, chunkY, chunkZ, colorType);
+        T result;
 
-        lock.lock();
+        int sliceSize = BlendConfig.getSliceSize(blendRadius);
 
-        T result = hash.getAndMoveToFirst(key);
-
-        if (result == null)
+        if (sliceSize == this.sliceSize)
         {
-            if (!freeListEmpty())
+            long key = ColorCaching.getChunkKey(sliceX, sliceY, sliceZ, colorType);
+
+            lock.lock();
+
+            result = hash.getAndMoveToFirst(key);
+
+            if (result == null)
             {
-                result = freeListPop();
-            }
-            else
-            {
-                for (;;)
+                if (!freeListEmpty())
                 {
-                    long lastKey = hash.lastLongKey();
-
-                    result = hash.removeLast();
-
-                    if (result.getReferenceCount() == 1)
+                    result = freeListPop();
+                }
+                else
+                {
+                    for (;;)
                     {
-                        result.release();
-                        break;
+                        long lastKey = hash.lastLongKey();
+
+                        result = hash.removeLast();
+
+                        if (result.getReferenceCount() == 1)
+                        {
+                            result.release();
+                            break;
+                        }
+                        else
+                        {
+                            hash.putAndMoveToFirst(lastKey, result);
+                        }
                     }
-                    else
-                    {
-                        hash.putAndMoveToFirst(lastKey, result);
-                    }
+
+                    removeFromInvalidationHash(result);
                 }
 
-                removeFromInvalidationHash(result);
+                long invalidationKey = ColorCaching.getChunkKey(sliceX, 0, sliceZ, 0);
+
+                result.key = key;
+                result.columnKey = invalidationKey;
+
+                result.prev = null;
+                result.next = null;
+
+                result.invalidateData();
+
+                result.acquire();
+
+                hash.putAndMoveToFirst(result.key, result);
+
+                addToInvalidationHash(result);
             }
-
-            long invalidationKey = ColorCaching.getChunkKey(chunkX, 0, chunkZ, 0);
-
-            result.key = key;
-            result.columnKey = invalidationKey;
-
-            result.prev = null;
-            result.next = null;
-
-            result.invalidateData();
 
             result.acquire();
 
-            hash.putAndMoveToFirst(result.key, result);
-
-            addToInvalidationHash(result);
+            lock.unlock();
         }
+        else
+        {
+            // TODO: Actually init chunk. Is this how it should be done ?
 
-        result.acquire();
-
-        lock.unlock();
+            result = newSlice(sliceSize);
+        }
 
         return result;
     }

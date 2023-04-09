@@ -1,6 +1,7 @@
 package fionathemortal.betterbiomeblend.mixin;
 
 import fionathemortal.betterbiomeblend.BetterBiomeBlend;
+import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
 import fionathemortal.betterbiomeblend.common.*;
 import fionathemortal.betterbiomeblend.common.cache.BiomeCache;
 import fionathemortal.betterbiomeblend.common.cache.ColorCache;
@@ -102,8 +103,11 @@ public abstract class MixinClientWorld extends Level
     onClearColorCaches(CallbackInfo ci)
     {
         betterBiomeBlend$blendColorCache.invalidateAll();
-        betterBiomeBlend$chunkColorCache.invalidateAll();
-        betterBiomeBlend$chunkBiomeCache.invalidateAll();
+
+        int blendRadius = BetterBiomeBlendClient.getBiomeBlendRadius();
+
+        betterBiomeBlend$chunkColorCache.invalidateAll(blendRadius);
+        betterBiomeBlend$chunkBiomeCache.invalidateAll(blendRadius);
     }
 
     @Inject(method = "onChunkLoaded", at = @At("HEAD"))
@@ -113,15 +117,20 @@ public abstract class MixinClientWorld extends Level
         int chunkX = chunkPos.x;
         int chunkZ = chunkPos.z;
 
+        // TODO: Implement invalidation
+
         betterBiomeBlend$blendColorCache.invalidateChunk(chunkX, chunkZ);
-        betterBiomeBlend$chunkColorCache.invalidateSmallNeighborhood(chunkX, chunkZ);
-        betterBiomeBlend$chunkBiomeCache.invalidateSmallNeighborhood(chunkX, chunkZ);
+        // betterBiomeBlend$chunkColorCache.invalidateSmallNeighborhood(chunkX, chunkZ);
+        // betterBiomeBlend$chunkBiomeCache.invalidateSmallNeighborhood(chunkX, chunkZ);
     }
 
     @Overwrite
     public int
     getBlockTint(BlockPos blockPosIn, ColorResolver colorResolverIn)
     {
+        // TODO: Check access pattern
+        // TODO: Does it make sense to accelerate fast path here?
+
         int                     colorType;
         ThreadLocal<BlendChunk> threadLocalChunk;
 
@@ -146,34 +155,52 @@ public abstract class MixinClientWorld extends Level
             threadLocalChunk = betterBiomeBlend$threadLocalGenericChunk;
         }
 
-        int x = blockPosIn.getX();
-        int y = blockPosIn.getY();
-        int z = blockPosIn.getZ();
+        final int x = blockPosIn.getX();
+        final int y = blockPosIn.getY();
+        final int z = blockPosIn.getZ();
 
-        int chunkX = x >> 4;
-        int chunkY = y >> 4;
-        int chunkZ = z >> 4;
+        final int chunkX = x >> 4;
+        final int chunkY = y >> 4;
+        final int chunkZ = z >> 4;
 
         BlendChunk chunk = ColorCaching.getThreadLocalChunk(threadLocalChunk, chunkX, chunkY, chunkZ, colorType);
 
         if (chunk == null)
         {
             chunk = ColorCaching.getBlendedColorChunk(
-                this,
-                colorResolverIn,
                 colorType,
                 chunkX,
                 chunkY,
                 chunkZ,
-                betterBiomeBlend$blendColorCache,
-                betterBiomeBlend$chunkColorCache,
-                betterBiomeBlend$chunkBiomeCache);
+                betterBiomeBlend$blendColorCache);
 
             ColorCaching.setThreadLocalChunk(threadLocalChunk, chunk, betterBiomeBlend$blendColorCache);
         }
 
-        int result = chunk.getColor(x, y, z);
+        final int blockX = x & 15;
+        final int blockY = y & 15;
+        final int blockZ = z & 15;
 
-        return result;
+        int index = ColorCaching.getCacheArrayIndex(16, blockX, blockY, blockZ);
+
+        int color = chunk.data[index];
+
+        if (color == 0)
+        {
+            ColorBlending.generateColors(
+                this,
+                colorResolverIn,
+                colorType,
+                x,
+                y,
+                z,
+                betterBiomeBlend$chunkColorCache,
+                betterBiomeBlend$chunkBiomeCache,
+                chunk.data);
+
+            color = chunk.data[index];
+        }
+
+        return color;
     }
 }

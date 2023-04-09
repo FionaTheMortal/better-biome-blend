@@ -11,4 +11,7 @@ public class DebugSummary
     public double averageOnePercentTime;
 
     public double totalCPUTimeInMilliseconds;
+
+    public double totalSubeventCPUTimeInMilliseconds;
+    public double averageSubeventTime;
 }

@@ -21,7 +21,7 @@ public final class Color
         int result =
             ((0xFF & R) << 16) |
             ((0xFF & G) <<  8) |
-            ((0xFF & B) <<  0) |
+            ((0xFF & B)      ) |
             ((0xFF    ) << 24);
 
         return result;
@@ -154,7 +154,7 @@ public final class Color
         float aResult = 1.9779984951f*lRoot - 2.4285922050f*mRoot + 0.4505937099f*sRoot;
         float bResult = 0.0259040371f*lRoot + 0.7827717662f*mRoot - 0.8086757660f*sRoot;
 
-        dest[index + 0] = LResult;
+        dest[index    ] = LResult;
         dest[index + 1] = aResult;
         dest[index + 2] = bResult;
     }
@@ -170,7 +170,7 @@ public final class Color
         float m = m_*m_*m_;
         float s = s_*s_*s_;
 
-        float rResult = +4.0767416621f * l - 3.3077115913f * m + 0.2309699292f * s;
+        float rResult =  4.0767416621f * l - 3.3077115913f * m + 0.2309699292f * s;
         float gResult = -1.2684380046f * l + 2.6097574011f * m - 0.3413193965f * s;
         float bResult = -0.0041960863f * l - 0.7034186147f * m + 1.7076147010f * s;
 
@@ -178,8 +178,32 @@ public final class Color
         int gByte = linearFloatTosRGBByte(gResult);
         int bByte = linearFloatTosRGBByte(bResult);
 
-        dest[index + 0] = (byte)rByte;
+        dest[index    ] = (byte)rByte;
         dest[index + 1] = (byte)gByte;
         dest[index + 2] = (byte)bByte;
+    }
+
+    public static void
+    OKLabsTosRGBAInt(float L, float a, float b, int[] dest, int index)
+    {
+        float l_ = L + 0.3963377774f * a + 0.2158037573f * b;
+        float m_ = L - 0.1055613458f * a - 0.0638541728f * b;
+        float s_ = L - 0.0894841775f * a - 1.2914855480f * b;
+
+        float l = l_*l_*l_;
+        float m = m_*m_*m_;
+        float s = s_*s_*s_;
+
+        float rResult =  4.0767416621f * l - 3.3077115913f * m + 0.2309699292f * s;
+        float gResult = -1.2684380046f * l + 2.6097574011f * m - 0.3413193965f * s;
+        float bResult = -0.0041960863f * l - 0.7034186147f * m + 1.7076147010f * s;
+
+        int rByte = linearFloatTosRGBByte(rResult);
+        int gByte = linearFloatTosRGBByte(gResult);
+        int bByte = linearFloatTosRGBByte(bResult);
+
+        int color = makeRGBAWithFullAlpha(rByte, gByte, bByte);
+
+        dest[index] = color;
     }
 }

@@ -9,6 +9,8 @@ public abstract class Slice
     public long key;
     public long columnKey;
 
+    public int  size;
+
     public Slice prev;
     public Slice next;
 

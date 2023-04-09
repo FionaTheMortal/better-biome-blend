@@ -5,6 +5,15 @@ public final class BiomeCache extends SliceCache<BiomeSlice>
     public
     BiomeCache(int count)
     {
-        super(count, BiomeSlice::new);
+        super(count);
+    }
+
+    @Override
+    public BiomeSlice
+    newSlice(int sliceSize)
+    {
+        BiomeSlice result = new BiomeSlice(sliceSize);
+
+        return result;
     }
 }

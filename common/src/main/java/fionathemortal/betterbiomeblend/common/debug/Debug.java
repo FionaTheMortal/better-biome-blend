@@ -1,5 +1,7 @@
 package fionathemortal.betterbiomeblend.common.debug;
 
+import org.checkerframework.checker.units.qual.A;
+
 import java.util.ArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -54,17 +56,33 @@ public final class Debug
     public static DebugSummary
     collateDebugEvents()
     {
-        int count = eventCount;
+        ArrayList<DebugEvent> colorGenEvents = new ArrayList<>();
+        ArrayList<DebugEvent> subevents      = new ArrayList<>();
+
+        for (int index = 0;
+             index < eventCount;
+             ++index)
+        {
+            DebugEvent event = events.get(index);
+
+            switch (event.eventType)
+            {
+                case COLOR_GEN:
+                {
+                    colorGenEvents.add(event);
+                } break;
+                case SUBEVENT:
+                {
+                    subevents.add(event);
+                } break;
+            }
+        }
 
         long startTime = Long.MAX_VALUE;
         long endTime   = Long.MIN_VALUE;
 
-        for (int index = 0;
-            index < count;
-            ++index)
+        for (DebugEvent event : colorGenEvents)
         {
-            DebugEvent event = events.get(index);
-
             if (event.startTime < startTime)
             {
                 startTime = event.startTime;
@@ -78,7 +96,7 @@ public final class Debug
 
         long elapsedTime = endTime - startTime;
 
-        events.sort(
+        colorGenEvents.sort(
             (a, b) ->
             {
                 long time1 = a.endTime - a.startTime;
@@ -94,18 +112,41 @@ public final class Debug
                 return result;
             });
 
-        double averageTime       = getAverageElapsedTime(events, count);
-        double averageOnePercent = getAverageElapsedTime(events, (count + 99) / 100);
+        subevents.sort(
+            (a, b) ->
+            {
+                long time1 = a.endTime - a.startTime;
+                long time2 = b.endTime - b.startTime;
+
+                int result = 0;
+
+                if (time1 != time2)
+                {
+                    result = (time1 > time2) ? -1 : 1;
+                }
+
+                return result;
+            });
+
+        int colorGenEventCount = colorGenEvents.size();
+
+        double averageTime       = getAverageElapsedTime(colorGenEvents, colorGenEventCount);
+        double averageOnePercent = getAverageElapsedTime(colorGenEvents, (colorGenEventCount + 99) / 100);
 
         DebugSummary result = new DebugSummary();
 
         result.averageTime                = averageTime;
         result.averageOnePercentTime      = averageOnePercent;
-        result.callsPerSecond             = (double)(count) / (double)(elapsedTime) * 1e9;
-        result.totalCalls                 = count;
+        result.callsPerSecond             = (double)(colorGenEventCount) / (double)(elapsedTime) * 1e9;
+        result.totalCalls                 = colorGenEventCount;
         result.elapsedWallTime            = elapsedTime;
         result.elapsedWallTimeInSeconds   = (double)elapsedTime * 1e-9;
-        result.totalCPUTimeInMilliseconds = (double)averageTime * (double)count * 1e-6;
+        result.totalCPUTimeInMilliseconds = (double)averageTime * (double)colorGenEventCount * 1e-6;
+
+        double averageSubeventTime = getAverageElapsedTime(subevents, subevents.size());
+
+        result.totalSubeventCPUTimeInMilliseconds = averageSubeventTime * (double)subevents.size() * 1e-6;
+        result.averageSubeventTime                = averageSubeventTime;
 
         return result;
     }
@@ -174,23 +215,49 @@ public final class Debug
     }
 
     public static DebugEvent
-    pushGenBegin(int chunkX, int chunkY, int chunkZ, int colorType)
+    pushColorGenEvent(int chunkX, int chunkY, int chunkZ, int colorType)
     {
-        DebugEvent frame = pushDebugEvent();
+        DebugEvent event = null;
 
-        frame.startTime = System.nanoTime();
+        if (Debug.measurePerformance)
+        {
+            event = pushDebugEvent();
 
-        frame.chunkX = chunkX;
-        frame.chunkY = chunkY;
-        frame.chunkZ = chunkZ;
-        frame.colorType = colorType;
+            event.eventType = DebugEventType.COLOR_GEN;
 
-        return frame;
+            event.startTime = System.nanoTime();
+
+            event.chunkX = chunkX;
+            event.chunkY = chunkY;
+            event.chunkZ = chunkZ;
+            event.colorType = colorType;
+        }
+
+        return event;
+    }
+
+    public static DebugEvent
+    pushSubevent(DebugEventType eventType)
+    {
+        DebugEvent event = null;
+
+        if (Debug.measurePerformance)
+        {
+            event = pushDebugEvent();
+
+            event.eventType = eventType;
+            event.startTime = System.nanoTime();
+        }
+
+        return event;
     }
 
     public static void
-    pushGenEnd(DebugEvent frame)
+    endEvent(DebugEvent event)
     {
-        frame.endTime = System.nanoTime();
+        if (event != null)
+        {
+            event.endTime = System.nanoTime();
+        }
     }
 }

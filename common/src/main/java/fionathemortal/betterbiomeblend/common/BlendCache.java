@@ -2,8 +2,11 @@ package fionathemortal.betterbiomeblend.common;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Options;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.ListIterator;
 import java.util.Stack;
 import java.util.concurrent.locks.ReentrantLock;
@@ -244,6 +247,8 @@ public final class BlendCache
         result.next = null;
 
         result.acquire();
+
+        Arrays.fill(result.data, 0);
 
         generating.add(result);
 
