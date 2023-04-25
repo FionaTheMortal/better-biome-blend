@@ -1,8 +1,10 @@
 package fionathemortal.betterbiomeblend.common.debug;
 
+import fionathemortal.betterbiomeblend.common.BlendChunk;
 import org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class Debug
@@ -258,6 +260,38 @@ public final class Debug
         if (event != null)
         {
             event.endTime = System.nanoTime();
+        }
+    }
+
+    public static AtomicLong colorTypeHit  = new AtomicLong();
+    public static AtomicLong colorTypeMiss = new AtomicLong();
+
+    public static void
+    countColorType(int colorType, int lastColorType)
+    {
+        if (colorType == lastColorType)
+        {
+            colorTypeHit.getAndIncrement();
+        }
+        else
+        {
+            colorTypeMiss.getAndIncrement();
+        }
+    }
+
+    public static AtomicLong threadLocalHit  = new AtomicLong();
+    public static AtomicLong threadLocalMiss = new AtomicLong();
+
+    public static void
+    countThreadLocalChunk(BlendChunk chunk)
+    {
+        if (chunk != null)
+        {
+            threadLocalHit.getAndIncrement();
+        }
+        else
+        {
+            threadLocalMiss.getAndIncrement();
         }
     }
 }

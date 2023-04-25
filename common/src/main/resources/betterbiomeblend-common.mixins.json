@@ -3,7 +3,8 @@
   "package": "fionathemortal.betterbiomeblend.mixin",
   "compatibilityLevel": "JAVA_17",
   "client": [
-    "MixinClientWorld"
+    "MixinClientWorld",
+    "MixinOptions"
   ],
   "mixins": [
   ],

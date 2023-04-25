@@ -5,6 +5,9 @@ import fionathemortal.betterbiomeblend.common.cache.BiomeCache;
 import fionathemortal.betterbiomeblend.common.cache.BiomeSlice;
 import fionathemortal.betterbiomeblend.common.cache.ColorCache;
 import fionathemortal.betterbiomeblend.common.cache.ColorSlice;
+import fionathemortal.betterbiomeblend.common.debug.Debug;
+import fionathemortal.betterbiomeblend.common.debug.DebugEvent;
+import fionathemortal.betterbiomeblend.common.debug.DebugEventType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -17,15 +20,13 @@ import net.minecraft.world.level.chunk.ChunkStatus;
 
 import java.util.Arrays;
 import java.util.Stack;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class ColorBlending
 {
     public static final ReentrantLock           freeBlendBuffersLock = new ReentrantLock();
     public static final Stack<BlendBuffer> freeBlendBuffers     = new Stack<>();
-
-    public static final int BIOME_BLEND_RADIUS_MIN = 0;
-    public static final int BIOME_BLEND_RADIUS_MAX = 14;
 
     public static int
     getSliceMin(int blendRadius, int blockSizeLog2, int sliceSizeLog2, int sliceIndex)
@@ -174,6 +175,12 @@ public final class ColorBlending
         return result;
     }
 
+    static final AtomicLong colorCacheHitCount = new AtomicLong();
+    static final AtomicLong biomeCacheHitCount = new AtomicLong();
+
+    static final AtomicLong colorCacheMissCount = new AtomicLong();
+    static final AtomicLong biomeCacheMissCount = new AtomicLong();
+
     public static void
     gatherColorsForSlice(
         Level         world,
@@ -230,8 +237,10 @@ public final class ColorBlending
             worldMinZ += blockSizeLog2;
         }
 
-        BiomeSlice biomeSlice = biomeCache.getOrDefaultInitializeSlice(blendRadius, sliceX, sliceY, sliceZ, 0);
+        // BiomeSlice biomeSlice = biomeCache.getOrDefaultInitializeSlice(blendRadius, sliceX, sliceY, sliceZ, 0);
         ColorSlice colorSlice = colorCache.getOrDefaultInitializeSlice(blendRadius, sliceX, sliceY, sliceZ, colorType);
+
+        DebugEvent subEvent = Debug.pushSubevent(DebugEventType.SUBEVENT);
 
         for (int y = 0;
              y < dimY;
@@ -241,24 +250,29 @@ public final class ColorBlending
                  z < dimZ;
                  ++z)
             {
+                final int sliceIndexX = sliceMinX;
+                final int sliceIndexY = sliceMinY + y;
+                final int sliceIndexZ = sliceMinZ + z;
+
+                final int blendIndexX = blendMinX;
+                final int blendIndexY = blendMinY + y;
+                final int blendIndexZ = blendMinZ + z;
+
+                int sliceIndex = ColorCaching.getCacheArrayIndex(sliceSize, sliceIndexX, sliceIndexY, sliceIndexZ);
+                int blendIndex = ColorCaching.getCacheArrayIndex(blendSize, blendIndexX, blendIndexY, blendIndexZ);
+
+                int biomeSliceIndex = sliceIndex;
+
+                sliceIndex *= 3;
+                blendIndex *= 3;
+
                 for (int x = 0;
                      x < dimX;
                      ++x)
                 {
-                    final int sliceIndexX = sliceMinX + x;
-                    final int sliceIndexY = sliceMinY + y;
-                    final int sliceIndexZ = sliceMinZ + z;
-
-                    final int blendIndexX = blendMinX + x;
-                    final int blendIndexY = blendMinY + y;
-                    final int blendIndexZ = blendMinZ + z;
-
-                    final int sliceIndex = ColorCaching.getCacheArrayIndex(sliceSize, sliceIndexX, sliceIndexY, sliceIndexZ);
-                    final int blendIndex = ColorCaching.getCacheArrayIndex(blendSize, blendIndexX, blendIndexY, blendIndexZ);
-
-                    int cachedR = 0xFF & colorSlice.data[3 * sliceIndex + 0];
-                    int cachedG = 0xFF & colorSlice.data[3 * sliceIndex + 1];
-                    int cachedB = 0xFF & colorSlice.data[3 * sliceIndex + 2];
+                    int cachedR = 0xFF & colorSlice.data[sliceIndex + 0];
+                    int cachedG = 0xFF & colorSlice.data[sliceIndex + 1];
+                    int cachedB = 0xFF & colorSlice.data[sliceIndex + 2];
 
                     final int commonBits = cachedR & cachedG & cachedB;
 
@@ -266,7 +280,9 @@ public final class ColorBlending
 
                     if (commonBits == 0xFF)
                     {
-                        Biome biome = biomeSlice.data[sliceIndex];
+                        // colorCacheMissCount.getAndIncrement();
+
+                        Biome biome = null; // biomeSlice.data[biomeSliceIndex];
 
                         final int sampleMinX = worldMinX + (x << blockSizeLog2);
                         final int sampleMinY = worldMinY + (y << blockSizeLog2);
@@ -280,15 +296,21 @@ public final class ColorBlending
 
                         if (biome == null)
                         {
+                            // biomeCacheMissCount.getAndIncrement();
+
                             blockPos.set(sampleX, sampleY, sampleZ);
 
                             biome = getBiomeAtPositionOrDefaultOrThrow(world, blockPos);
 
-                            biomeSlice.data[sliceIndex] = biome;
+                            // biomeSlice.data[biomeSliceIndex] = biome;
+                        }
+                        else
+                        {
+                            // biomeCacheHitCount.getAndIncrement();
                         }
 
-                        final double sampleXF64 = (double)sampleX;
-                        final double sampleZF64 = (double)sampleZ;
+                        final double sampleXF64 = sampleX;
+                        final double sampleZF64 = sampleZ;
 
                         final int color = colorResolver.getColor(biome, sampleXF64, sampleZF64);
 
@@ -296,18 +318,32 @@ public final class ColorBlending
                         cachedG = Color.RGBAGetG(color);
                         cachedB = Color.RGBAGetB(color);
 
-                        colorSlice.data[3 * sliceIndex + 0] = (byte)cachedR;
-                        colorSlice.data[3 * sliceIndex + 1] = (byte)cachedG;
-                        colorSlice.data[3 * sliceIndex + 2] = (byte)cachedB;
+                        colorSlice.data[sliceIndex    ] = (byte)cachedR;
+                        colorSlice.data[sliceIndex + 1] = (byte)cachedG;
+                        colorSlice.data[sliceIndex + 2] = (byte)cachedB;
+                    }
+                    else
+                    {
+                        // colorCacheHitCount.getAndIncrement();
                     }
 
-                    Color.sRGBByteToOKLabs(cachedR, cachedG, cachedB, blendBuffer.colors, 3 * blendIndex);
+                    Color.sRGBByteToOKLabs(cachedR, cachedG, cachedB, blendBuffer.colors, blendIndex);
+
+                    sliceIndex += 3;
+                    blendIndex += 3;
+
+                    ++biomeSliceIndex;
                 }
             }
         }
 
+        Debug.endEvent(subEvent);
+
+        // double biomeRatio = ((double)biomeCacheHitCount.get() / (double)(biomeCacheHitCount.get() + biomeCacheMissCount.get()));
+        // double colorRatio = ((double)colorCacheHitCount.get() / (double)(colorCacheHitCount.get() + colorCacheMissCount.get()));
+
         colorCache.releaseSlice(colorSlice);
-        biomeCache.releaseSlice(biomeSlice);
+        // biomeCache.releaseSlice(biomeSlice);
     }
 
     public static void
@@ -427,7 +463,10 @@ public final class ColorBlending
         final int scaledSliceSize = sliceSize >> blockSizeLog2;
         final int filterSupport   = BlendConfig.getFilterSupport(blendRadius);
 
-        float[] temp = new float[3 * blendSize];
+        float[] colors   = buffer.colors;
+        float[] scanline = buffer.scanline;
+
+        final float factor = (1.0f / blockSize);
 
         for (int y = 0;
              y < blendSize;
@@ -437,44 +476,54 @@ public final class ColorBlending
                  z < blendSize;
                  ++z)
             {
+                int srcIndex = 3 * ColorCaching.getCacheArrayIndex(blendBufferSize, 0, y, z);
+                int dstIndex = 0;
+
                 for (int x = 0;
                     x < blendSize;
                     ++x)
                 {
-                    int index = 3 * ColorCaching.getCacheArrayIndex(blendBufferSize, x, y, z);
+                    scanline[dstIndex    ] = colors[srcIndex    ];
+                    scanline[dstIndex + 1] = colors[srcIndex + 1];
+                    scanline[dstIndex + 2] = colors[srcIndex + 2];
 
-                    temp[3 * x    ] = buffer.colors[index    ];
-                    temp[3 * x + 1] = buffer.colors[index + 1];
-                    temp[3 * x + 2] = buffer.colors[index + 2];
+                    dstIndex += 3;
+                    srcIndex += 3;
                 }
 
                 float accumulatedR = 0.0f;
                 float accumulatedG = 0.0f;
                 float accumulatedB = 0.0f;
 
+                srcIndex = 0;
+
                 for (int x = 0;
                      x < filterSupport - 1;
                      ++x)
                 {
-                    accumulatedR += temp[3 * x    ];
-                    accumulatedG += temp[3 * x + 1];
-                    accumulatedB += temp[3 * x + 2];
+                    accumulatedR += scanline[srcIndex    ];
+                    accumulatedG += scanline[srcIndex + 1];
+                    accumulatedB += scanline[srcIndex + 2];
+
+                    srcIndex += 3;
                 }
+
+                dstIndex = 3 * ColorCaching.getCacheArrayIndex(blendBufferSize, 0, y, z);;
+
+                int lower = 0;
+                int upper = 3 * (filterSupport - 1);
 
                 for (int x = 0;
                      x < scaledSliceSize;
                      ++x)
                 {
-                    int lower = x;
-                    int upper = x + filterSupport - 1;
+                    float lowerR = scanline[lower    ] * factor;
+                    float lowerG = scanline[lower + 1] * factor;
+                    float lowerB = scanline[lower + 2] * factor;
 
-                    float lowerR = temp[3 * lower    ] * (1.0f / blockSize);
-                    float lowerG = temp[3 * lower + 1] * (1.0f / blockSize);
-                    float lowerB = temp[3 * lower + 2] * (1.0f / blockSize);
-
-                    float upperR = temp[3 * upper    ] * (1.0f / blockSize);
-                    float upperG = temp[3 * upper + 1] * (1.0f / blockSize);
-                    float upperB = temp[3 * upper + 2] * (1.0f / blockSize);
+                    float upperR = scanline[upper    ] * factor;
+                    float upperG = scanline[upper + 1] * factor;
+                    float upperB = scanline[upper + 2] * factor;
 
                     for (int i = 0;
                          i < blockSize;
@@ -484,17 +533,19 @@ public final class ColorBlending
                         accumulatedG += upperG;
                         accumulatedB += upperB;
 
-                        int index1 = (x << blockSizeLog2) + i;
-                        int index2 = 3 * ColorCaching.getCacheArrayIndex(blendBufferSize, index1, y, z);
-
-                        buffer.colors[index2    ] = accumulatedR;
-                        buffer.colors[index2 + 1] = accumulatedG;
-                        buffer.colors[index2 + 2] = accumulatedB;
+                        colors[dstIndex    ] = accumulatedR;
+                        colors[dstIndex + 1] = accumulatedG;
+                        colors[dstIndex + 2] = accumulatedB;
 
                         accumulatedR -= lowerR;
                         accumulatedG -= lowerG;
                         accumulatedB -= lowerB;
+
+                        dstIndex += 3;
                     }
+
+                    lower += 3;
+                    upper += 3;
                 }
             }
         }
@@ -507,44 +558,56 @@ public final class ColorBlending
                  x < sliceSize;
                  ++x)
             {
+                final int stride = 3 * blendBufferSize;
+
+                int srcIndex = 3 * ColorCaching.getCacheArrayIndex(blendBufferSize, x, y, 0);
+                int dstIndex = 0;
+
                 for (int i = 0;
                      i < blendSize;
                      ++i)
                 {
-                    int index = 3 * ColorCaching.getCacheArrayIndex(blendBufferSize, x, y, i);
+                    scanline[dstIndex    ] = colors[srcIndex    ];
+                    scanline[dstIndex + 1] = colors[srcIndex + 1];
+                    scanline[dstIndex + 2] = colors[srcIndex + 2];
 
-                    temp[3 * i    ] = buffer.colors[index    ];
-                    temp[3 * i + 1] = buffer.colors[index + 1];
-                    temp[3 * i + 2] = buffer.colors[index + 2];
+                    dstIndex += 3;
+                    srcIndex += stride;
                 }
 
                 float accumulatedR = 0.0f;
                 float accumulatedG = 0.0f;
                 float accumulatedB = 0.0f;
 
+                srcIndex = 0;
+
                 for (int z = 0;
                      z < filterSupport - 1;
                      ++z)
                 {
-                    accumulatedR += temp[3 * z    ];
-                    accumulatedG += temp[3 * z + 1];
-                    accumulatedB += temp[3 * z + 2];
+                    accumulatedR += scanline[srcIndex    ];
+                    accumulatedG += scanline[srcIndex + 1];
+                    accumulatedB += scanline[srcIndex + 2];
+
+                    srcIndex += 3;
                 }
+
+                dstIndex = 3 * ColorCaching.getCacheArrayIndex(blendBufferSize, x, y, 0);;
+
+                int lower = 0;
+                int upper = 3 * (filterSupport - 1);
 
                 for (int z = 0;
                      z < scaledSliceSize;
                      ++z)
                 {
-                    int lower = z;
-                    int upper = z + filterSupport - 1;
+                    float lowerR = scanline[lower    ] * factor;
+                    float lowerG = scanline[lower + 1] * factor;
+                    float lowerB = scanline[lower + 2] * factor;
 
-                    float lowerR = temp[3 * lower    ] * (1.0f / blockSize);
-                    float lowerG = temp[3 * lower + 1] * (1.0f / blockSize);
-                    float lowerB = temp[3 * lower + 2] * (1.0f / blockSize);
-
-                    float upperR = temp[3 * upper    ] * (1.0f / blockSize);
-                    float upperG = temp[3 * upper + 1] * (1.0f / blockSize);
-                    float upperB = temp[3 * upper + 2] * (1.0f / blockSize);
+                    float upperR = scanline[upper    ] * factor;
+                    float upperG = scanline[upper + 1] * factor;
+                    float upperB = scanline[upper + 2] * factor;
 
                     for (int i = 0;
                          i < blockSize;
@@ -554,20 +617,25 @@ public final class ColorBlending
                         accumulatedG += upperG;
                         accumulatedB += upperB;
 
-                        int index1 = (z << blockSizeLog2) + i;
-                        int index2 = 3 * ColorCaching.getCacheArrayIndex(blendBufferSize, x, y, index1);
-
-                        buffer.colors[index2    ] = accumulatedR;
-                        buffer.colors[index2 + 1] = accumulatedG;
-                        buffer.colors[index2 + 2] = accumulatedB;
+                        colors[dstIndex    ] = accumulatedR;
+                        colors[dstIndex + 1] = accumulatedG;
+                        colors[dstIndex + 2] = accumulatedB;
 
                         accumulatedR -= lowerR;
                         accumulatedG -= lowerG;
                         accumulatedB -= lowerB;
+
+                        dstIndex += stride;
                     }
+
+                    lower += 3;
+                    upper += 3;
                 }
             }
         }
+
+        float filter       = (float)(filterSupport - 1) + factor;
+        float filterScalar = 1.0f / (filter * filter * filter);
 
         for (int z = 0;
              z < sliceSize;
@@ -577,16 +645,24 @@ public final class ColorBlending
                  x < sliceSize;
                  ++x)
             {
+                final int stride = 3 * blendBufferSize * blendBufferSize;
+
+                int srcIndex = 3 * ColorCaching.getCacheArrayIndex(blendBufferSize, x, 0, z);
+                int dstIndex = 0;
+
                 for (int i = 0;
                      i < blendSize;
                      ++i)
                 {
-                    int index = 3 * ColorCaching.getCacheArrayIndex(blendBufferSize, x, i, z);
+                    scanline[dstIndex    ] = colors[srcIndex    ];
+                    scanline[dstIndex + 1] = colors[srcIndex + 1];
+                    scanline[dstIndex + 2] = colors[srcIndex + 2];
 
-                    temp[3 * i    ] = buffer.colors[index    ];
-                    temp[3 * i + 1] = buffer.colors[index + 1];
-                    temp[3 * i + 2] = buffer.colors[index + 2];
+                    dstIndex += 3;
+                    srcIndex += stride;
                 }
+
+                srcIndex = 0;
 
                 float accumulatedR = 0.0f;
                 float accumulatedG = 0.0f;
@@ -596,25 +672,29 @@ public final class ColorBlending
                      y < filterSupport - 1;
                      ++y)
                 {
-                    accumulatedR += temp[3 * y    ];
-                    accumulatedG += temp[3 * y + 1];
-                    accumulatedB += temp[3 * y + 2];
+                    accumulatedR += scanline[srcIndex    ];
+                    accumulatedG += scanline[srcIndex + 1];
+                    accumulatedB += scanline[srcIndex + 2];
+
+                    srcIndex += 3;
                 }
+
+                int lower = 0;
+                int upper = 3 * (filterSupport - 1);
+
+                dstIndex = base + ColorCaching.getCacheArrayIndex(16, x, 0, z);;
 
                 for (int y = 0;
                      y < scaledSliceSize;
                      ++y)
                 {
-                    int lower = y;
-                    int upper = y + filterSupport - 1;
+                    float lowerR = scanline[lower    ] * factor;
+                    float lowerG = scanline[lower + 1] * factor;
+                    float lowerB = scanline[lower + 2] * factor;
 
-                    float lowerR = temp[3 * lower    ] * (1.0f / blockSize);
-                    float lowerG = temp[3 * lower + 1] * (1.0f / blockSize);
-                    float lowerB = temp[3 * lower + 2] * (1.0f / blockSize);
-
-                    float upperR = temp[3 * upper    ] * (1.0f / blockSize);
-                    float upperG = temp[3 * upper + 1] * (1.0f / blockSize);
-                    float upperB = temp[3 * upper + 2] * (1.0f / blockSize);
+                    float upperR = scanline[upper    ] * factor;
+                    float upperG = scanline[upper + 1] * factor;
+                    float upperB = scanline[upper + 2] * factor;
 
                     for (int i = 0;
                          i < blockSize;
@@ -624,22 +704,21 @@ public final class ColorBlending
                         accumulatedG += upperG;
                         accumulatedB += upperB;
 
-                        int index1 = (y << blockSizeLog2) + i;
-                        int index2 = ColorCaching.getCacheArrayIndex(16, x, index1, z);
+                        float finalR = accumulatedR * filterScalar;
+                        float finalG = accumulatedG * filterScalar;
+                        float finalB = accumulatedB * filterScalar;
 
-                        float filterSupportValue = (float) (filterSupport - 1) + (1.0f / blockSize);
-                        float filter3d = filterSupportValue * filterSupportValue * filterSupportValue;
-
-                        float finalR = accumulatedR / filter3d;
-                        float finalG = accumulatedG / filter3d;
-                        float finalB = accumulatedB / filter3d;
-
-                        Color.OKLabsTosRGBAInt(finalR, finalG, finalB, result, index2 + base);
+                        Color.OKLabsTosRGBAInt(finalR, finalG, finalB, result, dstIndex);
 
                         accumulatedR -= lowerR;
                         accumulatedG -= lowerG;
                         accumulatedB -= lowerB;
+
+                        dstIndex += 16 * 16;
                     }
+
+                    lower += 3;
+                    upper += 3;
                 }
             }
         }
@@ -718,10 +797,12 @@ public final class ColorBlending
         BiomeCache    biomeCache,
         int[]         result)
     {
+        DebugEvent debugEvent = Debug.pushColorGenEvent(x, y, z, colorType);
+
         final int blendRadius = BetterBiomeBlendClient.getBiomeBlendRadius();
 
-        if (blendRadius >  BIOME_BLEND_RADIUS_MIN &&
-            blendRadius <= BIOME_BLEND_RADIUS_MAX)
+        if (blendRadius >  BlendConfig.BIOME_BLEND_RADIUS_MIN &&
+            blendRadius <= BlendConfig.BIOME_BLEND_RADIUS_MAX)
         {
             BlendBuffer blendBuffer = acquireBlendBuffer(blendRadius);
 
@@ -767,5 +848,7 @@ public final class ColorBlending
                 z,
                 result);
         }
+
+        Debug.endEvent(debugEvent);
     }
 }

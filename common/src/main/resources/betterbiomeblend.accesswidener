@@ -1,1 +1,4 @@
 accessWidener   v2  named
+
+accessible field net/minecraft/client/Options biomeBlendRadius Lnet/minecraft/client/OptionInstance;
+mutable    field net/minecraft/client/Options biomeBlendRadius Lnet/minecraft/client/OptionInstance;

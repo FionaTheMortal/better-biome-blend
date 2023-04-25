@@ -2,11 +2,14 @@ package fionathemortal.betterbiomeblend.common;
 
 public final class BlendConfig
 {
+    public static final int BIOME_BLEND_RADIUS_MIN = 0;
+    public static final int BIOME_BLEND_RADIUS_MAX = 14;
+
     public static final byte[]
     blendRadiusConfig =
     {
+        2, 0,
         3, 0,
-        3, 0,
         3, 1,
         3, 1,
         3, 1,
@@ -17,9 +20,9 @@ public final class BlendConfig
         4, 1,
         4, 1,
         4, 1,
-        4, 1,
-        4, 1,
-        4, 1,
+        4, 2,
+        4, 2,
+        4, 2,
     };
 
     public static int

@@ -25,7 +25,7 @@ public class BetterBiomeBlendForge
             () ->
                 () ->
                 {
-                    MinecraftForge.EVENT_BUS.register(BetterBiomeBlendClient.class);
+                    MinecraftForge.EVENT_BUS.register(BetterBiomeBlendForgeClient.class);
                 }
         );
 

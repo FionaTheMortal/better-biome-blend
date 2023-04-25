@@ -5,6 +5,7 @@ import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
 import fionathemortal.betterbiomeblend.common.*;
 import fionathemortal.betterbiomeblend.common.cache.BiomeCache;
 import fionathemortal.betterbiomeblend.common.cache.ColorCache;
+import fionathemortal.betterbiomeblend.common.debug.Debug;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import net.minecraft.client.color.block.BlockTintCache;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -39,10 +40,10 @@ public abstract class MixinClientWorld extends Level
     public final BlendCache betterBiomeBlend$blendColorCache = new BlendCache(2048);
 
     @Unique
-    public final ColorCache betterBiomeBlend$chunkColorCache = new ColorCache(512);
+    public final ColorCache betterBiomeBlend$chunkColorCache = new ColorCache(4096 * 10);
 
     @Unique
-    public final BiomeCache betterBiomeBlend$chunkBiomeCache = new BiomeCache(32);
+    public final BiomeCache betterBiomeBlend$chunkBiomeCache = new BiomeCache(4096 * 10);
 
     @Unique
     private final ThreadLocal<BlendChunk> betterBiomeBlend$threadLocalWaterChunk =
@@ -124,6 +125,14 @@ public abstract class MixinClientWorld extends Level
         // betterBiomeBlend$chunkBiomeCache.invalidateSmallNeighborhood(chunkX, chunkZ);
     }
 
+    @Unique
+    private final ThreadLocal<Integer> betterBiomeBlend$lastThreadLocal =
+        ThreadLocal.withInitial(
+            () ->
+            {
+                return 0;
+            });
+
     @Overwrite
     public int
     getBlockTint(BlockPos blockPosIn, ColorResolver colorResolverIn)
@@ -155,6 +164,12 @@ public abstract class MixinClientWorld extends Level
             threadLocalChunk = betterBiomeBlend$threadLocalGenericChunk;
         }
 
+        int lastColorType = betterBiomeBlend$lastThreadLocal.get();
+
+        Debug.countColorType(colorType, lastColorType);
+
+        betterBiomeBlend$lastThreadLocal.set(colorType);
+
         final int x = blockPosIn.getX();
         final int y = blockPosIn.getY();
         final int z = blockPosIn.getZ();
@@ -164,6 +179,8 @@ public abstract class MixinClientWorld extends Level
         final int chunkZ = z >> 4;
 
         BlendChunk chunk = ColorCaching.getThreadLocalChunk(threadLocalChunk, chunkX, chunkY, chunkZ, colorType);
+
+        Debug.countThreadLocalChunk(chunk);
 
         if (chunk == null)
         {
