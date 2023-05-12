@@ -294,4 +294,20 @@ public final class Debug
             threadLocalMiss.getAndIncrement();
         }
     }
+
+    public static AtomicLong blendCacheHit  = new AtomicLong();
+    public static AtomicLong blendCacheMiss = new AtomicLong();
+
+    public static void
+    countBlendCache(BlendChunk chunk)
+    {
+        if (chunk != null)
+        {
+            blendCacheHit.getAndIncrement();
+        }
+        else
+        {
+            blendCacheMiss.getAndIncrement();
+        }
+    }
 }

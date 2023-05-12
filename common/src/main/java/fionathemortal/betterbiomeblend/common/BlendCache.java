@@ -1,13 +1,10 @@
 package fionathemortal.betterbiomeblend.common;
 
+import fionathemortal.betterbiomeblend.common.debug.Debug;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.Options;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.ListIterator;
 import java.util.Stack;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -15,8 +12,7 @@ public final class BlendCache
 {
     public final ReentrantLock                            lock;
     public final Long2ObjectLinkedOpenHashMap<BlendChunk> hash;
-    public final Stack<BlendChunk>                        freeStack;
-    public final ArrayList<BlendChunk>                    generating;
+    public final Stack<BlendChunk>                        freeList;
     public final Long2ObjectOpenHashMap<BlendChunk>       invalidationHash;
 
     public int invalidationCounter = 0;
@@ -24,10 +20,9 @@ public final class BlendCache
     public
     BlendCache(int count)
     {
-        lock       = new ReentrantLock();
-        hash       = new Long2ObjectLinkedOpenHashMap<>(count);
-        freeStack  = new Stack<>();
-        generating = new ArrayList<>();
+        lock     = new ReentrantLock();
+        hash     = new Long2ObjectLinkedOpenHashMap<>(count);
+        freeList = new Stack<>();
 
         invalidationHash = new Long2ObjectOpenHashMap<>(count);
 
@@ -35,7 +30,7 @@ public final class BlendCache
             index < count;
             ++index)
         {
-            freeStack.add(new BlendChunk());
+            freeList.add(new BlendChunk());
         }
     }
 
@@ -46,7 +41,7 @@ public final class BlendCache
 
         if (refCount == 0)
         {
-            freeStack.push(chunk);
+            freeList.push(chunk);
         }
     }
 
@@ -59,7 +54,7 @@ public final class BlendCache
         {
             lock.lock();
 
-            freeStack.push(chunk);
+            freeList.push(chunk);
 
             lock.unlock();
         }
@@ -163,20 +158,6 @@ public final class BlendCache
 
                     current = next;
                 }
-
-                ListIterator<BlendChunk> iterator = generating.listIterator();
-
-                while (iterator.hasNext())
-                {
-                    BlendChunk generatingChunk = iterator.next();
-
-                    if (generatingChunk.invalidationKey == key)
-                    {
-                        generatingChunk.markAsInvalid();
-
-                        iterator.remove();
-                    }
-                }
             }
         }
 
@@ -184,7 +165,7 @@ public final class BlendCache
     }
 
     public BlendChunk
-    getChunk(int chunkX, int chunkY, int chunkZ, int colorType)
+    getOrInitChunk(int chunkX, int chunkY, int chunkZ, int colorType)
     {
         long key = ColorCaching.getChunkKey(chunkX, chunkY, chunkZ, colorType);
 
@@ -192,118 +173,53 @@ public final class BlendCache
 
         BlendChunk result = hash.getAndMoveToFirst(key);
 
-        if (result != null)
+        Debug.countBlendCache(result);
+
+        if (result == null)
         {
-            result.acquire();
-        }
-
-        lock.unlock();
-
-        return result;
-    }
-
-    public BlendChunk
-    newChunk(int chunkX, int chunkY, int chunkZ, int colorType)
-    {
-        long key = ColorCaching.getChunkKey(chunkX, chunkY, chunkZ, colorType);
-
-        lock.lock();
-
-        BlendChunk result = null;
-
-        if (!freeStack.empty())
-        {
-            result = freeStack.pop();
-        }
-        else
-        {
-            for (;;)
+            if (!freeList.empty())
             {
-                long lastKey = hash.lastLongKey();
-
-                result = hash.removeLast();
-
-                if (result.getReferenceCount() == 1)
-                {
-                    result.release();
-                    break;
-                }
-                else
-                {
-                    hash.putAndMoveToFirst(lastKey, result);
-                }
-            }
-
-            removeFromInvalidationHash(result);
-        }
-
-        long invalidationKey = ColorCaching.getChunkKey(chunkX, 0, chunkZ, 0);
-
-        result.key = key;
-        result.invalidationCounter = invalidationCounter;
-        result.invalidationKey = invalidationKey;
-
-        result.prev = null;
-        result.next = null;
-
-        result.acquire();
-
-        Arrays.fill(result.data, 0);
-
-        generating.add(result);
-
-        lock.unlock();
-
-        return result;
-    }
-
-    public BlendChunk
-    putChunk(BlendChunk chunk)
-    {
-        BlendChunk result = chunk;
-
-        lock.lock();
-
-        if (generating.remove(chunk))
-        {
-            BlendChunk prev = hash.getAndMoveToFirst(chunk.key);
-
-            if (prev == null)
-            {
-                hash.putAndMoveToFirst(chunk.key, chunk);
-
-                addToInvalidationHash(chunk);
-
-                chunk.acquire();
+                result = freeList.pop();
             }
             else
             {
-                BlendChunk olderChunk;
-
-                if (chunk.invalidationCounter >= prev.invalidationCounter)
+                for (;;)
                 {
-                    olderChunk = prev;
+                    result = hash.removeLast();
 
-                    hash.put(chunk.key, chunk);
-
-                    addToInvalidationHash(chunk);
-                    removeFromInvalidationHash(olderChunk);
-
-                    chunk.acquire();
-                }
-                else
-                {
-                    olderChunk = chunk;
-
-                    result = prev;
-                    result.acquire();
+                    if (result.getReferenceCount() == 1)
+                    {
+                        result.release();
+                        break;
+                    }
+                    else
+                    {
+                        hash.putAndMoveToFirst(result.key, result);
+                    }
                 }
 
-                releaseChunkWithoutLock(olderChunk);
-
-                olderChunk.markAsInvalid();
+                removeFromInvalidationHash(result);
             }
+
+            long invalidationKey = ColorCaching.getChunkKey(chunkX, 0, chunkZ, 0);
+
+            result.key = key;
+            result.invalidationCounter = invalidationCounter;
+            result.invalidationKey = invalidationKey;
+
+            result.prev = null;
+            result.next = null;
+
+            Arrays.fill(result.data, 0);
+
+            hash.putAndMoveToFirst(result.key, result);
+
+            addToInvalidationHash(result);
+
+            result.acquire();
         }
+
+        result.acquire();
 
         lock.unlock();
 

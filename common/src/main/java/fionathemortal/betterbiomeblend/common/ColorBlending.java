@@ -1,8 +1,6 @@
 package fionathemortal.betterbiomeblend.common;
 
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
-import fionathemortal.betterbiomeblend.common.cache.BiomeCache;
-import fionathemortal.betterbiomeblend.common.cache.BiomeSlice;
 import fionathemortal.betterbiomeblend.common.cache.ColorCache;
 import fionathemortal.betterbiomeblend.common.cache.ColorSlice;
 import fionathemortal.betterbiomeblend.common.debug.Debug;
@@ -11,22 +9,42 @@ import fionathemortal.betterbiomeblend.common.debug.DebugEventType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
+import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
 
-import java.util.Arrays;
-import java.util.Stack;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantLock;
 
 public final class ColorBlending
 {
-    public static final ReentrantLock           freeBlendBuffersLock = new ReentrantLock();
-    public static final Stack<BlendBuffer> freeBlendBuffers     = new Stack<>();
+    public static final ThreadLocal<BlendBuffer> threadLocalBlendBuffer = new ThreadLocal<>();
+
+    public static BlendBuffer
+    acquireBlendBuffer(int blendRadius)
+    {
+        BlendBuffer result = null;
+        BlendBuffer buffer = threadLocalBlendBuffer.get();
+
+        if (buffer != null && buffer.blendRadius == blendRadius)
+        {
+            result = buffer;
+        }
+        else
+        {
+            result = new BlendBuffer(blendRadius);
+        }
+
+        return result;
+    }
+
+    public static void
+    releaseBlendBuffer(BlendBuffer buffer)
+    {
+        threadLocalBlendBuffer.set(buffer);
+    }
 
     public static int
     getSliceMin(int blendRadius, int blockSizeLog2, int sliceSizeLog2, int sliceIndex)
@@ -90,44 +108,6 @@ public final class ColorBlending
         return result;
     }
 
-    public static BlendBuffer
-    acquireBlendBuffer(int blendRadius)
-    {
-        BlendBuffer result = null;
-
-        freeBlendBuffersLock.lock();
-
-        while (!freeBlendBuffers.empty())
-        {
-            BlendBuffer buffer = freeBlendBuffers.pop();
-
-            if (buffer.blendRadius == blendRadius)
-            {
-                result = buffer;
-                break;
-            }
-        }
-
-        freeBlendBuffersLock.unlock();
-
-        if (result == null)
-        {
-            result = new BlendBuffer(blendRadius);
-        }
-
-        return result;
-    }
-
-    public static void
-    releaseBlendBuffer(BlendBuffer cache)
-    {
-        freeBlendBuffersLock.lock();
-
-        freeBlendBuffers.push(cache);
-
-        freeBlendBuffersLock.unlock();
-    }
-
     public static Biome
     getDefaultBiome(Level world)
     {
@@ -185,9 +165,7 @@ public final class ColorBlending
     gatherColorsForSlice(
         Level         world,
         ColorResolver colorResolver,
-        int           colorType,
-        ColorCache    colorCache,
-        BiomeCache    biomeCache,
+        ColorSlice    colorSlice,
         BlendBuffer   blendBuffer,
         int           blendRadius,
         int           sliceIDX,
@@ -216,13 +194,13 @@ public final class ColorBlending
         final int sliceMaxY = getSliceMax(blendRadius, blockSizeLog2, sliceSizeLog2, sliceIDY);
         final int sliceMaxZ = getSliceMax(blendRadius, blockSizeLog2, sliceSizeLog2, sliceIDZ);
 
-        final int blendMinX = getBlendMin(blendRadius, blockSizeLog2, sliceSizeLog2, sliceIDX);
-        final int blendMinY = getBlendMin(blendRadius, blockSizeLog2, sliceSizeLog2, sliceIDY);
-        final int blendMinZ = getBlendMin(blendRadius, blockSizeLog2, sliceSizeLog2, sliceIDZ);
-
         final int dimX = sliceMaxX - sliceMinX;
         final int dimY = sliceMaxY - sliceMinY;
         final int dimZ = sliceMaxZ - sliceMinZ;
+
+        final int blendMinX = getBlendMin(blendRadius, blockSizeLog2, sliceSizeLog2, sliceIDX);
+        final int blendMinY = getBlendMin(blendRadius, blockSizeLog2, sliceSizeLog2, sliceIDY);
+        final int blendMinZ = getBlendMin(blendRadius, blockSizeLog2, sliceSizeLog2, sliceIDZ);
 
         int worldMinX = (sliceX << sliceSizeLog2) + (sliceMinX << blockSizeLog2);
         int worldMinY = (sliceY << sliceSizeLog2) + (sliceMinY << blockSizeLog2);
@@ -237,77 +215,54 @@ public final class ColorBlending
             worldMinZ += blockSizeLog2;
         }
 
-        // BiomeSlice biomeSlice = biomeCache.getOrDefaultInitializeSlice(blendRadius, sliceX, sliceY, sliceZ, 0);
-        ColorSlice colorSlice = colorCache.getOrDefaultInitializeSlice(blendRadius, sliceX, sliceY, sliceZ, colorType);
+        int sliceIndexY = 3 * ColorCaching.getCacheArrayIndex(sliceSize, sliceMinX, sliceMinY, sliceMinZ);
+        int blendIndexY = 3 * ColorCaching.getCacheArrayIndex(blendSize, blendMinX, blendMinY, blendMinZ);
 
-        DebugEvent subEvent = Debug.pushSubevent(DebugEventType.SUBEVENT);
+        int sliceIndexR = 0;
+        int sliceIndexG = 0;
+        int sliceIndexB = 0;
 
         for (int y = 0;
              y < dimY;
              ++y)
         {
+            int sliceIndexZ = sliceIndexY;
+            int blendIndexZ = blendIndexY;
+
             for (int z = 0;
                  z < dimZ;
                  ++z)
             {
-                final int sliceIndexX = sliceMinX;
-                final int sliceIndexY = sliceMinY + y;
-                final int sliceIndexZ = sliceMinZ + z;
-
-                final int blendIndexX = blendMinX;
-                final int blendIndexY = blendMinY + y;
-                final int blendIndexZ = blendMinZ + z;
-
-                int sliceIndex = ColorCaching.getCacheArrayIndex(sliceSize, sliceIndexX, sliceIndexY, sliceIndexZ);
-                int blendIndex = ColorCaching.getCacheArrayIndex(blendSize, blendIndexX, blendIndexY, blendIndexZ);
-
-                int biomeSliceIndex = sliceIndex;
-
-                sliceIndex *= 3;
-                blendIndex *= 3;
+                int sliceIndex = sliceIndexZ;
+                int blendIndex = blendIndexZ;
 
                 for (int x = 0;
                      x < dimX;
                      ++x)
                 {
+                    // NOTE: White is uninitialized data in vanilla code
+
                     int cachedR = 0xFF & colorSlice.data[sliceIndex + 0];
                     int cachedG = 0xFF & colorSlice.data[sliceIndex + 1];
                     int cachedB = 0xFF & colorSlice.data[sliceIndex + 2];
 
                     final int commonBits = cachedR & cachedG & cachedB;
 
-                    // NOTE: White is uninitialized data in vanilla code
+                    final int sampleMinX = worldMinX + (x << blockSizeLog2);
+                    final int sampleMinY = worldMinY + (y << blockSizeLog2);
+                    final int sampleMinZ = worldMinZ + (z << blockSizeLog2);
+
+                    // TODO: Random sampling
+
+                    final int sampleX = sampleMinX;
+                    final int sampleY = sampleMinY;
+                    final int sampleZ = sampleMinZ;
 
                     if (commonBits == 0xFF)
                     {
-                        // colorCacheMissCount.getAndIncrement();
+                        blockPos.set(sampleX, sampleY, sampleZ);
 
-                        Biome biome = null; // biomeSlice.data[biomeSliceIndex];
-
-                        final int sampleMinX = worldMinX + (x << blockSizeLog2);
-                        final int sampleMinY = worldMinY + (y << blockSizeLog2);
-                        final int sampleMinZ = worldMinZ + (z << blockSizeLog2);
-
-                        // TODO: Random sampling
-
-                        final int sampleX = sampleMinX;
-                        final int sampleY = sampleMinY;
-                        final int sampleZ = sampleMinZ;
-
-                        if (biome == null)
-                        {
-                            // biomeCacheMissCount.getAndIncrement();
-
-                            blockPos.set(sampleX, sampleY, sampleZ);
-
-                            biome = getBiomeAtPositionOrDefaultOrThrow(world, blockPos);
-
-                            // biomeSlice.data[biomeSliceIndex] = biome;
-                        }
-                        else
-                        {
-                            // biomeCacheHitCount.getAndIncrement();
-                        }
+                        Biome biome = getBiomeAtPositionOrDefaultOrThrow(world, blockPos);
 
                         final double sampleXF64 = sampleX;
                         final double sampleZF64 = sampleZ;
@@ -322,28 +277,60 @@ public final class ColorBlending
                         colorSlice.data[sliceIndex + 1] = (byte)cachedG;
                         colorSlice.data[sliceIndex + 2] = (byte)cachedB;
                     }
-                    else
-                    {
-                        // colorCacheHitCount.getAndIncrement();
-                    }
 
                     Color.sRGBByteToOKLabs(cachedR, cachedG, cachedB, blendBuffer.colors, blendIndex);
 
                     sliceIndex += 3;
                     blendIndex += 3;
-
-                    ++biomeSliceIndex;
                 }
+
+                sliceIndexZ += 3 * sliceSize;
+                blendIndexZ += 3 * blendSize;
             }
+
+            sliceIndexY += 3 * sliceSize * sliceSize;
+            blendIndexY += 3 * blendSize * blendSize;
         }
+    }
 
-        Debug.endEvent(subEvent);
+    private static void
+    fillBlendBufferWithCenterColor(
+        Level         world,
+        ColorResolver colorResolver,
+        BlendBuffer   blendBuffer,
+        int           sliceX,
+        int           sliceY,
+        int           sliceZ,
+        int           sliceSizeLog2)
+    {
+        int worldCenterX = (sliceX << sliceSizeLog2) + (1 << (sliceSizeLog2 - 1));
+        int worldCenterY = (sliceY << sliceSizeLog2) + (1 << (sliceSizeLog2 - 1));
+        int worldCenterZ = (sliceZ << sliceSizeLog2) + (1 << (sliceSizeLog2 - 1));
 
-        // double biomeRatio = ((double)biomeCacheHitCount.get() / (double)(biomeCacheHitCount.get() + biomeCacheMissCount.get()));
-        // double colorRatio = ((double)colorCacheHitCount.get() / (double)(colorCacheHitCount.get() + colorCacheMissCount.get()));
+        BlockPos blockPos = new BlockPos(worldCenterX, worldCenterY, worldCenterZ);
 
-        colorCache.releaseSlice(colorSlice);
-        // biomeCache.releaseSlice(biomeSlice);
+        final Biome biome = getBiomeAtPositionOrDefaultOrThrow(world, blockPos);
+
+        final int color = colorResolver.getColor(biome, (float)worldCenterX, (float)worldCenterZ);
+
+        final int colorR = Color.RGBAGetR(color);
+        final int colorG = Color.RGBAGetG(color);
+        final int colorB = Color.RGBAGetB(color);
+
+        Color.sRGBByteToOKLabs(colorR, colorG, colorB, blendBuffer.colors, 0);
+
+        final float floatR = blendBuffer.colors[0];
+        final float floatG = blendBuffer.colors[1];
+        final float floatB = blendBuffer.colors[2];
+
+        for (int index = 0;
+             index < blendBuffer.colors.length;
+             index += 3)
+        {
+            blendBuffer.colors[index    ] = floatR;
+            blendBuffer.colors[index + 1] = floatG;
+            blendBuffer.colors[index + 2] = floatB;
+        }
     }
 
     public static void
@@ -352,34 +339,30 @@ public final class ColorBlending
         ColorResolver colorResolver,
         int           colorType,
         ColorCache    colorCache,
-        BiomeCache    biomeCache,
         BlendBuffer   blendBuffer,
         int           x,
         int           y,
         int           z,
         int           blendRadius)
     {
+        boolean neighborsAreLoaded = true;
+
         int sliceSizeLog2 = BlendConfig.getSliceSizeLog2(blendRadius);
 
         final int sliceX = x >> sliceSizeLog2;
         final int sliceY = y >> sliceSizeLog2;
         final int sliceZ = z >> sliceSizeLog2;
 
-        ChunkAccess[] neighbors          = new ChunkAccess[9];
-        boolean       neighborsAreLoaded = true;
-
-        int neighborIndex = 0;
-
-        for (int sliceIndexZ = -1;
-             sliceIndexZ <= 1;
-             ++sliceIndexZ)
+        for (int sliceOffsetZ = -1;
+             sliceOffsetZ <= 1;
+             ++sliceOffsetZ)
         {
-            for (int sliceIndexX = -1;
-                 sliceIndexX <= 1;
-                 ++sliceIndexX)
+            for (int sliceOffsetX = -1;
+                 sliceOffsetX <= 1;
+                 ++sliceOffsetX)
             {
-                int neighborSliceX = sliceX + sliceIndexX;
-                int neighborSliceZ = sliceZ + sliceIndexZ;
+                int neighborSliceX = sliceX + sliceOffsetX;
+                int neighborSliceZ = sliceZ + sliceOffsetZ;
 
                 int neighborChunkX = neighborSliceX >> (4 - sliceSizeLog2);
                 int neighborChunkZ = neighborSliceZ >> (4 - sliceSizeLog2);
@@ -389,70 +372,89 @@ public final class ColorBlending
                 if (chunk == null)
                 {
                     neighborsAreLoaded = false;
+                    break;
                 }
-
-                neighbors[neighborIndex] = chunk;
-
-                ++neighborIndex;
             }
         }
 
-        // TODO: Handle color gather if not all chunks are loaded
-
-        if (!neighborsAreLoaded)
+        if (neighborsAreLoaded)
         {
-            Arrays.fill(blendBuffer.colors, 0.0f);
+            ColorSlice[] colorSlices = new ColorSlice[27];
+
+            colorCache.getOrDefaultInitializeNeighbors(colorSlices, blendRadius, sliceX, sliceY, sliceZ, colorType);
+
+            int sliceIndex = 0;
+
+            for (int sliceOffsetZ = -1;
+                 sliceOffsetZ <= 1;
+                 ++sliceOffsetZ)
+            {
+                for (int sliceOffsetX = -1;
+                     sliceOffsetX <= 1;
+                     ++sliceOffsetX)
+                {
+                    for (int sliceOffsetY = -1;
+                         sliceOffsetY <= 1;
+                         ++sliceOffsetY)
+                    {
+                        final int neighborSliceX = sliceX + sliceOffsetX;
+                        final int neighborSliceY = sliceY + sliceOffsetY;
+                        final int neighborSliceZ = sliceZ + sliceOffsetZ;
+
+                        ColorSlice colorSlice = colorSlices[sliceIndex];
+
+                        ++sliceIndex;
+
+                        gatherColorsForSlice(
+                            world,
+                            colorResolver,
+                            colorSlice,
+                            blendBuffer,
+                            blendRadius,
+                            sliceOffsetX,
+                            sliceOffsetY,
+                            sliceOffsetZ,
+                            neighborSliceX,
+                            neighborSliceY,
+                            neighborSliceZ);
+                    }
+                }
+            }
+
+            colorCache.releaseSlices(colorSlices);
         }
         else
         {
-            neighborIndex = 0;
-
-            for (int sliceIndexZ = -1;
-                 sliceIndexZ <= 1;
-                 ++sliceIndexZ)
-            {
-                for (int sliceIndexX = -1;
-                     sliceIndexX <= 1;
-                     ++sliceIndexX)
-                {
-                    for (int sliceIndexY = -1;
-                         sliceIndexY <= 1;
-                         ++sliceIndexY)
-                    {
-                        final int neighborSliceX = sliceX + sliceIndexX;
-                        final int neighborSliceY = sliceY + sliceIndexY;
-                        final int neighborSliceZ = sliceZ + sliceIndexZ;
-
-                        if (neighbors[neighborIndex] != null)
-                        {
-                            gatherColorsForSlice(
-                                world,
-                                colorResolver,
-                                colorType,
-                                colorCache,
-                                biomeCache,
-                                blendBuffer,
-                                blendRadius,
-                                sliceIndexX,
-                                sliceIndexY,
-                                sliceIndexZ,
-                                neighborSliceX,
-                                neighborSliceY,
-                                neighborSliceZ);
-                        }
-                    }
-
-                    ++neighborIndex;
-                }
-            }
+            fillBlendBufferWithCenterColor(
+                world,
+                colorResolver,
+                blendBuffer,
+                sliceX,
+                sliceY,
+                sliceZ,
+                sliceSizeLog2);
         }
     }
 
     public static void
-    blendColorsForChunk(int blendRadius, BlendBuffer buffer, int[] result, int base)
+    blendColorsForChunk(int blendRadius, BlendBuffer buffer, int[] result, int inputX, int inputY, int inputZ)
     {
         final int sliceSizeLog2 = BlendConfig.getSliceSizeLog2(blendRadius);
         final int blockSizeLog2 = BlendConfig.getBlockSizeLog2(blendRadius);
+
+        final int sliceX = inputX >> sliceSizeLog2;
+        final int sliceY = inputY >> sliceSizeLog2;
+        final int sliceZ = inputZ >> sliceSizeLog2;
+
+        final int baseX = sliceX << sliceSizeLog2;
+        final int baseY = sliceY << sliceSizeLog2;
+        final int baseZ = sliceZ << sliceSizeLog2;
+
+        final int inChunkX = Utility.getLowerBits(baseX, 4);
+        final int inChunkY = Utility.getLowerBits(baseY, 4);
+        final int inChunkZ = Utility.getLowerBits(baseZ, 4);
+
+        final int baseIndex = ColorCaching.getCacheArrayIndex(16, inChunkX, inChunkY, inChunkZ);
 
         final int sliceSize = 1 << sliceSizeLog2;
         final int blockSize = 1 << blockSizeLog2;
@@ -468,20 +470,23 @@ public final class ColorBlending
 
         final float factor = (1.0f / blockSize);
 
+        int srcSize = blendSize;
+        int dstSize = 0;
+
         for (int y = 0;
-             y < blendSize;
+             y < srcSize;
              ++y)
         {
             for (int z = 0;
-                 z < blendSize;
+                 z < srcSize;
                  ++z)
             {
                 int srcIndex = 3 * ColorCaching.getCacheArrayIndex(blendBufferSize, 0, y, z);
                 int dstIndex = 0;
 
                 for (int x = 0;
-                    x < blendSize;
-                    ++x)
+                     x < srcSize;
+                     ++x)
                 {
                     scanline[dstIndex    ] = colors[srcIndex    ];
                     scanline[dstIndex + 1] = colors[srcIndex + 1];
@@ -508,7 +513,7 @@ public final class ColorBlending
                     srcIndex += 3;
                 }
 
-                dstIndex = 3 * ColorCaching.getCacheArrayIndex(blendBufferSize, 0, y, z);;
+                dstIndex = 3 * ColorCaching.getCacheArrayIndex(blendBufferSize, 0, y, z);
 
                 int lower = 0;
                 int upper = 3 * (filterSupport - 1);
@@ -682,7 +687,7 @@ public final class ColorBlending
                 int lower = 0;
                 int upper = 3 * (filterSupport - 1);
 
-                dstIndex = base + ColorCaching.getCacheArrayIndex(16, x, 0, z);;
+                dstIndex = baseIndex + ColorCaching.getCacheArrayIndex(16, x, 0, z);;
 
                 for (int y = 0;
                      y < scaledSliceSize;
@@ -790,11 +795,10 @@ public final class ColorBlending
         Level         world,
         ColorResolver colorResolver,
         int           colorType,
+        ColorCache    colorCache,
         int           x,
         int           y,
         int           z,
-        ColorCache    colorCache,
-        BiomeCache    biomeCache,
         int[]         result)
     {
         DebugEvent debugEvent = Debug.pushColorGenEvent(x, y, z, colorType);
@@ -811,30 +815,17 @@ public final class ColorBlending
                 colorResolver,
                 colorType,
                 colorCache,
-                biomeCache,
                 blendBuffer,
                 x,
                 y,
                 z,
                 blendRadius);
 
-            int sliceSizeLog2 = BlendConfig.getSliceSizeLog2(blendRadius);
+            DebugEvent event = Debug.pushSubevent(DebugEventType.SUBEVENT);
 
-            final int sliceX = x >> sliceSizeLog2;
-            final int sliceY = y >> sliceSizeLog2;
-            final int sliceZ = z >> sliceSizeLog2;
+            blendColorsForChunk(blendRadius, blendBuffer, result, x, y, z);
 
-            final int baseX = sliceX << sliceSizeLog2;
-            final int baseY = sliceY << sliceSizeLog2;
-            final int baseZ = sliceZ << sliceSizeLog2;
-
-            final int inChunkX = Utility.getLowerBits(baseX, 4);
-            final int inChunkY = Utility.getLowerBits(baseY, 4);
-            final int inChunkZ = Utility.getLowerBits(baseZ, 4);
-
-            final int base = ColorCaching.getCacheArrayIndex(16, inChunkX, inChunkY, inChunkZ);
-
-            blendColorsForChunk(blendRadius, blendBuffer, result, base);
+            Debug.endEvent(event);
 
             releaseBlendBuffer(blendBuffer);
         }

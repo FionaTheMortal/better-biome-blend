@@ -1,9 +1,5 @@
 package fionathemortal.betterbiomeblend.common;
 
-import fionathemortal.betterbiomeblend.common.cache.BiomeCache;
-import fionathemortal.betterbiomeblend.common.cache.ColorCache;
-import net.minecraft.world.level.ColorResolver;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class BlendChunk

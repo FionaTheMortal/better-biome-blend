@@ -145,6 +145,31 @@ public abstract class SliceCache<T extends Slice>
     }
 
     public final void
+    releaseSlices(T[] slices)
+    {
+        lock.lock();
+
+        for (int index = 0;
+            index < 27;
+            ++index)
+        {
+            T slice = slices[index];
+
+            int refCount = slice.release();
+
+            if (refCount == 0)
+            {
+                if (slice.size == this.sliceSize)
+                {
+                    freeListPush(slice);
+                }
+            }
+        }
+
+        lock.unlock();
+    }
+
+    public final void
     invalidateAll(int blendRadius)
     {
         lock.lock();
@@ -280,5 +305,101 @@ public abstract class SliceCache<T extends Slice>
         }
 
         return result;
+    }
+
+    public final void
+    getOrDefaultInitializeNeighbors(T[] result, int blendRadius, int sliceX, int sliceY, int sliceZ, int colorType)
+    {
+        int sliceSize = BlendConfig.getSliceSize(blendRadius);
+
+        if (sliceSize == this.sliceSize)
+        {
+            lock.lock();
+
+            int sliceIndex = 0;
+
+            for (int offsetZ = -1;
+                 offsetZ <= 1;
+                 ++offsetZ)
+            {
+                for (int offsetX = -1;
+                     offsetX <= 1;
+                     ++offsetX)
+                {
+                    for (int offsetY = -1;
+                         offsetY <= 1;
+                         ++offsetY)
+                    {
+                        final int neighborSliceX = sliceX + offsetX;
+                        final int neighborSliceY = sliceY + offsetY;
+                        final int neighborSliceZ = sliceZ + offsetZ;
+
+                        long key = ColorCaching.getChunkKey(neighborSliceX, neighborSliceY, neighborSliceZ, colorType);
+
+                        T slice = hash.getAndMoveToFirst(key);
+
+                        if (slice == null)
+                        {
+                            if (!freeListEmpty())
+                            {
+                                slice = freeListPop();
+                            }
+                            else
+                            {
+                                for (;;)
+                                {
+                                    long lastKey = hash.lastLongKey();
+
+                                    slice = hash.removeLast();
+
+                                    if (slice.getReferenceCount() == 1)
+                                    {
+                                        slice.release();
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        hash.putAndMoveToFirst(lastKey, slice);
+                                    }
+                                }
+
+                                removeFromInvalidationHash(slice);
+                            }
+
+                            long invalidationKey = ColorCaching.getChunkKey(sliceX, 0, sliceZ, 0);
+
+                            slice.key = key;
+                            slice.columnKey = invalidationKey;
+
+                            slice.prev = null;
+                            slice.next = null;
+
+                            slice.invalidateData();
+
+                            slice.acquire();
+
+                            hash.putAndMoveToFirst(slice.key, slice);
+
+                            addToInvalidationHash(slice);
+                        }
+
+                        slice.acquire();
+
+                        result[sliceIndex++] = slice;
+                    }
+                }
+            }
+
+            lock.unlock();
+        }
+        else
+        {
+            for (int index = 0;
+                index < 27;
+                ++index)
+            {
+                result[index] = newSlice(sliceSize);
+            }
+        }
     }
 }
