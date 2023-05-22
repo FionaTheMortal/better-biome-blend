@@ -1,14 +1,16 @@
 package fionathemortal.betterbiomeblend.fabric;
 
-import fionathemortal.betterbiomeblend.BetterBiomeBlend;
-import net.fabricmc.api.ModInitializer;
+import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 
-public class BetterBiomeBlendFabric implements ModInitializer
+public class BetterBiomeBlendFabric implements ClientModInitializer
 {
     @Override
-    public void
-    onInitialize()
+    public void onInitializeClient()
     {
-        BetterBiomeBlend.init();
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+                BetterBiomeBlendClient.registerCommands(dispatcher);
+        });
     }
 }

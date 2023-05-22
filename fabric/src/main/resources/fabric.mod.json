@@ -15,7 +15,7 @@
   "icon": "assets/betterbiomeblend/icon.png",
   "environment": "*",
   "entrypoints": {
-    "main": [
+    "client": [
       "fionathemortal.betterbiomeblend.fabric.BetterBiomeBlendFabric"
     ]
   },

@@ -78,7 +78,6 @@ public abstract class MixinClientWorld extends Level
         // TODO: Implement invalidation (?)
 
         betterBiomeBlend$blendColorCache.invalidateChunk(chunkX, chunkZ);
-        // betterBiomeBlend$chunkColorCache.invalidateSmallNeighborhood(chunkX, chunkZ);
     }
 
     @Overwrite

@@ -1,7 +1,5 @@
 package fionathemortal.betterbiomeblend.common;
 
-import fionathemortal.betterbiomeblend.common.debug.Debug;
-
 public final class ColorCaching
 {
     public static final int INVALID_CHUNK_KEY = -1;

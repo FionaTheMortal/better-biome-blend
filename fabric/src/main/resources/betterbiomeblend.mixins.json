@@ -1,8 +1,10 @@
 {
   "required": true,
-  "package": "fionathemortal.betterbiomeblend.mixin.fabric",
+  "package": "fionathemortal.betterbiomeblend.fabric.mixin",
   "compatibilityLevel": "JAVA_17",
   "client": [
+    "MixinBlockColorCache",
+    "MixinSodiumGameOptionPages"
   ],
   "mixins": [
   ],

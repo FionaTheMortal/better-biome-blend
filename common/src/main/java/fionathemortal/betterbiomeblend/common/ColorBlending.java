@@ -738,6 +738,8 @@ public final class ColorBlending
         int           requestZ,
         int[]         result)
     {
+        // TODO: Needs to check for loaded neighbors
+
         BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
 
         final int sliceSizeLog2 = BlendConfig.getSliceSizeLog2(0);
@@ -821,11 +823,11 @@ public final class ColorBlending
                 z,
                 blendRadius);
 
-            DebugEvent event = Debug.pushSubevent(DebugEventType.SUBEVENT);
+            DebugEvent subEvent = Debug.pushSubevent(DebugEventType.SUBEVENT);
 
             blendColorsForChunk(blendRadius, blendBuffer, result, x, y, z);
 
-            Debug.endEvent(event);
+            Debug.endEvent(subEvent);
 
             releaseBlendBuffer(blendBuffer);
         }

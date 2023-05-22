@@ -155,17 +155,16 @@ public final class Color
         /* NOTE: Bounds checking on integers. I do not care about NaNs and
          *       comparisons are generally faster on integers. I think this gives
          *       the same result as the float comparisons. TODO: Check! */
-
-        int inBits = Math.max(Math.min(Float.floatToIntBits(in), almostone), minval);
-
         /*
+        int inBits = Math.max(Math.min(Float.floatToIntBits(in), almostone), minval);
+        */
+
         if (!(in > minvalF)) // written this way to catch NaNs
             in = minvalF;
         if (in > almostoneF)
             in = almostoneF;
 
         int inBits = Float.floatToIntBits(in);
-        */
 
         int tab   = fp32_to_srgb8_tab4[(inBits - minval) >>> 20];
         int bias  = (tab >>> 16) << 9;
@@ -239,6 +238,10 @@ public final class Color
     public static void
     OKLabsTosRGBAInt(float L, float a, float b, int[] dest, int index)
     {
+        dest[index] = 0xFF00FF00;
+
+        /*
+
         float l_ = L + 0.3963377774f * a + 0.2158037573f * b;
         float m_ = L - 0.1055613458f * a - 0.0638541728f * b;
         float s_ = L - 0.0894841775f * a - 1.2914855480f * b;
@@ -258,5 +261,7 @@ public final class Color
         int color = makeRGBAWithFullAlpha(rByte, gByte, bByte);
 
         dest[index] = color;
+
+        */
     }
 }

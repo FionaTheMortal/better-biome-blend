@@ -1,6 +1,9 @@
 package fionathemortal.betterbiomeblend.mixin;
 
 
+import fionathemortal.betterbiomeblend.BetterBiomeBlend;
+import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
+import fionathemortal.betterbiomeblend.common.LocalCache;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.OptionInstance;
@@ -10,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.ColorResolver;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -22,17 +26,10 @@ public class MixinOptions
     @Shadow
     public OptionInstance<Integer> biomeBlendRadius;
 
-    @Inject(method = "<init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V", at = @At("TAIL"))
+    @Inject(method = "processOptions", at = @At("HEAD"))
     private void
-    injectConstructor(Minecraft minecraft, File file, CallbackInfo info)
+    injectHandle(Options.FieldAccess fieldAccess, CallbackInfo info)
     {
-        this.biomeBlendRadius = new OptionInstance<>(
-            "options.biomeBlendRadius", OptionInstance.noTooltip(),
-            (component, integer) -> {
-                int i = integer * 2 + 1;
-                return Options.genericValueLabel(component, Component.translatable("options.biomeBlendRadius." + i));
-            }, new OptionInstance.IntRange(0, 14), 2, (integer) -> {
-                Minecraft.getInstance().levelRenderer.allChanged();
-            });
+        fieldAccess.process("betterBiomeBlendRadius", BetterBiomeBlendClient.betterBiomeBlendRadius);
     }
 }

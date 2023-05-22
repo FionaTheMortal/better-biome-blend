@@ -7,9 +7,4 @@ import java.nio.file.Path;
 
 public class BetterBiomeBlendExpectPlatformImpl
 {
-    public static Path
-    getConfigDirectory()
-    {
-        return FabricLoader.getInstance().getConfigDir();
-    }
 }

@@ -25,6 +25,8 @@ dependencies {
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
+
+    modCompileOnly "maven.modrinth:sodium:mc1.19.2-0.4.4"
 }
 
 processResources {
