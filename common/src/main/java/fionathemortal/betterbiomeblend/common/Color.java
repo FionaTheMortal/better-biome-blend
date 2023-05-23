@@ -113,18 +113,6 @@ public final class Color
         return result;
     }
 
-    /*
-    public static byte
-    linearFloatTosRGBByte(float color)
-    {
-        float sRGB = linearTosRGB(color);
-
-        byte result = normalizedFloatToByte(sRGB);
-
-        return result;
-    }
-    */
-
     /* NOTE: Copied from stb_image_resive.h and modified */
 
     static int[] fp32_to_srgb8_tab4 = {
@@ -175,20 +163,8 @@ public final class Color
         return (byte) ((bias + scale * t) >>> 16);
     }
 
-    public static float
-    sRGBByteToBlendSpace(int color)
-    {
-        return sRGBByteToLinearFloat(color);
-    }
-
-    public static byte
-    blendSpaceTosRGBByte(float color)
-    {
-        return linearFloatTosRGBByte(color);
-    }
-
     public static void
-    sRGBByteToOKLabs(int rIn, int gIn, int bIn, float[] dest, int index)
+    sRGBByteToOKLabs(int rIn, int gIn, int bIn, float[] rOut, float[] gOut, float[] bOut, int index)
     {
         float r = sRGBByteToLinearFloat(rIn);
         float g = sRGBByteToLinearFloat(gIn);
@@ -206,9 +182,9 @@ public final class Color
         float aResult = 1.9779984951f * lRoot - 2.4285922050f * mRoot + 0.4505937099f * sRoot;
         float bResult = 0.0259040371f * lRoot + 0.7827717662f * mRoot - 0.8086757660f * sRoot;
 
-        dest[index    ] = LResult;
-        dest[index + 1] = aResult;
-        dest[index + 2] = bResult;
+        rOut[index] = LResult;
+        gOut[index] = aResult;
+        bOut[index] = bResult;
     }
 
     public static void
@@ -238,10 +214,6 @@ public final class Color
     public static void
     OKLabsTosRGBAInt(float L, float a, float b, int[] dest, int index)
     {
-        dest[index] = 0xFF00FF00;
-
-        /*
-
         float l_ = L + 0.3963377774f * a + 0.2158037573f * b;
         float m_ = L - 0.1055613458f * a - 0.0638541728f * b;
         float s_ = L - 0.0894841775f * a - 1.2914855480f * b;
@@ -261,7 +233,5 @@ public final class Color
         int color = makeRGBAWithFullAlpha(rByte, gByte, bByte);
 
         dest[index] = color;
-
-        */
     }
 }

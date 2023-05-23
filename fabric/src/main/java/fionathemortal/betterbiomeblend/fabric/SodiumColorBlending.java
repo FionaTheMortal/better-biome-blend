@@ -33,6 +33,7 @@ public class SodiumColorBlending
         int           pZ,
         int           blendRadius)
     {
+        /*
         BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
 
         final int sliceSizeLog2 = BlendConfig.getSliceSizeLog2(blendRadius);
@@ -108,6 +109,7 @@ public class SodiumColorBlending
 
             indexY += 3 * blendDim * blendDim;
         }
+        */
     }
 
     public static void
@@ -119,6 +121,7 @@ public class SodiumColorBlending
         int            z,
         int[]          result)
     {
+        /*
         DebugEvent debugEvent = Debug.pushColorGenEvent(x, y, z, 0);
 
         final int blendRadius = BetterBiomeBlendClient.getBiomeBlendRadius();
@@ -155,8 +158,10 @@ public class SodiumColorBlending
                 z,
                 result);
             */
+        /*
         }
 
         Debug.endEvent(debugEvent);
+        */
     }
 }

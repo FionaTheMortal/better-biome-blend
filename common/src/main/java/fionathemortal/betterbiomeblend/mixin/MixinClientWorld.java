@@ -84,6 +84,8 @@ public abstract class MixinClientWorld extends Level
     public int
     getBlockTint(BlockPos blockPosIn, ColorResolver colorResolverIn)
     {
+        // TODO: Should have ZYX order of arrays
+
         final int x = blockPosIn.getX();
         final int y = blockPosIn.getY();
         final int z = blockPosIn.getZ();

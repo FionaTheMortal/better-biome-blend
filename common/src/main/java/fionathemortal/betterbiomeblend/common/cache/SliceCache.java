@@ -308,10 +308,8 @@ public abstract class SliceCache<T extends Slice>
     }
 
     public final void
-    getOrDefaultInitializeNeighbors(T[] result, int blendRadius, int sliceX, int sliceY, int sliceZ, int colorType)
+    getOrDefaultInitializeNeighbors(T[] result, int sliceSize, int sliceX, int sliceY, int sliceZ, int colorType)
     {
-        int sliceSize = BlendConfig.getSliceSize(blendRadius);
-
         if (sliceSize == this.sliceSize)
         {
             lock.lock();
