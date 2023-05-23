@@ -233,80 +233,6 @@ public abstract class SliceCache<T extends Slice>
         linkedListUnlink(chunk);
     }
 
-    public final T
-    getOrDefaultInitializeSlice(int blendRadius, int sliceX, int sliceY, int sliceZ, int colorType)
-    {
-        T result;
-
-        int sliceSize = BlendConfig.getSliceSize(blendRadius);
-
-        if (sliceSize == this.sliceSize)
-        {
-            long key = ColorCaching.getChunkKey(sliceX, sliceY, sliceZ, colorType);
-
-            lock.lock();
-
-            result = hash.getAndMoveToFirst(key);
-
-            if (result == null)
-            {
-                if (!freeListEmpty())
-                {
-                    result = freeListPop();
-                }
-                else
-                {
-                    for (;;)
-                    {
-                        long lastKey = hash.lastLongKey();
-
-                        result = hash.removeLast();
-
-                        if (result.getReferenceCount() == 1)
-                        {
-                            result.release();
-                            break;
-                        }
-                        else
-                        {
-                            hash.putAndMoveToFirst(lastKey, result);
-                        }
-                    }
-
-                    removeFromInvalidationHash(result);
-                }
-
-                long invalidationKey = ColorCaching.getChunkKey(sliceX, 0, sliceZ, 0);
-
-                result.key = key;
-                result.columnKey = invalidationKey;
-
-                result.prev = null;
-                result.next = null;
-
-                result.invalidateData();
-
-                result.acquire();
-
-                hash.putAndMoveToFirst(result.key, result);
-
-                addToInvalidationHash(result);
-            }
-
-            result.acquire();
-
-            lock.unlock();
-        }
-        else
-        {
-            // TODO: Actually init chunk. Is this how it should be done ?
-
-            result = newSlice(sliceSize);
-        }
-
-        return result;
-    }
-
     public final void
     getOrDefaultInitializeNeighbors(T[] result, int sliceSize, int sliceX, int sliceY, int sliceZ, int colorType)
     {
@@ -320,13 +246,13 @@ public abstract class SliceCache<T extends Slice>
                  offsetZ <= 1;
                  ++offsetZ)
             {
-                for (int offsetX = -1;
-                     offsetX <= 1;
-                     ++offsetX)
+                for (int offsetY = -1;
+                     offsetY <= 1;
+                     ++offsetY)
                 {
-                    for (int offsetY = -1;
-                         offsetY <= 1;
-                         ++offsetY)
+                    for (int offsetX = -1;
+                         offsetX <= 1;
+                         ++offsetX)
                     {
                         final int neighborSliceX = sliceX + offsetX;
                         final int neighborSliceY = sliceY + offsetY;
@@ -338,11 +264,7 @@ public abstract class SliceCache<T extends Slice>
 
                         if (slice == null)
                         {
-                            if (!freeListEmpty())
-                            {
-                                slice = freeListPop();
-                            }
-                            else
+                            if (freeListEmpty())
                             {
                                 for (;;)
                                 {
@@ -362,6 +284,10 @@ public abstract class SliceCache<T extends Slice>
                                 }
 
                                 removeFromInvalidationHash(slice);
+                            }
+                            else
+                            {
+                                slice = freeListPop();
                             }
 
                             long invalidationKey = ColorCaching.getChunkKey(sliceX, 0, sliceZ, 0);

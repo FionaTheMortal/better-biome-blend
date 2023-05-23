@@ -2,7 +2,6 @@ package fionathemortal.betterbiomeblend.mixin;
 
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
 import fionathemortal.betterbiomeblend.common.*;
-import fionathemortal.betterbiomeblend.common.cache.BiomeCache;
 import fionathemortal.betterbiomeblend.common.cache.ColorCache;
 import fionathemortal.betterbiomeblend.common.debug.Debug;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
@@ -75,8 +74,6 @@ public abstract class MixinClientWorld extends Level
         int chunkX = chunkPos.x;
         int chunkZ = chunkPos.z;
 
-        // TODO: Implement invalidation (?)
-
         betterBiomeBlend$blendColorCache.invalidateChunk(chunkX, chunkZ);
     }
 
@@ -84,8 +81,6 @@ public abstract class MixinClientWorld extends Level
     public int
     getBlockTint(BlockPos blockPosIn, ColorResolver colorResolverIn)
     {
-        // TODO: Should have ZYX order of arrays
-
         final int x = blockPosIn.getX();
         final int y = blockPosIn.getY();
         final int z = blockPosIn.getZ();
@@ -93,6 +88,10 @@ public abstract class MixinClientWorld extends Level
         final int chunkX = x >> 4;
         final int chunkY = y >> 4;
         final int chunkZ = z >> 4;
+
+        final int blockX = x & 15;
+        final int blockY = y & 15;
+        final int blockZ = z & 15;
 
         LocalCache localCache = betterBiomeBlend$threadLocalCache.get();
 
@@ -150,14 +149,10 @@ public abstract class MixinClientWorld extends Level
         {
             chunk = betterBiomeBlend$blendColorCache.getOrInitChunk(chunkX, chunkY, chunkZ, colorType);
 
-            localCache.putChunk(chunk, colorType, colorResolverIn, betterBiomeBlend$blendColorCache);
+            localCache.putChunk(betterBiomeBlend$blendColorCache, chunk, colorType, colorResolverIn);
         }
 
-        final int blockX = x & 15;
-        final int blockY = y & 15;
-        final int blockZ = z & 15;
-
-        int index = ColorCaching.getCacheArrayIndex(16, blockX, blockY, blockZ);
+        int index = ColorCaching.getArrayIndex(16, blockX, blockY, blockZ);
 
         int color = chunk.data[index];
 
@@ -168,10 +163,10 @@ public abstract class MixinClientWorld extends Level
                 colorResolverIn,
                 colorType,
                 betterBiomeBlend$chunkColorCache,
+                chunk,
                 x,
                 y,
-                z,
-                chunk.data);
+                z);
 
             color = chunk.data[index];
         }

@@ -32,7 +32,7 @@ public final class ColorSlice extends Slice
                      x < maxX;
                      ++x)
                 {
-                    int cacheIndex = ColorCaching.getCacheArrayIndex(16, x, y, z);
+                    int cacheIndex = ColorCaching.getArrayIndex(16, x, y, z);
 
                     this.data[3 * cacheIndex + 0] = (byte)-1;
                     this.data[3 * cacheIndex + 1] = (byte)-1;

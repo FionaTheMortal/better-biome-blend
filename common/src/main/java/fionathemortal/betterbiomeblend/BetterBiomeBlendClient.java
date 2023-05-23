@@ -18,10 +18,12 @@ public final class BetterBiomeBlendClient
         "options.biomeBlendRadius",
         OptionInstance.noTooltip(),
         (component, integer) -> {
-            int i = integer * 2 + 1;
-            return Options.genericValueLabel(component, Component.translatable("options.biomeBlendRadius." + i));
+            int diameter = integer * 2 + 1;
+            return Options.genericValueLabel(component, Component.translatable("options.biomeBlendRadius." + diameter));
         },
-        new OptionInstance.IntRange(0, 14), 2, (integer) -> {
+        new OptionInstance.IntRange(0, 14),
+        2,
+        (integer) -> {
             Minecraft.getInstance().levelRenderer.allChanged();
         });
 

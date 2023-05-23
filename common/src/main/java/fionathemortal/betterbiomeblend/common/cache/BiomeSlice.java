@@ -33,7 +33,7 @@ public final class BiomeSlice extends Slice
                      x < maxX;
                      ++x)
                 {
-                    int cacheIndex = ColorCaching.getCacheArrayIndex(16, x, y, z);
+                    int cacheIndex = ColorCaching.getArrayIndex(16, x, y, z);
 
                     this.data[cacheIndex] = null;
                 }

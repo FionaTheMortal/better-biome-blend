@@ -5,9 +5,9 @@ public final class ColorCaching
     public static final int INVALID_CHUNK_KEY = -1;
 
     public static int
-    getCacheArrayIndex(int dim, int x, int y, int z)
+    getArrayIndex(int dim, int x, int y, int z)
     {
-        int result = x + z * dim + y * dim * dim;
+        int result = x + y * dim + z * dim * dim;
 
         return result;
     }

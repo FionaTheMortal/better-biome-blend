@@ -13,12 +13,10 @@ import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = VideoSettingsScreen.class)
-abstract public class MixinVideoSettingsScreen extends OptionsSubScreen
+public abstract class MixinVideoSettingsScreen extends OptionsSubScreen
 {
     @Shadow
     private OptionsList list;

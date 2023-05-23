@@ -35,7 +35,7 @@ public final class LocalCache
     }
 
     public void
-    putChunk(BlendChunk chunk, int colorType, ColorResolver colorResolver, BlendCache cache)
+    putChunk(BlendCache cache, BlendChunk chunk, int colorType, ColorResolver colorResolver)
     {
         BlendChunk prevChunk = this.blendChunks[colorType];
 
