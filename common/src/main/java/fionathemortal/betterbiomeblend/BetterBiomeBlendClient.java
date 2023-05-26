@@ -22,7 +22,7 @@ public final class BetterBiomeBlendClient
             return Options.genericValueLabel(component, Component.translatable("options.biomeBlendRadius." + diameter));
         },
         new OptionInstance.IntRange(0, 14),
-        2,
+        14,
         (integer) -> {
             Minecraft.getInstance().levelRenderer.allChanged();
         });
