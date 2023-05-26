@@ -2,9 +2,14 @@ package fionathemortal.betterbiomeblend.common.cache;
 
 import fionathemortal.betterbiomeblend.common.BlendConfig;
 import fionathemortal.betterbiomeblend.common.ColorCaching;
+import fionathemortal.betterbiomeblend.common.debug.Debug;
+import fionathemortal.betterbiomeblend.common.debug.DebugEvent;
+import fionathemortal.betterbiomeblend.common.debug.DebugEventType;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import org.checkerframework.checker.units.qual.A;
 
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class SliceCache<T extends Slice>
@@ -232,6 +237,9 @@ public abstract class SliceCache<T extends Slice>
 
         linkedListUnlink(chunk);
     }
+
+    public static AtomicLong hit  = new AtomicLong();
+    public static AtomicLong miss = new AtomicLong();
 
     public final void
     getOrDefaultInitializeNeighbors(T[] result, int sliceSize, int sliceX, int sliceY, int sliceZ, int colorType)

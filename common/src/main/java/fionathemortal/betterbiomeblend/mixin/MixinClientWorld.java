@@ -37,7 +37,7 @@ public abstract class MixinClientWorld extends Level
     public final BlendCache betterBiomeBlend$blendColorCache = new BlendCache(1024);
 
     @Unique
-    public final ColorCache betterBiomeBlend$chunkColorCache = new ColorCache(4096 * 10);
+    public final ColorCache betterBiomeBlend$chunkColorCache = new ColorCache(1024);
 
     @Unique
     private final ThreadLocal<LocalCache> betterBiomeBlend$threadLocalCache = ThreadLocal.withInitial(LocalCache::new);

@@ -21,6 +21,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public final class ColorBlending
 {
+    public static final int SAMPLE_SEED_X = 1664525;
+    public static final int SAMPLE_SEED_Y = 214013;
+    public static final int SAMPLE_SEED_Z = 16807;
+
     public static final ThreadLocal<BlendBuffer> threadLocalBlendBuffer = new ThreadLocal<>();
 
     public static BlendBuffer
@@ -37,6 +41,9 @@ public final class ColorBlending
         {
             result = new BlendBuffer(blendRadius);
         }
+
+        result.colorBitsAnd = 0xFFFFFFFF;
+        result.colorBitsOr  = 0;
 
         return result;
     }
@@ -162,6 +169,18 @@ public final class ColorBlending
     static final AtomicLong colorCacheMissCount = new AtomicLong();
     static final AtomicLong biomeCacheMissCount = new AtomicLong();
 
+    public static int
+    getRandomSamplePosition(int min, int blockSizeLog2, int seed)
+    {
+        int blockMask = Utility.lowerBitMask(blockSizeLog2);
+
+        int random = Random.noise(min, seed);
+        int offset = random & blockMask;
+        int result = min + offset;
+
+        return result;
+    }
+
     public static void
     gatherColorsForSlice(
         Level         world,
@@ -183,7 +202,7 @@ public final class ColorBlending
         final int blockSizeLog2 = blendBuffer.blockSizeLog2;
 
         final int sliceSize = blendBuffer.sliceSize;
-        final int blendSize = BlendConfig.getBlendBufferSize(blendRadius);
+        final int blendSize = blendBuffer.blendBufferSize;
 
         final int sliceMinX = getSliceMin(blendRadius, blockSizeLog2, sliceSizeLog2, sliceIDX);
         final int sliceMinY = getSliceMin(blendRadius, blockSizeLog2, sliceSizeLog2, sliceIDY);
@@ -205,11 +224,11 @@ public final class ColorBlending
         int worldMinY = (sliceY << sliceSizeLog2) + (sliceMinY << blockSizeLog2);
         int worldMinZ = (sliceZ << sliceSizeLog2) + (sliceMinZ << blockSizeLog2);
 
-        if ((blendBuffer.scaledBlendDiameter & 1) != 0)
+        if ((blendBuffer.scaledBlendDiameter & 1) != 0 && blockSizeLog2 > 0)
         {
-            worldMinX += blockSizeLog2;
-            worldMinY += blockSizeLog2;
-            worldMinZ += blockSizeLog2;
+            worldMinX += (1 << (blockSizeLog2 - 1));
+            worldMinY += (1 << (blockSizeLog2 - 1));
+            worldMinZ += (1 << (blockSizeLog2 - 1));
         }
 
         int sliceIndexZ = 3 * ColorCaching.getArrayIndex(sliceSize, sliceMinX, sliceMinY, sliceMinZ);
@@ -235,11 +254,13 @@ public final class ColorBlending
                 {
                     // NOTE: 0xFF is uninitialized data in vanilla code
 
+                    // TODO: Fix race condition caused by data stored as 3 bytes and potentially written in different order
+
                     int cachedR = 0xFF & colorSlice.data[sliceIndex    ];
                     int cachedG = 0xFF & colorSlice.data[sliceIndex + 1];
                     int cachedB = 0xFF & colorSlice.data[sliceIndex + 2];
 
-                    final int commonBits = cachedR & cachedG & cachedB;
+                    int commonBits = cachedR & cachedG & cachedB;
 
                     if (commonBits == 0xFF)
                     {
@@ -247,17 +268,22 @@ public final class ColorBlending
                         final int sampleMinY = worldMinY + (y << blockSizeLog2);
                         final int sampleMinZ = worldMinZ + (z << blockSizeLog2);
 
-                        // TODO: Random sampling (?)
-
-                        final int sampleX = sampleMinX;
-                        final int sampleY = sampleMinY;
-                        final int sampleZ = sampleMinZ;
+                        final int sampleX = getRandomSamplePosition(sampleMinX, blockSizeLog2, SAMPLE_SEED_X);
+                        final int sampleY = getRandomSamplePosition(sampleMinY, blockSizeLog2, SAMPLE_SEED_Y);;
+                        final int sampleZ = getRandomSamplePosition(sampleMinZ, blockSizeLog2, SAMPLE_SEED_Z);;
 
                         blockPos.set(sampleX, sampleY, sampleZ);
 
                         Biome biome = getBiomeAtPositionOrDefaultOrThrow(world, blockPos);
 
                         final int color = colorResolver.getColor(biome, sampleX, sampleZ);
+
+                        final int defaultColor = colorResolver.getColor(getDefaultBiome(world), sampleX, sampleY);
+
+                        if (color == defaultColor)
+                        {
+                            int i = 0;
+                        }
 
                         cachedR = Color.RGBAGetR(color);
                         cachedG = Color.RGBAGetG(color);
@@ -272,6 +298,16 @@ public final class ColorBlending
 
                     sliceIndex += 3;
                     blendIndex += 3;
+
+                    int color = Color.makeRGBAWithFullAlpha(cachedR, cachedG, cachedB);
+
+                    blendBuffer.colorBitsAnd &= color;
+                    blendBuffer.colorBitsOr  |= color;
+
+                    if (blendBuffer.colorBitsAnd != color)
+                    {
+                        int i = 0;
+                    }
                 }
 
                 sliceIndexY += 3 * sliceSize;
@@ -320,6 +356,9 @@ public final class ColorBlending
             blendBuffer.color[index + 1] = floatG;
             blendBuffer.color[index + 2] = floatB;
         }
+
+        blendBuffer.colorBitsOr  = color;
+        blendBuffer.colorBitsAnd = color;
     }
 
     public static void
@@ -382,6 +421,8 @@ public final class ColorBlending
 
             colorCache.getOrDefaultInitializeNeighbors(colorSlices, blendBuffer.sliceSize, sliceX, sliceY, sliceZ, colorType);
 
+            DebugEvent subEvent = Debug.pushSubevent(DebugEventType.SUBEVENT);
+
             int sliceIndex = 0;
 
             for (int sliceOffsetZ = -1;
@@ -419,6 +460,8 @@ public final class ColorBlending
                 }
             }
 
+            Debug.endEvent(subEvent);
+
             colorCache.releaseSlices(colorSlices);
         }
         else
@@ -436,8 +479,6 @@ public final class ColorBlending
     public static void
     blendColorsForChunk(BlendBuffer buffer, BlendChunk blendChunk, int inputX, int inputY, int inputZ)
     {
-        // TODO: Adjust order to ZYX array
-
         int[] result = blendChunk.data;
 
         final int srcSize = BlendConfig.getBlendSize(buffer.blendRadius);
@@ -461,13 +502,13 @@ public final class ColorBlending
         int bufferIndexY = 0;
         int resultIndexY = 0;
 
-        for (int y = 0;
+        for (int y = 0; // z
              y < srcSize;
              ++y)
         {
             int indexZ = 0;
 
-            for (int z = 0;
+            for (int z = 0; // x
                  z < srcSize;
                  ++z)
             {
@@ -478,7 +519,7 @@ public final class ColorBlending
                 float sumG = 0;
                 float sumB = 0;
 
-                for (int x = 0;
+                for (int x = 0; // y
                      x < fullFilterDim;
                      ++x)
                 {
@@ -486,13 +527,13 @@ public final class ColorBlending
                     sumG += buffer.color[srcIndexX + 1];
                     sumB += buffer.color[srcIndexX + 2];
 
-                    srcIndexX += 3;
+                    srcIndexX += 3 * blendBufferDim;
                 }
 
                 srcIndexX = indexZ + bufferIndexY;
 
                 int lowerOffset = 0;
-                int upperOffset = 3 * fullFilterDim;
+                int upperOffset = 3 * fullFilterDim * blendBufferDim;
 
                 int lowerIndex = srcIndexX + lowerOffset;
                 int upperIndex = srcIndexX + upperOffset;
@@ -525,21 +566,21 @@ public final class ColorBlending
                         sumG -= lowerG;
                         sumB -= lowerB;
 
-                        dstIndexX += 3;
+                        dstIndexX += 3 * blendBufferDim;
                     }
 
-                    lowerIndex += 3;
-                    upperIndex += 3;
+                    lowerIndex += 3 * blendBufferDim;
+                    upperIndex += 3 * blendBufferDim;
                 }
 
-                indexZ += 3 * blendBufferDim;
+                indexZ += 3;
             }
 
             if (y < filterSupport - 1)
             {
                 int indexX = 0;
 
-                for (int x = 0;
+                for (int x = 0; // y
                      x < dstSize;
                      ++x)
                 {
@@ -551,19 +592,19 @@ public final class ColorBlending
                     float sumG = 0;
                     float sumB = 0;
 
-                    for (int z = 0;
-                         z < filterSupport - 1;
+                    for (int z = 0; // x
+                         z < fullFilterDim;
                          ++z)
                     {
                         sumR += buffer.blend[srcIndexZ    ];
                         sumG += buffer.blend[srcIndexZ + 1];
                         sumB += buffer.blend[srcIndexZ + 2];
 
-                        srcIndexZ += 3 * blendBufferDim;
+                        srcIndexZ += 3;
                     }
 
                     int lowerOffset = 0;
-                    int upperOffset = 3 * (filterSupport - 1) * blendBufferDim;
+                    int upperOffset = 3 * fullFilterDim;
 
                     srcIndexZ = indexX;
 
@@ -599,21 +640,22 @@ public final class ColorBlending
                             sumG -= lowerG;
                             sumB -= lowerB;
 
-                            dstIndexZ += 3 * blendBufferDim;
-                            sumIndexZ += 3 * blendBufferDim;
+                            dstIndexZ += 3;
+                            sumIndexZ += 3;
                         }
 
-                        srcIndexZ += 3 * blendBufferDim;
+                        srcIndexZ += 3;
                     }
 
-                    indexX += 3;
+                    indexX += 3 * blendBufferDim;
                 }
             }
             else
             {
                 int indexX = 0;
+                int resultOffsetX = 0;
 
-                for (int x = 0;
+                for (int x = 0; // y
                      x < dstSize;
                      ++x)
                 {
@@ -625,7 +667,7 @@ public final class ColorBlending
                     float sumG = 0;
                     float sumB = 0;
 
-                    for (int z = 0;
+                    for (int z = 0; // x
                          z < fullFilterDim;
                          ++z)
                     {
@@ -633,17 +675,17 @@ public final class ColorBlending
                         sumG += buffer.blend[srcIndexZ + 1];
                         sumB += buffer.blend[srcIndexZ + 2];
 
-                        srcIndexZ += 3 * blendBufferDim;
+                        srcIndexZ += 3;
                     }
 
                     int lowerOffset = 0;
-                    int upperOffset = 3 * (filterSupport - 1) * blendBufferDim;
+                    int upperOffset = 3 * fullFilterDim;
 
                     srcIndexZ = indexX;
 
-                    int finalIndexZ = resultIndexY + indexX / 3;
+                    int finalIndexZ = resultIndexY + resultOffsetX;
 
-                    for (int z = 0;
+                    for (int z = 0; // x
                          z < scaledDstSize;
                          ++z)
                     {
@@ -714,16 +756,18 @@ public final class ColorBlending
                             sumG -= lowerG;
                             sumB -= lowerB;
 
-                            dstIndexZ += 3 * blendBufferDim;
-                            sumIndexZ += 3 * blendBufferDim;
+                            dstIndexZ += 3;
+                            sumIndexZ += 3;
 
-                            finalIndexZ += 16;
+                            finalIndexZ += 1;
                         }
 
-                        srcIndexZ += 3 * blendBufferDim;
+                        srcIndexZ += 3;
                     }
 
-                    indexX += 3;
+                    indexX += 3 * blendBufferDim;
+
+                    resultOffsetX += 16;
                 }
 
                 resultIndexY += blockSize * 16 * 16;
@@ -759,9 +803,9 @@ public final class ColorBlending
         int baseY = sliceY << sliceSizeLog2;
         int baseZ = sliceZ << sliceSizeLog2;
 
-        final int inChunkX = Utility.getLowerBits(baseX, 4);
-        final int inChunkY = Utility.getLowerBits(baseY, 4);
-        final int inChunkZ = Utility.getLowerBits(baseZ, 4);
+        final int inChunkX = Utility.lowerBits(baseX, 4);
+        final int inChunkY = Utility.lowerBits(baseY, 4);
+        final int inChunkZ = Utility.lowerBits(baseZ, 4);
 
         final int base = ColorCaching.getArrayIndex(16, inChunkX, inChunkY, inChunkZ);
 
@@ -825,11 +869,14 @@ public final class ColorBlending
                 y,
                 z);
 
-            DebugEvent subEvent = Debug.pushSubevent(DebugEventType.SUBEVENT);
-
-            blendColorsForChunk(blendBuffer, blendChunk, x, y, z);
-
-            Debug.endEvent(subEvent);
+            if (blendBuffer.colorBitsOr == blendBuffer.colorBitsAnd)
+            {
+                Arrays.fill(blendChunk.data, blendBuffer.colorBitsOr);
+            }
+            else
+            {
+                blendColorsForChunk(blendBuffer, blendChunk, x, y, z);
+            }
 
             releaseBlendBuffer(blendBuffer);
         }

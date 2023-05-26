@@ -19,6 +19,9 @@ public final class BlendBuffer
     public final float[] blend;
     public final float[] sum;
 
+    public int colorBitsAnd;
+    public int colorBitsOr;
+
     public BlendBuffer(int blendRadius)
     {
         this.blendRadius = blendRadius;
@@ -35,7 +38,10 @@ public final class BlendBuffer
         this.scaledBlendDiameter = (2 * blendRadius) >> blockSizeLog2;
 
         this.color = new float[3 * blendBufferSize * blendBufferSize * blendBufferSize];
-        this.blend = new float[3 * blendBufferSize * blendSize];
+        this.blend = new float[3 * blendBufferSize * blendBufferSize]; // blendSize
         this.sum   = new float[3 * blendBufferSize * blendBufferSize];
+
+        colorBitsAnd = 0xFFFFFFFF;
+        colorBitsOr  = 0;
     }
 }

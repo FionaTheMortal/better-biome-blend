@@ -28,7 +28,5 @@ public class BetterBiomeBlendForge
                     MinecraftForge.EVENT_BUS.register(BetterBiomeBlendForgeClient.class);
                 }
         );
-
-        BetterBiomeBlend.init();
     }
 }
