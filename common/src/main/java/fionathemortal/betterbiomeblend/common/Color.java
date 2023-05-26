@@ -164,7 +164,7 @@ public final class Color
     }
 
     public static void
-    sRGBByteToOKLabs(int rIn, int gIn, int bIn, float[] rOut, float[] gOut, float[] bOut, int index)
+    sRGBByteToOKLabs(int rIn, int gIn, int bIn, float[] out, int index)
     {
         float r = sRGBByteToLinearFloat(rIn);
         float g = sRGBByteToLinearFloat(gIn);
@@ -182,9 +182,9 @@ public final class Color
         float aResult = 1.9779984951f * lRoot - 2.4285922050f * mRoot + 0.4505937099f * sRoot;
         float bResult = 0.0259040371f * lRoot + 0.7827717662f * mRoot - 0.8086757660f * sRoot;
 
-        rOut[index] = LResult;
-        gOut[index] = aResult;
-        bOut[index] = bResult;
+        out[index + 0] = LResult;
+        out[index + 1] = aResult;
+        out[index + 2] = bResult;
     }
 
     public static void

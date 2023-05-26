@@ -10,19 +10,14 @@ public final class BlendBuffer
     public final int sliceSize;
     public final int blockSize;
 
+    public final int blendSize;
+    public final int blendBufferSize;
+
     public final int scaledBlendDiameter;
 
-    public final float[] R;
-    public final float[] G;
-    public final float[] B;
-
-    public final float[] blendR;
-    public final float[] blendG;
-    public final float[] blendB;
-
-    public final float[] sumR;
-    public final float[] sumG;
-    public final float[] sumB;
+    public final float[] color;
+    public final float[] blend;
+    public final float[] sum;
 
     public BlendBuffer(int blendRadius)
     {
@@ -34,21 +29,13 @@ public final class BlendBuffer
         this.sliceSize = 1 << sliceSizeLog2;
         this.blockSize = 1 << blockSizeLog2;
 
+        this.blendSize       = BlendConfig.getBlendSize(blendRadius);
+        this.blendBufferSize = BlendConfig.getBlendBufferSize(blendRadius);
+
         this.scaledBlendDiameter = (2 * blendRadius) >> blockSizeLog2;
 
-        final int blendSize = BlendConfig.getBlendSize(blendRadius);
-        final int size      = BlendConfig.getBlendBufferSize(blendRadius);
-
-        this.R      = new float[size * size * size];
-        this.G      = new float[size * size * size];
-        this.B      = new float[size * size * size];
-
-        this.blendR = new float[size * blendSize];
-        this.blendG = new float[size * blendSize];
-        this.blendB = new float[size * blendSize];
-
-        this.sumR   = new float[size * size];
-        this.sumG   = new float[size * size];
-        this.sumB   = new float[size * size];
+        this.color = new float[3 * blendBufferSize * blendBufferSize * blendBufferSize];
+        this.blend = new float[3 * blendBufferSize * blendSize];
+        this.sum   = new float[3 * blendBufferSize * blendBufferSize];
     }
 }
