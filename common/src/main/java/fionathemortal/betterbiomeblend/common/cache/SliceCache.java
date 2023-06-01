@@ -6,8 +6,6 @@ import fionathemortal.betterbiomeblend.common.debug.Debug;
 import fionathemortal.betterbiomeblend.common.debug.DebugEvent;
 import fionathemortal.betterbiomeblend.common.debug.DebugEventType;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import org.checkerframework.checker.units.qual.A;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
@@ -17,7 +15,6 @@ public abstract class SliceCache<T extends Slice>
     public final ReentrantLock                   lock;
 
     public final Long2ObjectLinkedOpenHashMap<T> hash;
-    public final Long2ObjectOpenHashMap<T>       invalidationHash;
     public       T                               firstFree;
 
     public final int                             sliceCount;
@@ -28,11 +25,9 @@ public abstract class SliceCache<T extends Slice>
     public
     SliceCache(int count)
     {
-        lock             = new ReentrantLock();
-        hash             = new Long2ObjectLinkedOpenHashMap<>(count);
-        invalidationHash = new Long2ObjectOpenHashMap<>(count);
-
-        sliceCount       = count;
+        lock       = new ReentrantLock(true);
+        hash       = new Long2ObjectLinkedOpenHashMap<>(count);
+        sliceCount = count;
 
         allocateSlices(sliceSize);
     }
@@ -50,37 +45,6 @@ public abstract class SliceCache<T extends Slice>
 
             freeListPush(slice);
         }
-    }
-
-    public static void
-    linkedListUnlink(Slice slice)
-    {
-        if (slice.prev != null)
-        {
-            slice.prev.next = slice.next;
-        }
-
-        if (slice.next != null)
-        {
-            slice.next.prev = slice.prev;
-        }
-
-        slice.prev = null;
-        slice.next = null;
-    }
-
-    public static void
-    linkedListLinkAfter(Slice list, Slice slice)
-    {
-        slice.next = list.next;
-        slice.prev = list;
-
-        if (list.next != null)
-        {
-            list.next.prev = slice;
-        }
-
-        list.next = slice;
     }
 
     public final void
@@ -132,49 +96,6 @@ public abstract class SliceCache<T extends Slice>
     }
 
     public final void
-    releaseSlice(T slice)
-    {
-        int refCount = slice.release();
-
-        if (refCount == 0)
-        {
-            lock.lock();
-
-            if (slice.size == this.sliceSize)
-            {
-                freeListPush(slice);
-            }
-
-            lock.unlock();
-        }
-    }
-
-    public final void
-    releaseSlices(T[] slices)
-    {
-        lock.lock();
-
-        for (int index = 0;
-            index < 27;
-            ++index)
-        {
-            T slice = slices[index];
-
-            int refCount = slice.release();
-
-            if (refCount == 0)
-            {
-                if (slice.size == this.sliceSize)
-                {
-                    freeListPush(slice);
-                }
-            }
-        }
-
-        lock.unlock();
-    }
-
-    public final void
     invalidateAll(int blendRadius)
     {
         lock.lock();
@@ -202,44 +123,33 @@ public abstract class SliceCache<T extends Slice>
 
         hash.clear();
 
-        invalidationHash.clear();
-
         lock.unlock();
     }
 
     public final void
-    addToInvalidationHash(T chunk)
+    releaseSlices(T[] slices)
     {
-        T otherChunk = invalidationHash.get(chunk.columnKey);
+        lock.lock();
 
-        if (otherChunk != null)
+        for (int index = 0;
+            index < 27;
+            ++index)
         {
-            linkedListLinkAfter(otherChunk, chunk);
-        }
-        else
-        {
-            invalidationHash.put(chunk.columnKey, chunk);
-        }
-    }
+            T slice = slices[index];
 
-    public final void
-    removeFromInvalidationHash(T chunk)
-    {
-        if (chunk.prev == null)
-        {
-            invalidationHash.remove(chunk.columnKey);
+            int refCount = slice.release();
 
-            if (chunk.next != null)
+            if (refCount == 0)
             {
-                invalidationHash.put(chunk.columnKey, (T)chunk.next);
+                if (slice.size == this.sliceSize)
+                {
+                    freeListPush(slice);
+                }
             }
         }
 
-        linkedListUnlink(chunk);
+        lock.unlock();
     }
-
-    public static AtomicLong hit  = new AtomicLong();
-    public static AtomicLong miss = new AtomicLong();
 
     public final void
     getOrDefaultInitializeNeighbors(T[] result, int sliceSize, int sliceX, int sliceY, int sliceZ, int colorType)
@@ -276,8 +186,6 @@ public abstract class SliceCache<T extends Slice>
                             {
                                 for (;;)
                                 {
-                                    long lastKey = hash.lastLongKey();
-
                                     slice = hash.removeLast();
 
                                     if (slice.getReferenceCount() == 1)
@@ -287,21 +195,16 @@ public abstract class SliceCache<T extends Slice>
                                     }
                                     else
                                     {
-                                        hash.putAndMoveToFirst(lastKey, slice);
+                                        hash.putAndMoveToFirst(slice.key, slice);
                                     }
                                 }
-
-                                removeFromInvalidationHash(slice);
                             }
                             else
                             {
                                 slice = freeListPop();
                             }
 
-                            long invalidationKey = ColorCaching.getChunkKey(sliceX, 0, sliceZ, 0);
-
                             slice.key = key;
-                            slice.columnKey = invalidationKey;
 
                             slice.prev = null;
                             slice.next = null;
@@ -311,8 +214,6 @@ public abstract class SliceCache<T extends Slice>
                             slice.acquire();
 
                             hash.putAndMoveToFirst(slice.key, slice);
-
-                            addToInvalidationHash(slice);
                         }
 
                         slice.acquire();

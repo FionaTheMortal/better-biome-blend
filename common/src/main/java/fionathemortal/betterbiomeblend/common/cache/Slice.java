@@ -7,8 +7,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class Slice
 {
     public long key;
-    public long columnKey;
-
     public int  size;
 
     public Slice prev;
@@ -22,7 +20,6 @@ public abstract class Slice
         this.markAsInvalid();
     }
 
-    public abstract void invalidateRegion(int minX, int minY, int minZ, int maxX, int maxY, int maxZ);
     public abstract void invalidateData();
 
     public final int

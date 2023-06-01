@@ -19,8 +19,8 @@ public final class BlendBuffer
     public final float[] blend;
     public final float[] sum;
 
-    public int colorBitsAnd;
-    public int colorBitsOr;
+    public int colorBitsExclusive;
+    public int colorBitsInclusive;
 
     public BlendBuffer(int blendRadius)
     {
@@ -41,7 +41,7 @@ public final class BlendBuffer
         this.blend = new float[3 * blendBufferSize * blendBufferSize]; // blendSize
         this.sum   = new float[3 * blendBufferSize * blendBufferSize];
 
-        colorBitsAnd = 0xFFFFFFFF;
-        colorBitsOr  = 0;
+        colorBitsExclusive = 0xFFFFFFFF;
+        colorBitsInclusive = 0;
     }
 }
