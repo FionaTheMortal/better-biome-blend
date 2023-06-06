@@ -2,6 +2,10 @@ package fionathemortal.betterbiomeblend.common;
 
 public final class BlendBuffer
 {
+    public final float[] color;
+    public final float[] blend;
+    public final float[] sum;
+
     public final int blendRadius;
 
     public final int sliceSizeLog2;
@@ -14,10 +18,6 @@ public final class BlendBuffer
     public final int blendBufferSize;
 
     public final int scaledBlendDiameter;
-
-    public final float[] color;
-    public final float[] blend;
-    public final float[] sum;
 
     public int colorBitsExclusive;
     public int colorBitsInclusive;

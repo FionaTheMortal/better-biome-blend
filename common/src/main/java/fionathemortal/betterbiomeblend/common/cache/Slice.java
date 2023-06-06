@@ -8,34 +8,34 @@ public abstract class Slice
 {
     public long key;
     public int  size;
-
-    public Slice prev;
-    public Slice next;
+    public int  salt;
+    public int  age;
 
     public AtomicInteger refCount = new AtomicInteger();
 
     public
-    Slice()
+    Slice(int size, int salt)
     {
+        this.size = size;
+        this.salt = salt;
+
         this.markAsInvalid();
     }
 
     public abstract void invalidateData();
 
     public final int
-    getReferenceCount()
+    getRefCount()
     {
         int result = refCount.get();
 
         return result;
     }
 
-    public final int
+    public final void
     release()
     {
-        int result = refCount.decrementAndGet();
-
-        return result;
+        refCount.decrementAndGet();
     }
 
     public final void
@@ -44,9 +44,17 @@ public abstract class Slice
         refCount.incrementAndGet();
     }
 
+    public final boolean
+    isInvalid()
+    {
+        boolean result = ((this.key ^ this.salt) == ColorCaching.INVALID_CHUNK_KEY);
+
+        return result;
+    }
+
     public final void
     markAsInvalid()
     {
-        key = ColorCaching.INVALID_CHUNK_KEY;
+        key = ColorCaching.INVALID_CHUNK_KEY ^ salt;
     }
 }

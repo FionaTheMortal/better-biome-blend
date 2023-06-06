@@ -1,7 +1,6 @@
 package fionathemortal.betterbiomeblend.common;
 
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
-import fionathemortal.betterbiomeblend.common.cache.BiomeSlice;
 import fionathemortal.betterbiomeblend.common.cache.ColorCache;
 import fionathemortal.betterbiomeblend.common.cache.ColorSlice;
 import fionathemortal.betterbiomeblend.common.debug.Debug;
@@ -18,7 +17,6 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
 
 import java.util.Arrays;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 public final class ColorBlending
 {
@@ -273,13 +271,6 @@ public final class ColorBlending
 
                         cachedColor = getColorAtPosition(world, blockPos, sampleX, sampleZ, colorResolver);
 
-                        final int defaultColor = colorResolver.getColor(getDefaultBiome(world), sampleX, sampleY);
-
-                        if (cachedColor == defaultColor)
-                        {
-                            int i = 0;
-                        }
-
                         colorSlice.data[sliceIndex] = cachedColor;
                     }
 
@@ -390,52 +381,77 @@ public final class ColorBlending
 
         if (neighborsAreLoaded)
         {
-            ColorSlice[] colorSlices = new ColorSlice[27];
-
             DebugEvent subEvent = Debug.pushSubevent(DebugEventType.SUBEVENT);
 
-            colorCache.getOrDefaultInitializeNeighbors(colorSlices, blendBuffer.sliceSize, sliceX, sliceY, sliceZ, colorType);
+            boolean[] finishedSlices = new boolean[27];
 
-            Debug.endEvent(subEvent);
+            final int iterationCount = 2;
 
-            int sliceIndex = 0;
-
-            for (int sliceOffsetZ = -1;
-                 sliceOffsetZ <= 1;
-                 ++sliceOffsetZ)
+            for (int iteration = 0;
+                iteration < 2;
+                ++iteration)
             {
-                for (int sliceOffsetY = -1;
-                     sliceOffsetY <= 1;
-                     ++sliceOffsetY)
+                boolean lastIteration    = ((iteration + 1) == iterationCount);
+                boolean tryLock          = !lastIteration;
+                boolean hasMissingSlices = false;
+                int     sliceIndex       = 0;
+
+                for (int sliceOffsetZ = -1;
+                     sliceOffsetZ <= 1;
+                     ++sliceOffsetZ)
                 {
-                    for (int sliceOffsetX = -1;
-                         sliceOffsetX <= 1;
-                         ++sliceOffsetX)
+                    for (int sliceOffsetY = -1;
+                         sliceOffsetY <= 1;
+                         ++sliceOffsetY)
                     {
-                        final int neighborSliceX = sliceX + sliceOffsetX;
-                        final int neighborSliceY = sliceY + sliceOffsetY;
-                        final int neighborSliceZ = sliceZ + sliceOffsetZ;
+                        for (int sliceOffsetX = -1;
+                             sliceOffsetX <= 1;
+                             ++sliceOffsetX)
+                        {
+                            if (!finishedSlices[sliceIndex])
+                            {
+                                final int neighborSliceX = sliceX + sliceOffsetX;
+                                final int neighborSliceY = sliceY + sliceOffsetY;
+                                final int neighborSliceZ = sliceZ + sliceOffsetZ;
 
-                        ColorSlice colorSlice = colorSlices[sliceIndex];
+                                ColorSlice colorSlice = colorCache.getOrInitSlice(blendBuffer.sliceSize, neighborSliceX, neighborSliceY, neighborSliceZ, colorType, tryLock);
 
-                        ++sliceIndex;
+                                if (colorSlice != null)
+                                {
+                                    gatherColorsForSlice(
+                                        world,
+                                        colorResolver,
+                                        colorSlice,
+                                        blendBuffer,
+                                        sliceOffsetX,
+                                        sliceOffsetY,
+                                        sliceOffsetZ,
+                                        neighborSliceX,
+                                        neighborSliceY,
+                                        neighborSliceZ);
 
-                        gatherColorsForSlice(
-                            world,
-                            colorResolver,
-                            colorSlice,
-                            blendBuffer,
-                            sliceOffsetX,
-                            sliceOffsetY,
-                            sliceOffsetZ,
-                            neighborSliceX,
-                            neighborSliceY,
-                            neighborSliceZ);
+                                    colorCache.releaseSlice(colorSlice);
+
+                                    finishedSlices[sliceIndex] = true;
+                                }
+                                else
+                                {
+                                    hasMissingSlices = true;
+                                }
+                            }
+
+                            ++sliceIndex;
+                        }
                     }
+                }
+
+                if (!hasMissingSlices)
+                {
+                    break;
                 }
             }
 
-            colorCache.releaseSlices(colorSlices);
+            Debug.endEvent(subEvent);
         }
         else
         {
@@ -465,7 +481,7 @@ public final class ColorBlending
 
         final float oneOverBlockSize = (1.0f / blockSize);
 
-        final float filter = (float) (filterSupport - 1) + oneOverBlockSize;
+        final float filter       = (float) (filterSupport - 1) + oneOverBlockSize;
         final float filterScalar = 1.0f / (filter * filter * filter);
 
         Arrays.fill(buffer.sum, 0);

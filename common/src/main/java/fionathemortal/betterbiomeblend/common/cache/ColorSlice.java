@@ -9,11 +9,11 @@ public final class ColorSlice extends Slice
     public int[] data;
 
     public
-    ColorSlice(int sliceSize)
+    ColorSlice(int size, int salt)
     {
-        super();
+        super(size, salt);
 
-        this.data = new int[sliceSize * sliceSize * sliceSize];
+        this.data = new int[size * size * size];
     }
 
     public void

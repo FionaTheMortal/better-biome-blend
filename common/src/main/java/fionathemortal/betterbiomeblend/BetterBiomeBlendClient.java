@@ -75,6 +75,7 @@ public final class BetterBiomeBlendClient
                             String.format("Total CPU time: %.2f ms", summary.totalCPUTimeInMilliseconds),
                             String.format("Total Subevent CPU time: %.2f ms", summary.totalSubeventCPUTimeInMilliseconds),
                             String.format("Avg. Subevent CPU Time: %.2f ns", summary.averageSubeventTime),
+                            String.format("Avg. Subevent 1%%: %.2f ns", summary.averageSubeventOnePercent),
                             ""
                         };
 

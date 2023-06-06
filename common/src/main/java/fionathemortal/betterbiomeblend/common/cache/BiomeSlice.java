@@ -9,11 +9,11 @@ public final class BiomeSlice extends Slice
     public Biome[] data;
 
     public
-    BiomeSlice(int sliceSize)
+    BiomeSlice(int size, int salt)
     {
-        super();
+        super(size, salt);
 
-        this.data = new Biome[sliceSize * sliceSize * sliceSize];
+        this.data = new Biome[size * size * size];
     }
 
     public void

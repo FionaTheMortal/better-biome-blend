@@ -10,9 +10,9 @@ public final class BiomeCache extends SliceCache<BiomeSlice>
 
     @Override
     public BiomeSlice
-    newSlice(int sliceSize)
+    newSlice(int size, int salt)
     {
-        BiomeSlice result = new BiomeSlice(sliceSize);
+        BiomeSlice result = new BiomeSlice(size, salt);
 
         return result;
     }

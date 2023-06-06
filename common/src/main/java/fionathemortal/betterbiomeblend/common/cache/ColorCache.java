@@ -10,9 +10,9 @@ public final class ColorCache extends SliceCache<ColorSlice>
 
     @Override
     public ColorSlice
-    newSlice(int sliceSize)
+    newSlice(int size, int salt)
     {
-        ColorSlice result = new ColorSlice(sliceSize);
+        ColorSlice result = new ColorSlice(size, salt);
 
         return result;
     }

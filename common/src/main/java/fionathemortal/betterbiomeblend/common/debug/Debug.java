@@ -132,7 +132,7 @@ public final class Debug
 
         int colorGenEventCount = colorGenEvents.size();
 
-        double averageTime       = getAverageElapsedTime(colorGenEvents, colorGenEventCount);
+        double averageTime       = getAverageElapsedTime(colorGenEvents,  colorGenEventCount);
         double averageOnePercent = getAverageElapsedTime(colorGenEvents, (colorGenEventCount + 99) / 100);
 
         DebugSummary result = new DebugSummary();
@@ -145,10 +145,12 @@ public final class Debug
         result.elapsedWallTimeInSeconds   = (double)elapsedTime * 1e-9;
         result.totalCPUTimeInMilliseconds = (double)averageTime * (double)colorGenEventCount * 1e-6;
 
-        double averageSubeventTime = getAverageElapsedTime(subevents, subevents.size());
+        double averageSubeventTime       = getAverageElapsedTime(subevents,  subevents.size());
+        double averageSubeventOnePercent = getAverageElapsedTime(subevents, (subevents.size() + 99) / 100);
 
         result.totalSubeventCPUTimeInMilliseconds = averageSubeventTime * (double)subevents.size() * 1e-6;
         result.averageSubeventTime                = averageSubeventTime;
+        result.averageSubeventOnePercent          = averageSubeventOnePercent;
 
         return result;
     }
