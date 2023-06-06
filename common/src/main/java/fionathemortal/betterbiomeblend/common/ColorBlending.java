@@ -381,8 +381,6 @@ public final class ColorBlending
 
         if (neighborsAreLoaded)
         {
-            DebugEvent subEvent = Debug.pushSubevent(DebugEventType.SUBEVENT);
-
             boolean[] finishedSlices = new boolean[27];
 
             final int iterationCount = 2;
@@ -450,8 +448,6 @@ public final class ColorBlending
                     break;
                 }
             }
-
-            Debug.endEvent(subEvent);
         }
         else
         {
@@ -486,48 +482,48 @@ public final class ColorBlending
 
         Arrays.fill(buffer.sum, 0);
 
-        int bufferIndexY = 0;
-        int resultIndexY = 0;
+        int newBufferIndexZ = 0;
+        int newResultIndexZ = 0;
 
-        for (int y = 0; // z
-             y < srcSize;
-             ++y)
+        for (int z = 0;
+             z < srcSize;
+             ++z)
         {
-            int indexZ = 0;
+            int newIndexX = 0;
 
-            for (int z = 0; // x
-                 z < srcSize;
-                 ++z)
+            for (int newX = 0;
+                 newX < srcSize;
+                 ++newX)
             {
-                int srcIndexX = indexZ + bufferIndexY;
-                int dstIndexX = indexZ;
+                int newSrcIndexY = newIndexX + newBufferIndexZ;
+                int newDstIndexY = newIndexX;
 
                 float sumR = 0;
                 float sumG = 0;
                 float sumB = 0;
 
-                for (int x = 0; // y
-                     x < fullFilterDim;
-                     ++x)
+                for (int newY = 0;
+                     newY < fullFilterDim;
+                     ++newY)
                 {
-                    sumR += buffer.color[srcIndexX    ];
-                    sumG += buffer.color[srcIndexX + 1];
-                    sumB += buffer.color[srcIndexX + 2];
+                    sumR += buffer.color[newSrcIndexY    ];
+                    sumG += buffer.color[newSrcIndexY + 1];
+                    sumB += buffer.color[newSrcIndexY + 2];
 
-                    srcIndexX += 3 * blendBufferDim;
+                    newSrcIndexY += 3 * blendBufferDim;
                 }
 
-                srcIndexX = indexZ + bufferIndexY;
+                newSrcIndexY = newIndexX + newBufferIndexZ;
 
                 int lowerOffset = 0;
                 int upperOffset = 3 * fullFilterDim * blendBufferDim;
 
-                int lowerIndex = srcIndexX + lowerOffset;
-                int upperIndex = srcIndexX + upperOffset;
+                int lowerIndex = newSrcIndexY + lowerOffset;
+                int upperIndex = newSrcIndexY + upperOffset;
 
-                for (int x = 0;
-                     x < scaledDstSize;
-                     ++x)
+                for (int newY = 0;
+                     newY < scaledDstSize;
+                     ++newY)
                 {
                     float lowerR = buffer.color[lowerIndex    ] * oneOverBlockSize;
                     float lowerG = buffer.color[lowerIndex + 1] * oneOverBlockSize;
@@ -545,67 +541,67 @@ public final class ColorBlending
                         sumG += upperG;
                         sumB += upperB;
 
-                        buffer.blend[dstIndexX    ] = sumR;
-                        buffer.blend[dstIndexX + 1] = sumG;
-                        buffer.blend[dstIndexX + 2] = sumB;
+                        buffer.blend[newDstIndexY    ] = sumR;
+                        buffer.blend[newDstIndexY + 1] = sumG;
+                        buffer.blend[newDstIndexY + 2] = sumB;
 
                         sumR -= lowerR;
                         sumG -= lowerG;
                         sumB -= lowerB;
 
-                        dstIndexX += 3 * blendBufferDim;
+                        newDstIndexY += 3 * blendBufferDim;
                     }
 
                     lowerIndex += 3 * blendBufferDim;
                     upperIndex += 3 * blendBufferDim;
                 }
 
-                indexZ += 3;
+                newIndexX += 3;
             }
 
-            if (y < filterSupport - 1)
+            if (z < fullFilterDim)
             {
-                int indexX = 0;
+                int newIndexY = 0;
 
-                for (int x = 0; // y
-                     x < dstSize;
-                     ++x)
+                for (int newY = 0;
+                     newY < dstSize;
+                     ++newY)
                 {
-                    int srcIndexZ = indexX;
-                    int dstIndexZ = indexX + bufferIndexY;
-                    int sumIndexZ = indexX;
+                    int newSrcIndexX = newIndexY;
+                    int newDstIndexX = newIndexY + newBufferIndexZ;
+                    int newSumIndexX = newIndexY;
 
                     float sumR = 0;
                     float sumG = 0;
                     float sumB = 0;
 
-                    for (int z = 0; // x
-                         z < fullFilterDim;
-                         ++z)
+                    for (int newX = 0;
+                         newX < fullFilterDim;
+                         ++newX)
                     {
-                        sumR += buffer.blend[srcIndexZ    ];
-                        sumG += buffer.blend[srcIndexZ + 1];
-                        sumB += buffer.blend[srcIndexZ + 2];
+                        sumR += buffer.blend[newSrcIndexX    ];
+                        sumG += buffer.blend[newSrcIndexX + 1];
+                        sumB += buffer.blend[newSrcIndexX + 2];
 
-                        srcIndexZ += 3;
+                        newSrcIndexX += 3;
                     }
 
                     int lowerOffset = 0;
                     int upperOffset = 3 * fullFilterDim;
 
-                    srcIndexZ = indexX;
+                    newSrcIndexX = newIndexY;
 
-                    for (int z = 0;
-                         z < scaledDstSize;
-                         ++z)
+                    for (int newX = 0;
+                         newX < scaledDstSize;
+                         ++newX)
                     {
-                        float lowerR = buffer.blend[srcIndexZ + lowerOffset    ] * oneOverBlockSize;
-                        float lowerG = buffer.blend[srcIndexZ + lowerOffset + 1] * oneOverBlockSize;
-                        float lowerB = buffer.blend[srcIndexZ + lowerOffset + 2] * oneOverBlockSize;
+                        float lowerR = buffer.blend[newSrcIndexX + lowerOffset    ] * oneOverBlockSize;
+                        float lowerG = buffer.blend[newSrcIndexX + lowerOffset + 1] * oneOverBlockSize;
+                        float lowerB = buffer.blend[newSrcIndexX + lowerOffset + 2] * oneOverBlockSize;
 
-                        float upperR = buffer.blend[srcIndexZ + upperOffset    ] * oneOverBlockSize;
-                        float upperG = buffer.blend[srcIndexZ + upperOffset + 1] * oneOverBlockSize;
-                        float upperB = buffer.blend[srcIndexZ + upperOffset + 2] * oneOverBlockSize;
+                        float upperR = buffer.blend[newSrcIndexX + upperOffset    ] * oneOverBlockSize;
+                        float upperG = buffer.blend[newSrcIndexX + upperOffset + 1] * oneOverBlockSize;
+                        float upperB = buffer.blend[newSrcIndexX + upperOffset + 2] * oneOverBlockSize;
 
                         for (int i = 0;
                              i < blockSize;
@@ -615,48 +611,48 @@ public final class ColorBlending
                             sumG += upperG;
                             sumB += upperB;
 
-                            buffer.color[dstIndexZ    ] = sumR;
-                            buffer.color[dstIndexZ + 1] = sumG;
-                            buffer.color[dstIndexZ + 2] = sumB;
+                            buffer.color[newDstIndexX    ] = sumR;
+                            buffer.color[newDstIndexX + 1] = sumG;
+                            buffer.color[newDstIndexX + 2] = sumB;
 
-                            buffer.sum[sumIndexZ    ] += sumR;
-                            buffer.sum[sumIndexZ + 1] += sumG;
-                            buffer.sum[sumIndexZ + 2] += sumB;
+                            buffer.sum[newSumIndexX    ] += sumR;
+                            buffer.sum[newSumIndexX + 1] += sumG;
+                            buffer.sum[newSumIndexX + 2] += sumB;
 
                             sumR -= lowerR;
                             sumG -= lowerG;
                             sumB -= lowerB;
 
-                            dstIndexZ += 3;
-                            sumIndexZ += 3;
+                            newDstIndexX += 3;
+                            newSumIndexX += 3;
                         }
 
-                        srcIndexZ += 3;
+                        newSrcIndexX += 3;
                     }
 
-                    indexX += 3 * blendBufferDim;
+                    newIndexY += 3 * blendBufferDim;
                 }
             }
             else
             {
-                int indexX = 0;
                 int resultOffsetX = 0;
+                int indexX = 0;
 
-                for (int x = 0; // y
-                     x < dstSize;
-                     ++x)
+                for (int newY = 0;
+                     newY < dstSize;
+                     ++newY)
                 {
                     int srcIndexZ = indexX;
-                    int dstIndexZ = indexX + bufferIndexY;
+                    int dstIndexZ = indexX + newBufferIndexZ;
                     int sumIndexZ = indexX;
 
                     float sumR = 0;
                     float sumG = 0;
                     float sumB = 0;
 
-                    for (int z = 0; // x
-                         z < fullFilterDim;
-                         ++z)
+                    for (int newX = 0;
+                         newX < fullFilterDim;
+                         ++newX)
                     {
                         sumR += buffer.blend[srcIndexZ    ];
                         sumG += buffer.blend[srcIndexZ + 1];
@@ -670,11 +666,11 @@ public final class ColorBlending
 
                     srcIndexZ = indexX;
 
-                    int finalIndexZ = resultIndexY + resultOffsetX;
+                    int finalIndexZ = newResultIndexZ + resultOffsetX;
 
-                    for (int z = 0; // x
-                         z < scaledDstSize;
-                         ++z)
+                    for (int newX = 0;
+                         newX < scaledDstSize;
+                         ++newX)
                     {
                         float lowerR = buffer.blend[srcIndexZ + lowerOffset    ] * oneOverBlockSize;
                         float lowerG = buffer.blend[srcIndexZ + lowerOffset + 1] * oneOverBlockSize;
@@ -757,10 +753,10 @@ public final class ColorBlending
                     resultOffsetX += 16;
                 }
 
-                resultIndexY += blockSize * 16 * 16;
+                newResultIndexZ += blockSize * 16 * 16;
             }
 
-            bufferIndexY += 3 * blendBufferDim * blendBufferDim;
+            newBufferIndexZ += 3 * blendBufferDim * blendBufferDim;
         }
     }
 
@@ -940,7 +936,11 @@ public final class ColorBlending
 
             if (blendBuffer.colorBitsInclusive != blendBuffer.colorBitsExclusive)
             {
+                DebugEvent subEvent = Debug.pushSubevent(DebugEventType.SUBEVENT);
+
                 blendColorsForSlice(blendBuffer, blendChunk, x, y, z);
+
+                Debug.endEvent(subEvent);
             }
             else
             {
