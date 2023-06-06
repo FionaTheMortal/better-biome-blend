@@ -480,10 +480,26 @@ public final class ColorBlending
         final float filter       = (float) (filterSupport - 1) + oneOverBlockSize;
         final float filterScalar = 1.0f / (filter * filter * filter);
 
+        final int sliceSizeLog2 = buffer.sliceSizeLog2;
+
+        final int sliceX = inputX >> sliceSizeLog2;
+        final int sliceY = inputY >> sliceSizeLog2;
+        final int sliceZ = inputZ >> sliceSizeLog2;
+
+        int baseX = sliceX << sliceSizeLog2;
+        int baseY = sliceY << sliceSizeLog2;
+        int baseZ = sliceZ << sliceSizeLog2;
+
+        final int inChunkX = Utility.lowerBits(baseX, 4);
+        final int inChunkY = Utility.lowerBits(baseY, 4);
+        final int inChunkZ = Utility.lowerBits(baseZ, 4);
+
+        int baseIndex = ColorCaching.getArrayIndex(16, inChunkX, inChunkY, inChunkZ);
+
         Arrays.fill(buffer.sum, 0);
 
         int newBufferIndexZ = 0;
-        int newResultIndexZ = 0;
+        int newResultIndexZ = baseIndex;
 
         for (int z = 0;
              z < srcSize;
