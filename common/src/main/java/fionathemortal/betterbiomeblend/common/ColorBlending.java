@@ -6,6 +6,10 @@ import fionathemortal.betterbiomeblend.common.cache.ColorSlice;
 import fionathemortal.betterbiomeblend.common.debug.Debug;
 import fionathemortal.betterbiomeblend.common.debug.DebugEvent;
 import fionathemortal.betterbiomeblend.common.debug.DebugEventType;
+import fionathemortal.betterbiomeblend.common.util.Color;
+import fionathemortal.betterbiomeblend.common.util.MathUtil;
+import fionathemortal.betterbiomeblend.common.util.Random;
+import fionathemortal.betterbiomeblend.common.util.Math;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -175,7 +179,7 @@ public final class ColorBlending
     public static int
     getRandomSamplePosition(int min, int blockSizeLog2, int seed)
     {
-        int blockMask = Utility.lowerBitMask(blockSizeLog2);
+        int blockMask = MathUtil.lowerBitMask(blockSizeLog2);
 
         int random = Random.noise(min, seed);
         int offset = random & blockMask;
@@ -490,9 +494,9 @@ public final class ColorBlending
         int baseY = sliceY << sliceSizeLog2;
         int baseZ = sliceZ << sliceSizeLog2;
 
-        final int inChunkX = Utility.lowerBits(baseX, 4);
-        final int inChunkY = Utility.lowerBits(baseY, 4);
-        final int inChunkZ = Utility.lowerBits(baseZ, 4);
+        final int inChunkX = MathUtil.lowerBits(baseX, 4);
+        final int inChunkY = MathUtil.lowerBits(baseY, 4);
+        final int inChunkZ = MathUtil.lowerBits(baseZ, 4);
 
         int baseIndex = ColorCaching.getArrayIndex(16, inChunkX, inChunkY, inChunkZ);
 
@@ -828,9 +832,9 @@ public final class ColorBlending
         int baseY = sliceY << sliceSizeLog2;
         int baseZ = sliceZ << sliceSizeLog2;
 
-        final int inChunkX = Utility.lowerBits(baseX, 4);
-        final int inChunkY = Utility.lowerBits(baseY, 4);
-        final int inChunkZ = Utility.lowerBits(baseZ, 4);
+        final int inChunkX = MathUtil.lowerBits(baseX, 4);
+        final int inChunkY = MathUtil.lowerBits(baseY, 4);
+        final int inChunkZ = MathUtil.lowerBits(baseZ, 4);
 
         int baseIndex = ColorCaching.getArrayIndex(16, inChunkX, inChunkY, inChunkZ);
 
@@ -865,9 +869,9 @@ public final class ColorBlending
         int baseY = sliceY << sliceSizeLog2;
         int baseZ = sliceZ << sliceSizeLog2;
 
-        final int inChunkX = Utility.lowerBits(baseX, 4);
-        final int inChunkY = Utility.lowerBits(baseY, 4);
-        final int inChunkZ = Utility.lowerBits(baseZ, 4);
+        final int inChunkX = MathUtil.lowerBits(baseX, 4);
+        final int inChunkY = MathUtil.lowerBits(baseY, 4);
+        final int inChunkZ = MathUtil.lowerBits(baseZ, 4);
 
         int baseIndex = ColorCaching.getArrayIndex(16, inChunkX, inChunkY, inChunkZ);
 
@@ -919,6 +923,71 @@ public final class ColorBlending
             fillBlendChunkRegionWithColor(blendChunk, color, baseIndex, sliceSize);
         }
     }
+
+    public static void
+    generateColors(
+        Level         world,
+        ColorResolver colorResolver,
+        int           colorType,
+        ColorCache    colorCache,
+        BlendChunk    blendChunk,
+        int           x,
+        int           y,
+        int           z)
+    {
+        final int blendRadius = BetterBiomeBlendClient.getBiomeBlendRadius();
+
+        if (blendRadius >  BlendConfig.BIOME_BLEND_RADIUS_MIN &&
+            blendRadius <= BlendConfig.BIOME_BLEND_RADIUS_MAX)
+        {
+            int outputSizeLog2 = BlendConfig.getOutputSizeLog2();
+            int outputSize     = 1 << outputSizeLog2;
+
+            int outputMinX = (x >> outputSizeLog2) << outputSizeLog2;
+            int outputMinY = (y >> outputSizeLog2) << outputSizeLog2;
+            int outputMinZ = (z >> outputSizeLog2) << outputSizeLog2;
+
+            int outputMaxX = outputMinX + outputSize;
+            int outputMaxY = outputMinY + outputSize;
+            int outputMaxZ = outputMinZ + outputSize;
+
+            int inputMinX = outputMinX - blendRadius;
+            int inputMinY = outputMinY - blendRadius;
+            int inputMinZ = outputMinZ - blendRadius;
+
+            int inputMaxX = outputMaxX + blendRadius;
+            int inputMaxY = outputMaxY + blendRadius;
+            int inputMaxZ = outputMaxZ + blendRadius;
+        }
+
+
+        // we have 16 x 16 x 16
+        // we need to know the output region
+
+        this.blendRadius = blendRadius;
+
+        this.sliceSizeLog2 = BlendConfig.getSliceSizeLog2(blendRadius);
+        this.blockSizeLog2 = BlendConfig.getBlockSizeLog2(blendRadius);
+
+        this.sliceSize = 1 << sliceSizeLog2;
+        this.blockSize = 1 << blockSizeLog2;
+
+        this.blendSize       = BlendConfig.getBlendSize(blendRadius);
+        this.blendBufferSize = BlendConfig.getBlendBufferSize(blendRadius);
+
+        this.scaledBlendDiameter = (2 * blendRadius) >> blockSizeLog2;
+
+        this.color = new float[3 * blendBufferSize * blendBufferSize * blendBufferSize];
+        this.blend = new float[3 * blendBufferSize * blendBufferSize]; // blendSize
+        this.sum   = new float[3 * blendBufferSize * blendBufferSize];
+
+        colorBitsExclusive = 0xFFFFFFFF;
+        colorBitsInclusive = 0;
+    }
+
+
+
+    /*
 
     public static void
     generateColors(
@@ -984,4 +1053,5 @@ public final class ColorBlending
 
         Debug.endEvent(debugEvent);
     }
+    */
 }

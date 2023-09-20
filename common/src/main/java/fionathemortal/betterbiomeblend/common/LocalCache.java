@@ -8,8 +8,8 @@ public final class LocalCache
     public BlendChunk    lastBlendChunk;
     public int           lastColorType;
 
-    public BlendChunk[] blendChunks     = new BlendChunk[3];
-    public int          blendChunkCount = 3;
+    public BlendChunk[]  blendChunks     = new BlendChunk[3];
+    public int           blendChunkCount = 3;
 
     public static BlendChunk
     newBlendChunk()

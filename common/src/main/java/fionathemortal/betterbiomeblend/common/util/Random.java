@@ -1,4 +1,4 @@
-package fionathemortal.betterbiomeblend.common;
+package fionathemortal.betterbiomeblend.common.util;
 
 public class Random
 {

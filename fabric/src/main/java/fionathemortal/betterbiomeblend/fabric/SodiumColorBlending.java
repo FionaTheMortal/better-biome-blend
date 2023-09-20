@@ -1,10 +1,7 @@
 package fionathemortal.betterbiomeblend.fabric;
 
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
-import fionathemortal.betterbiomeblend.common.BlendBuffer;
-import fionathemortal.betterbiomeblend.common.BlendConfig;
-import fionathemortal.betterbiomeblend.common.Color;
-import fionathemortal.betterbiomeblend.common.ColorBlending;
+import fionathemortal.betterbiomeblend.common.*;
 import fionathemortal.betterbiomeblend.common.cache.ColorCache;
 import fionathemortal.betterbiomeblend.common.cache.ColorSlice;
 import fionathemortal.betterbiomeblend.common.debug.Debug;
@@ -13,6 +10,7 @@ import fionathemortal.betterbiomeblend.common.debug.DebugEventType;
 import fionathemortal.betterbiomeblend.fabric.mixin.MixinBlockColorCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
@@ -33,6 +31,17 @@ public class SodiumColorBlending
         int           pZ,
         int           blendRadius)
     {
+        int sliceMinX = 0;
+        int sliceMaxX = 0;
+
+        int blendMinX = sliceMinX - blendRadius;
+        int blendMaxX = sliceMaxX + blendRadius;
+
+        int gatherMinX = 0; // bring block coords into gather coordinates
+        int gatherMaxX = 0;
+
+        // this gives us an offset inside the gather coordinates
+
         /*
         BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
 
@@ -114,17 +123,92 @@ public class SodiumColorBlending
 
     public static void
     generateColors(
-        BiomeManager   biomeManager,
-        ColorResolver  resolver,
-        int            x,
-        int            y,
-        int            z,
-        int[]          result)
+        BiomeManager  biomeManager,
+        ColorResolver resolver,
+        int           colorType,
+        ColorCache    colorCache,
+        int           inBufferX,
+        int           inBufferY,
+        int           inBufferZ,
+        int           chunkX,
+        int           chunkY,
+        int           chunkZ,
+        int[]         result)
     {
         /*
-        DebugEvent debugEvent = Debug.pushColorGenEvent(x, y, z, 0);
+        int blendRadius = BetterBiomeBlendClient.getBiomeBlendRadius();
 
-        final int blendRadius = BetterBiomeBlendClient.getBiomeBlendRadius();
+        if (blendRadius >  BlendConfig.BIOME_BLEND_RADIUS_MIN &&
+            blendRadius <= BlendConfig.BIOME_BLEND_RADIUS_MAX)
+        {
+            if (blendRadius > BlendConfig.SODIUM_BLEND_RADIUS_MAX)
+            {
+                blendRadius = BlendConfig.SODIUM_BLEND_RADIUS_MAX;
+            }
+
+
+            int bufferMinX = 0;
+            int bufferMinY = 0;
+            int bufferMinZ = 0;
+
+            int regionDimX = 0;
+            int regionDimY = 0;
+            int regionDimZ = 0;
+
+            int inBufferRegionMinX = (inBufferX / regionDimX) * regionDimX;
+            int inBufferRegionMinY = (inBufferY / regionDimY) * regionDimY;
+            int inBufferRegionMinZ = (inBufferZ / regionDimZ) * regionDimZ;
+
+            int regionMinX = inBufferRegionMinX + bufferMinX;
+            int regionMinY = inBufferRegionMinY + bufferMinY;
+            int regionMinZ = inBufferRegionMinZ + bufferMinZ;
+
+            int regionMaxX = regionMinX + regionDimX;
+            int regionMaxY = regionMinY + regionDimY;
+            int regionMaxZ = regionMinZ + regionDimZ;
+
+            // TODO: gather colors for region
+
+            // we know the blend radius
+            // we know block alignment
+            // maybe block alignment should be different for sodium?
+            // maybe transform coordinates to block coordinates and then call a unified gather function ?
+
+            // we call gather colors which will setup everything for the blend function
+        }
+        else
+        {
+
+        }
+
+        final int sliceSizeLog2 = BlendConfig.getSliceSizeLog2(blendRadius);
+
+        int chunkBaseX = this.betterbiomeblend$baseX + 1;
+        int chunkBaseY = this.betterbiomeblend$baseY + 1;
+        int chunkBaseZ = this.betterbiomeblend$baseZ + 1;
+
+        int inChunkX = Mth.clamp(posX - chunkBaseX, 0, 15);
+        int inChunkY = Mth.clamp(posY - chunkBaseY, 0, 15);
+        int inChunkZ = Mth.clamp(posZ - chunkBaseZ, 0, 15);
+
+        int sliceX = (inChunkX >> sliceSizeLog2) + (chunkBaseX >> sliceSizeLog2);
+        int sliceY = (inChunkY >> sliceSizeLog2) + (chunkBaseY >> sliceSizeLog2);
+        int sliceZ = (inChunkZ >> sliceSizeLog2) + (chunkBaseZ >> sliceSizeLog2);
+
+        SodiumColorBlending.generateColors(
+                biomeManager,
+                resolver,
+                this.betterBiomeBlend$colorCache,
+                blendRadius,
+                sliceX,
+                sliceY,
+                sliceZ,
+                colors);
+
+
+        /*
+
+        DebugEvent debugEvent = Debug.pushColorGenEvent(0, 0, 0, 0);
 
         if (blendRadius >  BlendConfig.BIOME_BLEND_RADIUS_MIN &&
             blendRadius <= BlendConfig.BIOME_BLEND_RADIUS_MAX)
