@@ -29,6 +29,7 @@ jobs:
       - name: Build
         run: |
           chmod +x ./gradlew
+          ./gradlew setupDecompWorkspace --refresh-dependencies
           ./gradlew build
 
       - name: Undo Commit If Build Fails
