@@ -1,0 +1,48 @@
+name: Squash Commits
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Amount of commits to be squashed'
+        default: '1'
+        required: true
+        type: number
+      reuse_oldest_commit:
+        description: 'Reuses the message and description from the oldest commit being squashed'
+        default: 'false'
+        required: false
+        type: boolean
+      commit_message:
+        description: 'The commit message'
+        default: ''
+        required: false
+        type: string
+      commit_description:
+        description: 'The commit description, use \n for multiple lines'
+        default: ''
+        required: false
+        type: string
+
+jobs:
+  squash_commits:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: $(( ${{ fromJson(inputs.commit) }} + 1))
+
+      - name: Squash Commits
+        run: |
+          git config --local user.name 'github-actions[bot]'
+          git config --local user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull
+          oldest_commit=$(git log --format=%B -n 1 HEAD~$(( ${{ fromJson(inputs.commit) }} - 1)))
+          git reset --soft HEAD~${{ fromJson(inputs.commit) }}
+          if [ ${{ fromJson(inputs.reuse_oldest_commit) }} == 'true' ]; then
+            git commit -m "$oldest_commit"
+          else
+            git commit -m $'${{ inputs.commit_message }}\n${{ inputs.commit_description }}'
+          fi
+          git push --force-with-lease

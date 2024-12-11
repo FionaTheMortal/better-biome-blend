@@ -156,9 +156,7 @@ public final class BiomeColor
     {
         freeBlendCacheslock.lock();
 
-        int blendRadius = BetterBiomeBlendConfig.blendRadius;
-
-        if (cache.blendRadius == blendRadius)
+        if (cache.blendRadius == 3)
         {
             freeBlendCaches.push(cache);
         }
@@ -266,46 +264,6 @@ public final class BiomeColor
         cache.releaseChunk(local);
 
         threadLocal.set(chunk);
-    }
-
-    public static void
-    gatherRawColorsForChunk(
-        IBlockAccess                   blockAccess,
-        byte[]                         result,
-        int                            chunkX,
-        int                            chunkZ,
-        BiomeColorHelper.ColorResolver colorResolver)
-    {
-        BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
-
-        int blockX = 16 * chunkX;
-        int blockZ = 16 * chunkZ;
-
-        int dstIndex = 0;
-
-        for (int z = 0;
-            z < 16;
-            ++z)
-        {
-            for (int x = 0;
-                x < 16;
-                ++x)
-            {
-                blockPos.setPos(blockX + x, 0, blockZ + z);
-
-                int color = colorResolver.getColorAtPos(blockAccess.getBiome(blockPos), blockPos);
-
-                int colorR = Color.RGBAGetR(color);
-                int colorG = Color.RGBAGetG(color);
-                int colorB = Color.RGBAGetB(color);
-
-                result[3 * dstIndex + 0] = (byte)colorR;
-                result[3 * dstIndex + 1] = (byte)colorG;
-                result[3 * dstIndex + 2] = (byte)colorB;
-
-                ++dstIndex;
-            }
-        }
     }
 
     public static void
@@ -490,23 +448,13 @@ public final class BiomeColor
         int                            colorType,
         BiomeColorHelper.ColorResolver colorResolver)
     {
-        int blendRadius = BetterBiomeBlendConfig.blendRadius;
+        ColorBlendCache blendCache = acquireBlendCache(3);
 
-        if (blendRadius >  BetterBiomeBlendClient.BIOME_BLEND_RADIUS_MIN &&
-            blendRadius <= BetterBiomeBlendClient.BIOME_BLEND_RADIUS_MAX)
-        {
-            ColorBlendCache blendCache = acquireBlendCache(blendRadius);
+        gatherRawColorsToBlendCache(blockAccess, chunkX, chunkZ, blendCache.blendRadius, blendCache.color, colorResolver);
 
-            gatherRawColorsToBlendCache(blockAccess, chunkX, chunkZ, blendCache.blendRadius, blendCache.color, colorResolver);
+        blendCachedColorsForChunk(blockAccess, result, blendCache);
 
-            blendCachedColorsForChunk(blockAccess, result, blendCache);
-
-            releaseBlendCache(blendCache);
-        }
-        else
-        {
-            gatherRawColorsForChunk(blockAccess, result, chunkX, chunkZ, colorResolver);
-        }
+        releaseBlendCache(blendCache);
     }
 
     public static World

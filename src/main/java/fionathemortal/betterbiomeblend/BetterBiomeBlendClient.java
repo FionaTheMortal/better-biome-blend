@@ -16,9 +16,6 @@ import java.util.List;
 @Mod.EventBusSubscriber(Side.CLIENT)
 public final class BetterBiomeBlendClient
 {
-    public static final int BIOME_BLEND_RADIUS_MAX = 14;
-    public static final int BIOME_BLEND_RADIUS_MIN = 0;
-
     @SubscribeEvent
     public static void
     onChunkLoadedEvent(ChunkEvent.Load event)
