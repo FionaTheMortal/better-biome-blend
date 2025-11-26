@@ -1,4 +1,4 @@
-package fionathemortal.betterbiomeblend.common.util;
+package fionathemortal.betterbiomeblend.common;
 
 public final class Color
 {
@@ -166,9 +166,9 @@ public final class Color
     public static void
     sRGBByteToOKLabs(int color, float[] dest, int index)
     {
-        int rIn = RGBAGetR(color);
-        int gIn = RGBAGetG(color);
-        int bIn = RGBAGetB(color);
+        int rIn = Color.RGBAGetR(color);
+        int gIn = Color.RGBAGetG(color);
+        int bIn = Color.RGBAGetB(color);
 
         float r = sRGBByteToLinearFloat(rIn);
         float g = sRGBByteToLinearFloat(gIn);

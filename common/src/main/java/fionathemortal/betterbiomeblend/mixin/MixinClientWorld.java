@@ -3,7 +3,6 @@ package fionathemortal.betterbiomeblend.mixin;
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
 import fionathemortal.betterbiomeblend.common.*;
 import fionathemortal.betterbiomeblend.common.cache.ColorCache;
-import fionathemortal.betterbiomeblend.common.compat.CustomColorResolverCompatibility;
 import fionathemortal.betterbiomeblend.common.debug.Debug;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import net.minecraft.client.color.block.BlockTintCache;
@@ -18,7 +17,6 @@ import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.storage.WritableLevelData;
-import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -30,22 +28,22 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.function.Supplier;
 
 @Mixin(value = ClientLevel.class)
-public abstract class MixinClientLevel extends Level implements LevelCacheAccess
+public abstract class MixinClientWorld extends Level
 {
     @Shadow
     private final Object2ObjectArrayMap<ColorResolver, BlockTintCache> tintCaches = new Object2ObjectArrayMap<>();
 
     @Unique
-    private final BlendCache betterBiomeBlend$blendColorCache = new BlendCache(1024);
+    public final BlendCache betterBiomeBlend$blendColorCache = new BlendCache(1024);
 
     @Unique
-    private final ColorCache betterBiomeBlend$chunkColorCache = new ColorCache(1024);
+    public final ColorCache betterBiomeBlend$chunkColorCache = new ColorCache(1024);
 
     @Unique
     private final ThreadLocal<LocalCache> betterBiomeBlend$threadLocalCache = ThreadLocal.withInitial(LocalCache::new);
 
     protected
-    MixinClientLevel(
+    MixinClientWorld(
         WritableLevelData        writableLevelData,
         ResourceKey<Level>       resourceKey,
         Holder<DimensionType>    holder,
@@ -62,9 +60,10 @@ public abstract class MixinClientLevel extends Level implements LevelCacheAccess
     public void
     onClearColorCaches(CallbackInfo ci)
     {
+        betterBiomeBlend$blendColorCache.invalidateAll();
+
         int blendRadius = BetterBiomeBlendClient.getBiomeBlendRadius();
 
-        betterBiomeBlend$blendColorCache.invalidateAll();
         betterBiomeBlend$chunkColorCache.invalidateAll(blendRadius);
     }
 
@@ -80,7 +79,7 @@ public abstract class MixinClientLevel extends Level implements LevelCacheAccess
 
     @Overwrite
     public int
-    getBlockTint(BlockPos blockPosIn, @NotNull ColorResolver colorResolverIn)
+    getBlockTint(BlockPos blockPosIn, ColorResolver colorResolverIn)
     {
         final int x = blockPosIn.getX();
         final int y = blockPosIn.getY();
@@ -173,11 +172,5 @@ public abstract class MixinClientLevel extends Level implements LevelCacheAccess
         }
 
         return color;
-    }
-
-    public ColorCache
-    getColorCache()
-    {
-        return this.betterBiomeBlend$chunkColorCache;
     }
 }

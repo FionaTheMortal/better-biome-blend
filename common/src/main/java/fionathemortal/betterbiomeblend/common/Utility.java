@@ -1,6 +1,6 @@
-package fionathemortal.betterbiomeblend.common.util;
+package fionathemortal.betterbiomeblend.common;
 
-public class MathUtil
+public class Utility
 {
     public static int
     boolToInt(boolean value)

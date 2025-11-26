@@ -1,6 +1,5 @@
-package fionathemortal.betterbiomeblend.common.compat;
+package fionathemortal.betterbiomeblend.common;
 
-import fionathemortal.betterbiomeblend.common.BiomeColorType;
 import net.minecraft.world.level.ColorResolver;
 
 import java.util.concurrent.ConcurrentHashMap;

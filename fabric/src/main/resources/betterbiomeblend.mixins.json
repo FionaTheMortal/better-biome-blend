@@ -4,8 +4,7 @@
   "compatibilityLevel": "JAVA_17",
   "client": [
     "MixinBlockColorCache",
-    "MixinSodiumGameOptionPages",
-    "WorldSliceAccessor"
+    "MixinSodiumGameOptionPages"
   ],
   "mixins": [
   ],
