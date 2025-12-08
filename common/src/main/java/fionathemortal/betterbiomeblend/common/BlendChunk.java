@@ -1,5 +1,7 @@
 package fionathemortal.betterbiomeblend.common;
 
+import fionathemortal.betterbiomeblend.common.util.Utility;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class BlendChunk
@@ -48,7 +50,7 @@ public final class BlendChunk
     public void
     markAsInvalid()
     {
-        key = ColorCaching.INVALID_CHUNK_KEY;
+        key = Utility.INVALID_CHUNK_KEY;
     }
 
     public void

@@ -1,6 +1,6 @@
 package fionathemortal.betterbiomeblend.common.cache;
 
-import fionathemortal.betterbiomeblend.common.ColorCaching;
+import fionathemortal.betterbiomeblend.common.util.Utility;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -47,7 +47,7 @@ public abstract class Slice
     public final boolean
     isInvalid()
     {
-        boolean result = ((this.key ^ this.salt) == ColorCaching.INVALID_CHUNK_KEY);
+        boolean result = ((this.key ^ this.salt) == Utility.INVALID_CHUNK_KEY);
 
         return result;
     }
@@ -55,6 +55,6 @@ public abstract class Slice
     public final void
     markAsInvalid()
     {
-        key = ColorCaching.INVALID_CHUNK_KEY ^ salt;
+        key = Utility.INVALID_CHUNK_KEY ^ salt;
     }
 }

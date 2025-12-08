@@ -5,89 +5,120 @@ public final class BlendConfig
     public static final int BIOME_BLEND_RADIUS_MIN = 0;
     public static final int BIOME_BLEND_RADIUS_MAX = 14;
 
-    public static final byte[]
-    blendRadiusConfig =
+    public static final BlendConfig[]
+    blendConfigs =
     {
-        2, 0,
-        3, 0,
-        3, 1,
-        3, 1,
-        3, 1,
-        3, 1,
-        4, 2,
-        4, 2,
-        4, 2,
-        4, 2,
-        4, 2,
-        4, 2,
-        4, 2,
-        4, 2,
-        4, 2,
+        new BlendConfig( 0, 4, 0, 0),
+        new BlendConfig( 1, 4, 0, 0),
+        new BlendConfig( 2, 4, 0, 0),
+        new BlendConfig( 3, 4, 0, 0),
+        new BlendConfig( 4, 4, 0, 0),
+        new BlendConfig( 5, 4, 0, 0),
+        new BlendConfig( 6, 4, 0, 0),
+        new BlendConfig( 7, 4, 0, 0),
+        new BlendConfig( 8, 4, 0, 0),
+        new BlendConfig( 9, 4, 0, 0),
+        new BlendConfig(10, 4, 0, 0),
+        new BlendConfig(11, 4, 0, 0),
+        new BlendConfig(12, 4, 0, 0),
+        new BlendConfig(13, 4, 0, 0),
+        new BlendConfig(14, 4, 0, 0)
     };
 
-    public static int
-    getSliceSizeLog2(int blendRadius)
+    public final int blendRadius;
+    public final int blendDim;
+
+    // NOTE: The sample size in blocks
+
+    public final int sampleSizeLog2;
+    public final int sampleSize;
+
+    // NOTE: The slice size in samples
+
+    public final int sliceSizeLog2;
+    public final int sliceSize;
+
+    // NOTE: The sample and slice coordinate offset in blocks
+
+    public final int baseOffset;
+
+    public
+    BlendConfig(int blendRadius, int sliceSizeLog2, int sampleSizeLog2, int baseOffset)
     {
-        int result = blendRadiusConfig[(blendRadius << 1)];
+        this.blendRadius    = blendRadius;
+        this.blendDim       = 2 * blendRadius + 1;
+
+        this.sampleSizeLog2 = sampleSizeLog2;
+        this.sampleSize     = 1 << sampleSizeLog2;
+
+        this.sliceSizeLog2  = sliceSizeLog2;
+        this.sliceSize      = 1 << sliceSizeLog2;
+
+        this.baseOffset     = baseOffset;
+    }
+
+    public static BlendConfig
+    getBlendConfigForBlendRadius(int blendRadius)
+    {
+        BlendConfig result;
+
+        if (blendRadius >= 0 && blendRadius < blendConfigs.length)
+        {
+            result = blendConfigs[blendRadius];
+        }
+        else
+        {
+            result = blendConfigs[0];
+        }
 
         return result;
     }
 
-    public static int
-    getBlockSizeLog2(int blendRadius)
+    public int
+    ceilBlockToSample(int block)
     {
-        int result = blendRadiusConfig[(blendRadius << 1) + 1];
+        int result = (block - baseOffset + sampleSize - 1) >> sampleSizeLog2;
 
         return result;
     }
 
-    public static int
-    getSliceSize(int blendRadius)
+    public int
+    floorBlockToSample(int block)
     {
-        int result = 1 << getSliceSizeLog2(blendRadius);
+        int result = (block - baseOffset) >> sampleSizeLog2;
 
         return result;
     }
 
-    public static int
-    getBlendSize(int blendRadius)
+    public int
+    getSampleFromBlock(int block)
     {
-        final int blockSizeLog2 = getBlockSizeLog2(blendRadius);
-        final int sliceSizeLog2 = getSliceSizeLog2(blendRadius);
-
-        final int blockSize = 1 << blockSizeLog2;
-        final int sliceSize = 1 << sliceSizeLog2;
-
-        final int blendSize       = sliceSize + 2 * blendRadius;
-        final int scaledBlendSize = blendSize >> blockSizeLog2;
-
-        return scaledBlendSize;
-    }
-
-    public static int
-    getBlendBufferSize(int blendRadius)
-    {
-        int blendSize = getBlendSize(blendRadius);
-        int sliceSize = getSliceSize(blendRadius);
-
-        int result = Math.max(blendSize, sliceSize);
+        int result = floorBlockToSample(block);
 
         return result;
     }
 
-    public static int
-    getFilterSupport(int blendRadius)
+    public int
+    getBlockFromSample(int sample)
     {
-        final int sliceSizeLog2 = BlendConfig.getSliceSizeLog2(blendRadius);
-        final int blockSizeLog2 = BlendConfig.getBlockSizeLog2(blendRadius);
+        int result = (sample << sampleSizeLog2) + baseOffset;
 
-        final int sliceSize = 1 << sliceSizeLog2;
+        return result;
+    }
 
-        final int blendDim = BlendConfig.getBlendSize(blendRadius);
+    public int
+    getSampleFromSlice(int slice)
+    {
+        int result = slice << sliceSizeLog2;
 
-        final int scaledSliceSize = sliceSize >> blockSizeLog2;
-        final int filterSupport   = blendDim - scaledSliceSize + 1;
+        return result;
+    }
 
-        return filterSupport;
+    public int
+    getSliceFromSample(int sample)
+    {
+        int result = sample >> sliceSizeLog2;
+
+        return result;
     }
 }

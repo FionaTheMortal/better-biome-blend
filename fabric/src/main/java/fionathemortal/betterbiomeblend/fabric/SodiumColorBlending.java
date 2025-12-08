@@ -1,24 +1,8 @@
 package fionathemortal.betterbiomeblend.fabric;
 
-import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
-import fionathemortal.betterbiomeblend.common.BlendBuffer;
-import fionathemortal.betterbiomeblend.common.BlendConfig;
-import fionathemortal.betterbiomeblend.common.Color;
-import fionathemortal.betterbiomeblend.common.ColorBlending;
-import fionathemortal.betterbiomeblend.common.cache.ColorCache;
-import fionathemortal.betterbiomeblend.common.cache.ColorSlice;
-import fionathemortal.betterbiomeblend.common.debug.Debug;
-import fionathemortal.betterbiomeblend.common.debug.DebugEvent;
-import fionathemortal.betterbiomeblend.common.debug.DebugEventType;
-import fionathemortal.betterbiomeblend.fabric.mixin.MixinBlockColorCache;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
+import fionathemortal.betterbiomeblend.common.BlendContext;
 import net.minecraft.world.level.ColorResolver;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
-import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkStatus;
 
 public class SodiumColorBlending
 {
@@ -27,7 +11,7 @@ public class SodiumColorBlending
     gatherColors(
         BiomeManager  biomeManager,
         ColorResolver resolver,
-        BlendBuffer   blendBuffer,
+        BlendContext blendContext,
         int           pX,
         int           pY,
         int           pZ,

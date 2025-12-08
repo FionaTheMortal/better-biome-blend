@@ -1,4 +1,4 @@
-package fionathemortal.betterbiomeblend.common;
+package fionathemortal.betterbiomeblend.common.util;
 
 public final class Color
 {
@@ -14,6 +14,8 @@ public final class Color
             sRGBLUT[i] = sRGBToLinear(color);
         }
     }
+
+    public static final int DEBUG_PINK = makeRGBAWithFullAlpha(0xFF, 0x00, 0xFF);
 
     public static int
     makeRGBAWithFullAlpha(int R, int G, int B)
@@ -215,8 +217,8 @@ public final class Color
         dest[index + 2] = (byte)bByte;
     }
 
-    public static void
-    OKLabsTosRGBAInt(float L, float a, float b, int[] dest, int index)
+    public static int
+    OKLabsTosRGBAInt(float L, float a, float b)
     {
         float l_ = L + 0.3963377774f * a + 0.2158037573f * b;
         float m_ = L - 0.1055613458f * a - 0.0638541728f * b;
@@ -236,6 +238,6 @@ public final class Color
 
         int color = makeRGBAWithFullAlpha(rByte, gByte, bByte);
 
-        dest[index] = color;
+        return color;
     }
 }

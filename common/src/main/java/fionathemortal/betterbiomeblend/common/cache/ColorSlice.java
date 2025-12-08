@@ -1,7 +1,5 @@
 package fionathemortal.betterbiomeblend.common.cache;
 
-import fionathemortal.betterbiomeblend.common.ColorCaching;
-
 import java.util.Arrays;
 
 public final class ColorSlice extends Slice

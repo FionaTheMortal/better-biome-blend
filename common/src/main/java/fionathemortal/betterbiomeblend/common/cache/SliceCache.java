@@ -1,18 +1,17 @@
 package fionathemortal.betterbiomeblend.common.cache;
 
 import fionathemortal.betterbiomeblend.common.BlendConfig;
-import fionathemortal.betterbiomeblend.common.ColorCaching;
+import fionathemortal.betterbiomeblend.common.util.Utility;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.StampedLock;
 
 public abstract class SliceCache<T extends Slice>
 {
     public final static int BUCKET_COUNT = 8;
 
-    public final Long2ObjectLinkedOpenHashMap<T>[] hashList;
-    public final StampedLock[]                     lockList;
+    public final Long2ObjectLinkedOpenHashMap<T>[] hashList = new Long2ObjectLinkedOpenHashMap[BUCKET_COUNT];
+    public final StampedLock[]                     lockList = new StampedLock[BUCKET_COUNT];
 
     public final int sliceCount;
     public       int sliceSize;
@@ -20,28 +19,24 @@ public abstract class SliceCache<T extends Slice>
     public abstract T newSlice(int sliceSize, int salt);
 
     public
-    SliceCache(int count)
+    SliceCache(int sliceCount)
     {
-        this.sliceCount = count;
+        this.sliceCount = sliceCount;
 
-        int countPerHash = count / BUCKET_COUNT;
+        int sliceCountPerBucket = sliceCount / BUCKET_COUNT;
 
-        hashList = new Long2ObjectLinkedOpenHashMap[BUCKET_COUNT];
-
-        for (int hashIndex = 0;
-             hashIndex < BUCKET_COUNT;
-             ++hashIndex)
+        for (int bucket = 0;
+             bucket < BUCKET_COUNT;
+             ++bucket)
         {
-            hashList[hashIndex] = new Long2ObjectLinkedOpenHashMap<>(countPerHash);
+            hashList[bucket] = new Long2ObjectLinkedOpenHashMap<>(sliceCountPerBucket);
         }
 
-        lockList = new StampedLock[BUCKET_COUNT];
-
-        for (int hashIndex = 0;
-             hashIndex < BUCKET_COUNT;
-             ++hashIndex)
+        for (int bucket = 0;
+             bucket < BUCKET_COUNT;
+             ++bucket)
         {
-            lockList[hashIndex] = new StampedLock();
+            lockList[bucket] = new StampedLock();
         }
     }
 
@@ -50,21 +45,21 @@ public abstract class SliceCache<T extends Slice>
     {
         this.sliceSize = sliceSize;
 
-        int countPerHash = this.sliceCount / BUCKET_COUNT;
+        int sliceCountPerBucket = this.sliceCount / BUCKET_COUNT;
 
-        for (int hashIndex = 0;
-             hashIndex < BUCKET_COUNT;
-             ++hashIndex)
+        for (int bucket = 0;
+             bucket < BUCKET_COUNT;
+             ++bucket)
         {
-            StampedLock                     lock = lockList[hashIndex];
-            Long2ObjectLinkedOpenHashMap<T> hash = hashList[hashIndex];
+            StampedLock                     lock = lockList[bucket];
+            Long2ObjectLinkedOpenHashMap<T> hash = hashList[bucket];
 
             long stamp = lock.writeLock();
 
             hash.clear();
 
             for (int index = 0;
-                 index < countPerHash;
+                 index < sliceCountPerBucket;
                  ++index)
             {
                 T slice = newSlice(sliceSize, index);
@@ -79,7 +74,7 @@ public abstract class SliceCache<T extends Slice>
     public final void
     invalidateAll(int blendRadius)
     {
-        this.sliceSize = BlendConfig.getSliceSize(blendRadius);
+        this.sliceSize = BlendConfig.getBlendConfigForBlendRadius(blendRadius).sliceSize;
 
         reallocSlices(sliceSize);
     }
@@ -95,13 +90,13 @@ public abstract class SliceCache<T extends Slice>
     public final void
     releaseSlice(T slice)
     {
-        slice.release();;
+        slice.release();
     }
 
     public final T
     getOrInitSlice(int sliceSize, int sliceX, int sliceY, int sliceZ, int colorType, boolean tryLock)
     {
-        long key = ColorCaching.getChunkKey(sliceX, sliceY, sliceZ, colorType);
+        long key = Utility.getChunkKey(sliceX, sliceY, sliceZ, colorType);
 
         int bucket = getBucketIndex(sliceX, sliceY, sliceZ);
 
@@ -110,7 +105,7 @@ public abstract class SliceCache<T extends Slice>
 
         T slice = null;
 
-        long stamp = 0;
+        long stamp;
 
         if (tryLock)
         {

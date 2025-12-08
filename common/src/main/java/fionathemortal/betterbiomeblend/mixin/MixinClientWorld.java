@@ -3,7 +3,10 @@ package fionathemortal.betterbiomeblend.mixin;
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
 import fionathemortal.betterbiomeblend.common.*;
 import fionathemortal.betterbiomeblend.common.cache.ColorCache;
+import fionathemortal.betterbiomeblend.common.compat.CustomColorResolverCompatibility;
 import fionathemortal.betterbiomeblend.common.debug.Debug;
+import fionathemortal.betterbiomeblend.common.util.Array3i;
+import fionathemortal.betterbiomeblend.common.util.Utility;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import net.minecraft.client.color.block.BlockTintCache;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -102,7 +105,7 @@ public abstract class MixinClientWorld extends Level
         {
             colorType = localCache.lastColorType;
 
-            long key = ColorCaching.getChunkKey(chunkX, chunkY, chunkZ, colorType);
+            long key = Utility.getChunkKey(chunkX, chunkY, chunkZ, colorType);
 
             if (localCache.lastBlendChunk.key == key)
             {
@@ -133,7 +136,7 @@ public abstract class MixinClientWorld extends Level
                 }
             }
 
-            long key = ColorCaching.getChunkKey(chunkX, chunkY, chunkZ, colorType);
+            long key = Utility.getChunkKey(chunkX, chunkY, chunkZ, colorType);
 
             BlendChunk cachedChunk = localCache.blendChunks[colorType];
 
@@ -152,13 +155,13 @@ public abstract class MixinClientWorld extends Level
             localCache.putChunk(betterBiomeBlend$blendColorCache, chunk, colorType, colorResolverIn);
         }
 
-        int index = ColorCaching.getArrayIndex(16, blockX, blockY, blockZ);
+        int index = Array3i.getArrayIndex(16, 16, blockX, blockY, blockZ);
 
         int color = chunk.data[index];
 
         if (color == 0)
         {
-            ColorBlending.generateColors(
+            ColorBlending.generateColorsForBlock(
                 this,
                 colorResolverIn,
                 colorType,

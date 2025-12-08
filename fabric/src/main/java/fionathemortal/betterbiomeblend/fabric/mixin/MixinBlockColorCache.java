@@ -1,6 +1,7 @@
 package fionathemortal.betterbiomeblend.fabric.mixin;
 
-import fionathemortal.betterbiomeblend.common.ColorCaching;
+import fionathemortal.betterbiomeblend.common.util.Array3i;
+import fionathemortal.betterbiomeblend.common.util.Utility;
 import fionathemortal.betterbiomeblend.fabric.SodiumColorBlending;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import me.jellysquid.mods.sodium.client.world.WorldSlice;
@@ -62,7 +63,7 @@ public class MixinBlockColorCache
         int blockY = Mth.clamp(posY - this.betterbiomeblend$baseY, 0, 15);
         int blockZ = Mth.clamp(posZ - this.betterbiomeblend$baseZ, 0, 15);
 
-        int index = ColorCaching.getArrayIndex(16, blockX, blockY, blockZ);
+        int index = Array3i.getArrayIndex(16, 16, blockX, blockY, blockZ);
 
         int color = colors[index];
 

@@ -1,6 +1,7 @@
 package fionathemortal.betterbiomeblend.common;
 
 import fionathemortal.betterbiomeblend.common.debug.Debug;
+import fionathemortal.betterbiomeblend.common.util.Utility;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
@@ -138,7 +139,7 @@ public final class BlendCache
                 x <= 1;
                 ++x)
             {
-                long key = ColorCaching.getChunkKey(chunkX + x, 0, chunkZ + z, 0);
+                long key = Utility.getChunkKey(chunkX + x, 0, chunkZ + z, 0);
 
                 BlendChunk first = invalidationHash.get(key);
 
@@ -167,7 +168,7 @@ public final class BlendCache
     public BlendChunk
     getOrInitChunk(int chunkX, int chunkY, int chunkZ, int colorType)
     {
-        long key = ColorCaching.getChunkKey(chunkX, chunkY, chunkZ, colorType);
+        long key = Utility.getChunkKey(chunkX, chunkY, chunkZ, colorType);
 
         lock.lock();
 
@@ -201,7 +202,7 @@ public final class BlendCache
                 removeFromInvalidationHash(result);
             }
 
-            long invalidationKey = ColorCaching.getChunkKey(chunkX, 0, chunkZ, 0);
+            long invalidationKey = Utility.getChunkKey(chunkX, 0, chunkZ, 0);
 
             result.key = key;
             result.invalidationCounter = invalidationCounter;
