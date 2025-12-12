@@ -7,8 +7,6 @@ public final class BlendContext
 {
     public final BlendConfig blendConfig;
 
-    public final Array3i output;
-
     public float[] samples;
 
     public float[] lineBuffer;
@@ -69,11 +67,29 @@ public final class BlendContext
     public int colorBitsExclusive;
     public int colorBitsInclusive;
 
+    // NOTE: Filter config
+
+    public float filterMultiplier;
+    public float filterSupport;
+
+    // NOTE: Output
+
+    int[] output;
+
+    int outputDimX;
+    int outputDimY;
+    int outputDimZ;
+
+    int outputMinX;
+    int outputMinY;
+    int outputMinZ;
+
+    int outputArrayDimX;
+    int outputArrayDimY;
+
     public BlendContext(BlendConfig blendConfig)
     {
         this.blendConfig = blendConfig;
-
-        this.output = new Array3i();
 
         this.colorBitsExclusive = 0xFFFFFFFF;
         this.colorBitsInclusive = 0;
@@ -102,13 +118,21 @@ public final class BlendContext
         this.blockMaxY = blockMinY + outputDimY;
         this.blockMaxZ = blockMinZ + outputDimZ;
 
-        this.sampleMinX = blendConfig.getSampleFromBlock(this.blockMinX);
-        this.sampleMinY = blendConfig.getSampleFromBlock(this.blockMinY);
-        this.sampleMinZ = blendConfig.getSampleFromBlock(this.blockMinZ);
+        int blendMinX = this.blockMinX - blendConfig.blendRadius;
+        int blendMinY = this.blockMinY - blendConfig.blendRadius;
+        int blendMinZ = this.blockMinZ - blendConfig.blendRadius;
 
-        this.sampleMaxX = blendConfig.ceilBlockToSample(this.blockMaxX);
-        this.sampleMaxY = blendConfig.ceilBlockToSample(this.blockMaxY);
-        this.sampleMaxZ = blendConfig.ceilBlockToSample(this.blockMaxZ);
+        int blendMaxX = this.blockMaxX + blendConfig.blendRadius;
+        int blendMaxY = this.blockMaxY + blendConfig.blendRadius;
+        int blendMaxZ = this.blockMaxZ + blendConfig.blendRadius;
+
+        this.sampleMinX = blendConfig.getSampleFromBlock(blendMinX);
+        this.sampleMinY = blendConfig.getSampleFromBlock(blendMinY);
+        this.sampleMinZ = blendConfig.getSampleFromBlock(blendMinZ);
+
+        this.sampleMaxX = blendConfig.getSampleFromBlock(blendMaxX + blendConfig.sampleSize - 1);
+        this.sampleMaxY = blendConfig.getSampleFromBlock(blendMaxY + blendConfig.sampleSize - 1);
+        this.sampleMaxZ = blendConfig.getSampleFromBlock(blendMaxZ + blendConfig.sampleSize - 1);
 
         this.sampleCountX = this.sampleMaxX - this.sampleMinX;
         this.sampleCountY = this.sampleMaxY - this.sampleMinY;
@@ -116,8 +140,9 @@ public final class BlendContext
 
         this.sampleBlockMinX = blendConfig.getBlockFromSample(this.sampleMinX);
         this.sampleBlockMinZ = blendConfig.getBlockFromSample(this.sampleMinZ);
-        this.sampleBlockMaxX = blendConfig.getBlockFromSample(this.sampleMinX + 1);
-        this.sampleBlockMaxZ = blendConfig.getBlockFromSample(this.sampleMinZ + 1);
+
+        this.sampleBlockMaxX = blendConfig.getBlockFromSample(this.sampleMaxX);
+        this.sampleBlockMaxZ = blendConfig.getBlockFromSample(this.sampleMaxZ);
 
         this.sliceMinX = blendConfig.getSliceFromSample(this.sampleMinX);
         this.sliceMinY = blendConfig.getSliceFromSample(this.sampleMinY);
@@ -127,12 +152,10 @@ public final class BlendContext
         this.sliceMaxY = blendConfig.getSliceFromSample(this.sampleMaxY + 1);
         this.sliceMaxZ = blendConfig.getSliceFromSample(this.sampleMaxZ + 1);
 
-        int filterDim = blendConfig.blendDim;
+        int maxSamplesInFilter = (blendConfig.blendDim + 2 * (blendConfig.sampleSize - 1)) >> blendConfig.sampleSizeLog2;
 
-        int filterDimInSamples = (filterDim + 2 * (blendConfig.sampleSize - 1)) >> blendConfig.sliceSizeLog2;
-
-        this.lineCount = filterDimInSamples;
-        this.planeCount = filterDimInSamples;
+        this.lineCount  = maxSamplesInFilter;
+        this.planeCount = maxSamplesInFilter;
 
         this.output.init(
             output,

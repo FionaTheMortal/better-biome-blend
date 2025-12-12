@@ -161,7 +161,7 @@ public abstract class MixinClientWorld extends Level
 
         if (color == 0)
         {
-            ColorBlending.generateColorsForBlock(
+            ColorGeneration.generateColorsForBlock(
                 this,
                 colorResolverIn,
                 colorType,
