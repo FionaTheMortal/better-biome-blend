@@ -11,16 +11,20 @@ public final class Array3i
         int strideY = getStrideY(arrayDimX);
         int strideZ = getStrideZ(arrayDimX, arrayDimY);
 
-        int index = minX + minY * strideX + minZ * strideX * strideY;
+        int indexZ = getArrayIndex(arrayDimX, arrayDimY, minX, minY, minZ);
 
         for (int z = 0;
              z < dimZ;
              ++z)
         {
+            int indexY = indexZ;
+
             for (int y = 0;
                  y < dimY;
                  ++y)
             {
+                int index = indexY;
+
                 for (int x = 0;
                      x < dimX;
                      ++x)
@@ -30,35 +34,49 @@ public final class Array3i
                     index += strideX;
                 }
 
-                index += strideY;
+                indexY += strideY;
             }
 
-            index += strideZ;
+            indexZ += strideZ;
         }
     }
 
     public static int
     getStrideX()
     {
-        return ELEMENT_SIZE;
+        int result = ELEMENT_SIZE;
+
+        return result;
     }
 
     public static int
     getStrideY(int dimX)
     {
-        return dimX;
+        int result = getStrideX() * dimX;
+
+        return result;
     }
 
     public static int
     getStrideZ(int dimX, int dimY)
     {
-        return dimX * dimY;
+        int result = getStrideY(dimX) * dimY;
+
+        return result;
     }
 
     public static int
     getArrayIndex(int dimX, int dimY, int x, int y, int z)
     {
         int result = x + (y + z * dimY) * dimX;
+
+        return result;
+    }
+
+    public static int
+    getSize(int dimX, int dimY, int dimZ)
+    {
+        int result = ELEMENT_SIZE * dimX * dimY * dimZ;
 
         return result;
     }

@@ -4,6 +4,9 @@ public class Utility
 {
     public static final int INVALID_CHUNK_KEY = -1;
 
+    public static final int CHUNK_SIZE_LOG_2 = 4;
+    public static final int CHUNK_SIZE = (1 << CHUNK_SIZE_LOG_2);
+
     public static long
     getChunkKey(int chunkX, int chunkY, int chunkZ, int colorType)
     {
@@ -43,7 +46,15 @@ public class Utility
     public static int
     blockToChunk(int position)
     {
-        int result = position >> 4;
+        int result = position >> CHUNK_SIZE_LOG_2;
+
+        return result;
+    }
+
+    public static int
+    chunkToBlock(int chunk)
+    {
+        int result = chunk << CHUNK_SIZE_LOG_2;
 
         return result;
     }

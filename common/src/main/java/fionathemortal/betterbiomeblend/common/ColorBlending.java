@@ -287,9 +287,6 @@ public final class ColorBlending
 
         int outputStrideX = Array3i.getStrideX();
         int outputStrideY = Array3i.getStrideY(outputArrayDimX);
-        int outputStrideZ = Array3i.getStrideZ(outputArrayDimX, outputArrayDimY);
-
-        int outputIndex = Array3i.getArrayIndex(outputArrayDimX, outputArrayDimY, outputMinX, outputMinY, outputMinZ);
 
         BlendConfig blendConfig = blendContext.blendConfig;
 
@@ -318,12 +315,16 @@ public final class ColorBlending
             int upperPlaneFirst = Array3c.getArrayIndex(outputDimX, outputDimY, 0, 0, upperPlaneIndex);
             int lowerPlaneFirst = Array3c.getArrayIndex(outputDimX, outputDimY, 0, 0, lowerPlaneIndex);
 
+            int outputIndexY = Array3i.getArrayIndex(outputArrayDimX, outputArrayDimY, outputMinX, outputMinY, outputMinZ + z);
+
             int sampleIndex = 0;
 
             for (int y = 0;
                  y < outputDimY;
                  ++y)
             {
+                int outputIndex = outputIndexY;
+
                 for (int x = 0;
                      x < outputDimX;
                      ++x)
@@ -357,13 +358,11 @@ public final class ColorBlending
                     sampleIndex += Array3c.ELEMENT_SIZE;
                 }
 
-                outputIndex += outputStrideY;
+                outputIndexY += outputStrideY;
             }
 
             ++upperFilter;
             ++lowerFilter;
-
-            outputIndex += outputStrideZ;
         }
     }
 }

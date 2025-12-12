@@ -1,10 +1,15 @@
 package fionathemortal.betterbiomeblend.common;
 
-import fionathemortal.betterbiomeblend.common.util.Array3i;
+import fionathemortal.betterbiomeblend.common.util.Array1c;
+import fionathemortal.betterbiomeblend.common.util.Array2c;
+import fionathemortal.betterbiomeblend.common.util.Array3c;
 import fionathemortal.betterbiomeblend.common.util.Color;
 
 public final class BlendContext
 {
+    public static final int INITIAL_COLOR_BITS_EXCLUSIVE = 0xFFFFFFFF;
+    public static final int INITIAL_COLOR_BITS_INCLUSIVE = 0;
+
     public final BlendConfig blendConfig;
 
     public float[] samples;
@@ -90,9 +95,6 @@ public final class BlendContext
     public BlendContext(BlendConfig blendConfig)
     {
         this.blendConfig = blendConfig;
-
-        this.colorBitsExclusive = 0xFFFFFFFF;
-        this.colorBitsInclusive = 0;
     }
 
     public void
@@ -110,6 +112,21 @@ public final class BlendContext
         int   outputDataDimX,
         int   outputDataDimY)
     {
+        resetColorBits();
+
+        this.output = output;
+
+        this.outputMinX = outputMinX;
+        this.outputMinY = outputMinY;
+        this.outputMinZ = outputMinZ;
+
+        this.outputDimX = outputDimX;
+        this.outputDimY = outputDimY;
+        this.outputDimZ = outputDimZ;
+
+        this.outputArrayDimX = outputDataDimX;
+        this.outputArrayDimY = outputDataDimY;
+
         this.blockMinX = blockMinX;
         this.blockMinY = blockMinY;
         this.blockMinZ = blockMinZ;
@@ -148,36 +165,31 @@ public final class BlendContext
         this.sliceMinY = blendConfig.getSliceFromSample(this.sampleMinY);
         this.sliceMinZ = blendConfig.getSliceFromSample(this.sampleMinZ);
 
-        this.sliceMaxX = blendConfig.getSliceFromSample(this.sampleMaxX + 1);
-        this.sliceMaxY = blendConfig.getSliceFromSample(this.sampleMaxY + 1);
-        this.sliceMaxZ = blendConfig.getSliceFromSample(this.sampleMaxZ + 1);
+        this.sliceMaxX = blendConfig.getSliceFromSample(this.sampleMaxX + blendConfig.sliceSize - 1);
+        this.sliceMaxY = blendConfig.getSliceFromSample(this.sampleMaxY + blendConfig.sliceSize - 1);
+        this.sliceMaxZ = blendConfig.getSliceFromSample(this.sampleMaxZ + blendConfig.sliceSize - 1);
 
         int maxSamplesInFilter = (blendConfig.blendDim + 2 * (blendConfig.sampleSize - 1)) >> blendConfig.sampleSizeLog2;
 
         this.lineCount  = maxSamplesInFilter;
         this.planeCount = maxSamplesInFilter;
 
-        this.output.init(
-            output,
-            outputMinX,
-            outputMinY,
-            outputMinZ,
-            outputDimX,
-            outputDimY,
-            outputDimZ,
-            outputDataDimX,
-            outputDataDimY);
+        ensureBufferCapacities();
+    }
 
-        checkBuffers();
-
-        this.colorBitsExclusive = 0xFFFFFFFF;
-        this.colorBitsInclusive = 0;
+    private void
+    resetColorBits()
+    {
+        this.colorBitsExclusive = INITIAL_COLOR_BITS_EXCLUSIVE;
+        this.colorBitsInclusive = INITIAL_COLOR_BITS_INCLUSIVE;
     }
 
     public void
     free()
     {
-        this.output.free();
+        this.output = null;
+
+        resetColorBits();
     }
 
     public boolean
@@ -203,41 +215,12 @@ public final class BlendContext
     }
 
     private void
-    checkBuffers()
+    ensureBufferCapacities()
     {
-        int sampleCount = this.sampleCountX * this.sampleCountY * this.sampleCountZ;
-
-        if (this.samples == null || this.samples.length < 3 * sampleCount)
-        {
-            this.samples = new float[3 * sampleCount];
-        }
-
-        int lineLength = 3 * output.dimX;
-
-        if (this.lineSum == null || lineSum.length < lineLength)
-        {
-            lineSum = new float[lineLength];
-        }
-
-        int lineBufferSize = lineLength * this.lineCount;
-
-        if (this.lineBuffer == null || lineBuffer.length < lineBufferSize)
-        {
-            lineBuffer = new float[lineBufferSize];
-        }
-
-        int planeSize = 3 * output.dimX * output.dimY;
-
-        if (this.planeSum == null || planeSum.length < planeSize)
-        {
-            planeSum = new float[planeSize];
-        }
-
-        int planeBufferSize = planeSize * this.planeCount;
-
-        if (this.planeBuffer == null || planeBuffer.length < planeBufferSize)
-        {
-            planeBuffer = new float[planeBufferSize];
-        }
+        this.samples     = Array3c.ensureCapacity(this.samples, sampleCountX, sampleCountY, sampleCountZ);
+        this.lineSum     = Array1c.ensureCapacity(this.lineSum, outputDimX);
+        this.lineBuffer  = Array2c.ensureCapacity(this.lineBuffer, outputDimX, lineCount);
+        this.planeSum    = Array2c.ensureCapacity(this.planeSum, outputDimX, outputDimY);
+        this.planeBuffer = Array3c.ensureCapacity(this.planeBuffer, outputDimX, outputDimY, planeCount);
     }
 }
