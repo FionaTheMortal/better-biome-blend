@@ -4,6 +4,7 @@ import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
 import fionathemortal.betterbiomeblend.common.cache.ColorCache;
 import fionathemortal.betterbiomeblend.common.debug.Debug;
 import fionathemortal.betterbiomeblend.common.debug.DebugEvent;
+import fionathemortal.betterbiomeblend.common.debug.DebugEventType;
 import fionathemortal.betterbiomeblend.common.util.*;
 
 import net.minecraft.world.level.ColorResolver;
@@ -107,7 +108,11 @@ public final class ColorGeneration
 
             if (!blendContext.isSingleColor())
             {
+                DebugEvent subEvent = Debug.pushSubevent(DebugEventType.SUBEVENT);
+
                 ColorBlending.blendColors(blendContext);
+
+                Debug.endEvent(subEvent);
             }
             else
             {
