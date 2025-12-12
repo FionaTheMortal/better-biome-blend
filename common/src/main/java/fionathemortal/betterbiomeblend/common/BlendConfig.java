@@ -22,7 +22,7 @@ public final class BlendConfig
         new BlendConfig(11, 4, 0, 0),
         new BlendConfig(12, 4, 0, 0),
         new BlendConfig(13, 4, 0, 0),
-        new BlendConfig(14, 4, 0, 0)
+        new BlendConfig(14, 3, 1, 2)
     };
 
     public final int blendRadius;

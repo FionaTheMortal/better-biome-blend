@@ -103,7 +103,7 @@ public final class ColorGeneration
                 colorCache,
                 blendContext);
 
-            Arrays.fill(blendContext.samples, 1.0f);
+            // Arrays.fill(blendContext.samples, 1.0f);
 
             if (!blendContext.isSingleColor())
             {

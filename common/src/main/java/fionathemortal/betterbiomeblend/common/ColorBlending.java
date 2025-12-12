@@ -5,6 +5,8 @@ import fionathemortal.betterbiomeblend.common.util.Array3c;
 import fionathemortal.betterbiomeblend.common.util.Array3i;
 import fionathemortal.betterbiomeblend.common.util.Color;
 
+import java.util.Arrays;
+
 public final class ColorBlending
 {
     private static void
@@ -102,6 +104,8 @@ public final class ColorBlending
     private static int
     initLineBuffers(BlendContext blendContext, int planeIndex)
     {
+        Arrays.fill(blendContext.lineSum, 0.0f);
+
         BlendConfig blendConfig = blendContext.blendConfig;
 
         int lowerFilter = blendContext.blockMinY - blendConfig.blendRadius;
@@ -121,7 +125,7 @@ public final class ColorBlending
             {
                 if (prevSampleIndexY != Integer.MIN_VALUE)
                 {
-                    accumulateLine(blendContext, sampleIndexY, blockCount);
+                    accumulateLine(blendContext, prevSampleIndexY, blockCount);
                 }
 
                 blendColorsInLine(blendContext, blendConfig, sampleIndexY, planeIndex);
@@ -229,6 +233,8 @@ public final class ColorBlending
     private static int
     initPlaneBuffers(BlendContext blendContext)
     {
+        Arrays.fill(blendContext.planeSum, 0.0f);
+
         BlendConfig blendConfig = blendContext.blendConfig;
 
         int lowerFilter = blendContext.blockMinZ - blendConfig.blendRadius;
@@ -248,7 +254,7 @@ public final class ColorBlending
             {
                 if (prevSampleIndexZ != Integer.MIN_VALUE)
                 {
-                    accumulatePlane(blendContext, sampleIndexZ, blockCount);
+                    accumulatePlane(blendContext, prevSampleIndexZ, blockCount);
                 }
 
                 blendColorsInPlane(blendContext, blendConfig, sampleIndexZ);

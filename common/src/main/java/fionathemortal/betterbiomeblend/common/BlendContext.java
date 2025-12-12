@@ -5,6 +5,8 @@ import fionathemortal.betterbiomeblend.common.util.Array2c;
 import fionathemortal.betterbiomeblend.common.util.Array3c;
 import fionathemortal.betterbiomeblend.common.util.Color;
 
+import java.util.Arrays;
+
 public final class BlendContext
 {
     public static final int INITIAL_COLOR_BITS_EXCLUSIVE = 0xFFFFFFFF;
@@ -174,7 +176,13 @@ public final class BlendContext
         this.lineCount  = maxSamplesInFilter;
         this.planeCount = maxSamplesInFilter;
 
+        filterSupport = blendConfig.blendDim * blendConfig.blendDim * blendConfig.blendDim;
+        filterMultiplier = 1.0f / filterSupport;
+
         ensureBufferCapacities();
+
+        Arrays.fill(lineSum, 0.0f);
+        Arrays.fill(planeSum, 0.0f);
     }
 
     private void
