@@ -6,21 +6,28 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public final class BlendChunk
 {
-    public int[] data;
-    public long  key;
-    public int   invalidationCounter;
+    public boolean storesConstColor;
+    public int     chunkColor;
+    public int[]   blockColors;
 
-    public AtomicInteger refCount = new AtomicInteger();
-
-    public long invalidationKey;
+    public long    key;
+    public int     invalidationCounter;
+    public long    invalidationKey;
 
     BlendChunk prev;
     BlendChunk next;
 
+    public AtomicInteger refCount = new AtomicInteger();
+
     public
-    BlendChunk()
+    BlendChunk(boolean storesConstColor)
     {
-        this.data = new int[16 * 16 * 16];
+        this.storesConstColor = storesConstColor;
+
+        if (!storesConstColor)
+        {
+            this.blockColors = new int[16 * 16 * 16];
+        }
 
         this.markAsInvalid();
     }

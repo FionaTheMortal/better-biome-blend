@@ -19,7 +19,7 @@ public final class BlendCache
     public int invalidationCounter = 0;
 
     public
-    BlendCache(int count)
+    BlendCache(int count, boolean chunksStoreConstColor)
     {
         lock     = new ReentrantLock();
         hash     = new Long2ObjectLinkedOpenHashMap<>(count);
@@ -31,7 +31,7 @@ public final class BlendCache
             index < count;
             ++index)
         {
-            freeList.add(new BlendChunk());
+            freeList.add(new BlendChunk(chunksStoreConstColor));
         }
     }
 
@@ -211,7 +211,14 @@ public final class BlendCache
             result.prev = null;
             result.next = null;
 
-            Arrays.fill(result.data, 0);
+            if (result.storesConstColor)
+            {
+                result.chunkColor = 0;
+            }
+            else
+            {
+                Arrays.fill(result.blockColors, 0);
+            }
 
             hash.putAndMoveToFirst(result.key, result);
 

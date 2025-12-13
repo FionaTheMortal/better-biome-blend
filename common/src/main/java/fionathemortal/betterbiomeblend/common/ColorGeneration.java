@@ -127,7 +127,7 @@ public final class ColorGeneration
     }
 
     public static void
-    generateColorsForBlock(
+    generateColorsForChunk(
         Level         world,
         ColorResolver colorResolver,
         int           colorType,
@@ -153,7 +153,114 @@ public final class ColorGeneration
             blockMinX,
             blockMinY,
             blockMinZ,
-            blendChunk.data,
+            blendChunk.blockColors,
+            0,
+            0,
+            0,
+            16,
+            16,
+            16,
+            16,
+            16);
+    }
+
+    public static void
+    finalizeColorGen(
+        BlendContext blendContext,
+        BlendChunk   blendChunk)
+    {
+        if (!blendContext.isSingleColor())
+        {
+            blendContext.output = blendChunk.blockColors;
+
+            ColorBlending.blendColors(blendContext);
+        }
+        else
+        {
+            blendChunk.storesConstColor = true;
+            blendChunk.chunkColor = blendContext.colorBitsExclusive;
+        }
+
+        releaseBlendContext(blendContext);
+    }
+
+    public static BlendContext
+    initColorGen(
+        Level         world,
+        ColorResolver colorResolver,
+        int           colorType,
+        ColorCache    colorCache,
+        int           blockMinX,
+        int           blockMinY,
+        int           blockMinZ,
+        int           outputMinX,
+        int           outputMinY,
+        int           outputMinZ,
+        int           outputDimX,
+        int           outputDimY,
+        int           outputDimZ,
+        int           outputArrayDimX,
+        int           outputArrayDimY)
+    {
+        BlendContext blendContext = acquireBlendContext();
+
+        blendContext.init(
+            blockMinX,
+            blockMinY,
+            blockMinZ,
+            null,
+            outputMinX,
+            outputMinY,
+            outputMinZ,
+            outputDimX,
+            outputDimY,
+            outputDimZ,
+            outputArrayDimX,
+            outputArrayDimY);
+
+        if (blendContext.blendConfig.blendRadius >  BlendConfig.BIOME_BLEND_RADIUS_MIN &&
+            blendContext.blendConfig.blendRadius <= BlendConfig.BIOME_BLEND_RADIUS_MAX)
+        {
+            ColorGather.gatherColorsForBlending(
+                world,
+                colorResolver,
+                colorType,
+                colorCache,
+                blendContext);
+        }
+        else
+        {
+        }
+
+        return blendContext;
+    }
+
+    public static BlendContext
+    initColorGenForChunk(
+        Level         world,
+        ColorResolver colorResolver,
+        int           colorType,
+        ColorCache    colorCache,
+        int           blockX,
+        int           blockY,
+        int           blockZ)
+    {
+        int chunkX = Utility.blockToChunk(blockX);
+        int chunkY = Utility.blockToChunk(blockY);
+        int chunkZ = Utility.blockToChunk(blockZ);
+
+        int blockMinX = Utility.chunkToBlock(chunkX);
+        int blockMinY = Utility.chunkToBlock(chunkY);
+        int blockMinZ = Utility.chunkToBlock(chunkZ);
+
+        return initColorGen(
+            world,
+            colorResolver,
+            colorType,
+            colorCache,
+            blockMinX,
+            blockMinY,
+            blockMinZ,
             0,
             0,
             0,

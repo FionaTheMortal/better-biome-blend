@@ -14,7 +14,7 @@ public final class LocalCache
     public static BlendChunk
     newBlendChunk()
     {
-        BlendChunk result = new BlendChunk();
+        BlendChunk result = new BlendChunk(false);
 
         result.acquire();
 
@@ -35,7 +35,7 @@ public final class LocalCache
     }
 
     public void
-    putChunk(BlendCache cache, BlendChunk chunk, int colorType, ColorResolver colorResolver)
+    putChunk(BlendCache arrayCache, BlendCache constCache, BlendChunk chunk, int colorType, ColorResolver colorResolver)
     {
         BlendChunk prevChunk = this.blendChunks[colorType];
 
@@ -43,7 +43,14 @@ public final class LocalCache
         this.lastBlendChunk    = chunk;
         this.lastColorType     = colorType;
 
-        cache.releaseChunk(prevChunk);
+        if (prevChunk.storesConstColor)
+        {
+            constCache.releaseChunk(prevChunk);
+        }
+        else
+        {
+            arrayCache.releaseChunk(prevChunk);
+        }
 
         this.blendChunks[colorType] = chunk;
     }

@@ -7,7 +7,6 @@ import fionathemortal.betterbiomeblend.common.cache.output.BlendChunk;
 import fionathemortal.betterbiomeblend.common.cache.output.LocalCache;
 import fionathemortal.betterbiomeblend.common.cache.source.ColorCache;
 import fionathemortal.betterbiomeblend.common.compat.CustomColorResolverCompatibility;
-import fionathemortal.betterbiomeblend.common.debug.Debug;
 import fionathemortal.betterbiomeblend.common.util.Array3i;
 import fionathemortal.betterbiomeblend.common.util.Utility;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
@@ -40,7 +39,10 @@ public abstract class MixinClientWorld extends Level
     private final Object2ObjectArrayMap<ColorResolver, BlockTintCache> tintCaches = new Object2ObjectArrayMap<>();
 
     @Unique
-    public final BlendCache betterBiomeBlend$blendColorCache = new BlendCache(1024);
+    public final BlendCache betterBiomeBlend$blendColorCache = new BlendCache(512, false);
+
+    @Unique
+    public final BlendCache betterBiomeBlend$constColorCache = new BlendCache(8192, true);
 
     @Unique
     public final ColorCache betterBiomeBlend$chunkColorCache = new ColorCache(1024);
@@ -67,6 +69,7 @@ public abstract class MixinClientWorld extends Level
     onClearColorCaches(CallbackInfo ci)
     {
         betterBiomeBlend$blendColorCache.invalidateAll();
+        betterBiomeBlend$constColorCache.invalidateAll();
 
         int blendRadius = BetterBiomeBlendClient.getBiomeBlendRadius();
 
@@ -81,6 +84,7 @@ public abstract class MixinClientWorld extends Level
         int chunkZ = chunkPos.z;
 
         betterBiomeBlend$blendColorCache.invalidateChunk(chunkX, chunkZ);
+        betterBiomeBlend$constColorCache.invalidateChunk(chunkX, chunkZ);
     }
 
     @Overwrite
@@ -151,28 +155,40 @@ public abstract class MixinClientWorld extends Level
 
         if (chunk == null)
         {
-            chunk = betterBiomeBlend$blendColorCache.getOrInitChunk(chunkX, chunkY, chunkZ, colorType);
-
-            localCache.putChunk(betterBiomeBlend$blendColorCache, chunk, colorType, colorResolverIn);
-        }
-
-        int index = Array3i.getArrayIndex(16, 16, blockX, blockY, blockZ);
-
-        int color = chunk.data[index];
-
-        if (color == 0)
-        {
-            ColorGeneration.generateColorsForBlock(
+            BlendContext context = ColorGeneration.initColorGenForChunk(
                 this,
                 colorResolverIn,
                 colorType,
                 betterBiomeBlend$chunkColorCache,
-                chunk,
                 x,
                 y,
                 z);
 
-            color = chunk.data[index];
+            if (context.isSingleColor())
+            {
+                chunk = betterBiomeBlend$constColorCache.getOrInitChunk(chunkX, chunkY, chunkZ, colorType);
+            }
+            else
+            {
+                chunk = betterBiomeBlend$blendColorCache.getOrInitChunk(chunkX, chunkY, chunkZ, colorType);
+            }
+
+            ColorGeneration.finalizeColorGen(context, chunk);
+
+            localCache.putChunk(betterBiomeBlend$blendColorCache, betterBiomeBlend$constColorCache, chunk, colorType, colorResolverIn);
+        }
+
+        int color = 0;
+
+        if (chunk.storesConstColor)
+        {
+            color = chunk.chunkColor;
+        }
+        else
+        {
+            int index = Array3i.getArrayIndex(16, 16, blockX, blockY, blockZ);
+
+            color = chunk.blockColors[index];
         }
 
         return color;
