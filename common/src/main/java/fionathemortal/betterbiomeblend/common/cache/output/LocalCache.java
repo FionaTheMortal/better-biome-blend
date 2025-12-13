@@ -1,4 +1,4 @@
-package fionathemortal.betterbiomeblend.common;
+package fionathemortal.betterbiomeblend.common.cache.output;
 
 import net.minecraft.world.level.ColorResolver;
 

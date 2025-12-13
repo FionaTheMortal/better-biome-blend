@@ -1,4 +1,4 @@
-package fionathemortal.betterbiomeblend.common.cache;
+package fionathemortal.betterbiomeblend.common.cache.source;
 
 public final class ColorCache extends SliceCache<ColorSlice>
 {

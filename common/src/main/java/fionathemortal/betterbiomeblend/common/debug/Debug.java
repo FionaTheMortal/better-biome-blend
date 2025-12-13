@@ -1,7 +1,6 @@
 package fionathemortal.betterbiomeblend.common.debug;
 
-import fionathemortal.betterbiomeblend.common.BlendChunk;
-import org.checkerframework.checker.units.qual.A;
+import fionathemortal.betterbiomeblend.common.cache.output.BlendChunk;
 
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
@@ -144,6 +143,7 @@ public final class Debug
         result.elapsedWallTime            = elapsedTime;
         result.elapsedWallTimeInSeconds   = (double)elapsedTime * 1e-9;
         result.totalCPUTimeInMilliseconds = (double)averageTime * (double)colorGenEventCount * 1e-6;
+        result.totalSubEventCount         = subevents.size();
 
         double averageSubeventTime       = getAverageElapsedTime(subevents,  subevents.size());
         double averageSubeventOnePercent = getAverageElapsedTime(subevents, (subevents.size() + 99) / 100);

@@ -54,7 +54,10 @@ public final class ColorBlending
              ++x)
         {
             int upperSampleIndexX = blendConfig.getSampleFromBlock(upperFilter) - blendContext.sampleMinX;
+            int lowerSampleIndexX = blendConfig.getSampleFromBlock(lowerFilter) - blendContext.sampleMinX;
+
             int upperSampleIndex  = lineFirst + Array3c.ELEMENT_SIZE * upperSampleIndexX;
+            int lowerSampleIndex  = lineFirst + Array2c.ELEMENT_SIZE * lowerSampleIndexX;
 
             float upperSampleR = blendContext.samples[upperSampleIndex    ];
             float upperSampleG = blendContext.samples[upperSampleIndex + 1];
@@ -69,9 +72,6 @@ public final class ColorBlending
             blendContext.lineBuffer[outputIndex    ] = sumR;
             blendContext.lineBuffer[outputIndex + 1] = sumG;
             blendContext.lineBuffer[outputIndex + 2] = sumB;
-
-            int lowerSampleIndexX = blendConfig.getSampleFromBlock(lowerFilter) - blendContext.sampleMinX;
-            int lowerSampleIndex  = lineFirst + Array2c.ELEMENT_SIZE * lowerSampleIndexX;
 
             float lowerSampleR = blendContext.samples[lowerSampleIndex    ];
             float lowerSampleG = blendContext.samples[lowerSampleIndex + 1];

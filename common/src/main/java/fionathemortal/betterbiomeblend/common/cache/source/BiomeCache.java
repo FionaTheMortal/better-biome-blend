@@ -1,4 +1,4 @@
-package fionathemortal.betterbiomeblend.common.cache;
+package fionathemortal.betterbiomeblend.common.cache.source;
 
 public final class BiomeCache extends SliceCache<BiomeSlice>
 {

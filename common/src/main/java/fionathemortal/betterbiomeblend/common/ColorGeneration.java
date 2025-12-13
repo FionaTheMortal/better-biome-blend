@@ -1,7 +1,8 @@
 package fionathemortal.betterbiomeblend.common;
 
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
-import fionathemortal.betterbiomeblend.common.cache.ColorCache;
+import fionathemortal.betterbiomeblend.common.cache.output.BlendChunk;
+import fionathemortal.betterbiomeblend.common.cache.source.ColorCache;
 import fionathemortal.betterbiomeblend.common.debug.Debug;
 import fionathemortal.betterbiomeblend.common.debug.DebugEvent;
 import fionathemortal.betterbiomeblend.common.debug.DebugEventType;
@@ -9,8 +10,6 @@ import fionathemortal.betterbiomeblend.common.util.*;
 
 import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.Level;
-
-import java.util.Arrays;
 
 public final class ColorGeneration
 {
@@ -104,8 +103,6 @@ public final class ColorGeneration
                 colorCache,
                 blendContext);
 
-            // Arrays.fill(blendContext.samples, 1.0f);
-
             if (!blendContext.isSingleColor())
             {
                 DebugEvent subEvent = Debug.pushSubevent(DebugEventType.SUBEVENT);
@@ -135,7 +132,7 @@ public final class ColorGeneration
         ColorResolver colorResolver,
         int           colorType,
         ColorCache    colorCache,
-        BlendChunk    blendChunk,
+        BlendChunk blendChunk,
         int           blockX,
         int           blockY,
         int           blockZ)

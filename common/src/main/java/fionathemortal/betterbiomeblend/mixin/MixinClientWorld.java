@@ -2,7 +2,10 @@ package fionathemortal.betterbiomeblend.mixin;
 
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
 import fionathemortal.betterbiomeblend.common.*;
-import fionathemortal.betterbiomeblend.common.cache.ColorCache;
+import fionathemortal.betterbiomeblend.common.cache.output.BlendCache;
+import fionathemortal.betterbiomeblend.common.cache.output.BlendChunk;
+import fionathemortal.betterbiomeblend.common.cache.output.LocalCache;
+import fionathemortal.betterbiomeblend.common.cache.source.ColorCache;
 import fionathemortal.betterbiomeblend.common.compat.CustomColorResolverCompatibility;
 import fionathemortal.betterbiomeblend.common.debug.Debug;
 import fionathemortal.betterbiomeblend.common.util.Array3i;
@@ -145,8 +148,6 @@ public abstract class MixinClientWorld extends Level
                 chunk = cachedChunk;
             }
         }
-
-        Debug.countThreadLocalChunk(chunk);
 
         if (chunk == null)
         {

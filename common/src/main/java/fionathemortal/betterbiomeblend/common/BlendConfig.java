@@ -8,20 +8,20 @@ public final class BlendConfig
     public static final BlendConfig[]
     blendConfigs =
     {
-        new BlendConfig( 0, 4, 0, 0),
-        new BlendConfig( 1, 4, 0, 0),
-        new BlendConfig( 2, 4, 0, 0),
-        new BlendConfig( 3, 4, 0, 0),
-        new BlendConfig( 4, 4, 0, 0),
-        new BlendConfig( 5, 4, 0, 0),
-        new BlendConfig( 6, 4, 0, 0),
-        new BlendConfig( 7, 4, 0, 0),
-        new BlendConfig( 8, 4, 0, 0),
-        new BlendConfig( 9, 4, 0, 0),
-        new BlendConfig(10, 4, 0, 0),
-        new BlendConfig(11, 4, 0, 0),
-        new BlendConfig(12, 4, 0, 0),
-        new BlendConfig(13, 4, 0, 0),
+        new BlendConfig( 0, 4, 0, 2),
+        new BlendConfig( 1, 4, 0, 2),
+        new BlendConfig( 2, 3, 1, 2),
+        new BlendConfig( 3, 3, 1, 2),
+        new BlendConfig( 4, 3, 1, 2),
+        new BlendConfig( 5, 3, 1, 2),
+        new BlendConfig( 6, 2, 2, 2),
+        new BlendConfig( 7, 2, 2, 2),
+        new BlendConfig( 8, 2, 2, 2),
+        new BlendConfig( 9, 2, 2, 2),
+        new BlendConfig(10, 2, 2, 2),
+        new BlendConfig(11, 2, 2, 2),
+        new BlendConfig(12, 2, 2, 2),
+        new BlendConfig(13, 2, 2, 2),
         new BlendConfig(14, 2, 2, 2)
     };
 

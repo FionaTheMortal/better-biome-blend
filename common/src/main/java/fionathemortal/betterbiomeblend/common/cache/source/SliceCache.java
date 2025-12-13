@@ -1,4 +1,4 @@
-package fionathemortal.betterbiomeblend.common.cache;
+package fionathemortal.betterbiomeblend.common.cache.source;
 
 import fionathemortal.betterbiomeblend.common.BlendConfig;
 import fionathemortal.betterbiomeblend.common.util.Utility;

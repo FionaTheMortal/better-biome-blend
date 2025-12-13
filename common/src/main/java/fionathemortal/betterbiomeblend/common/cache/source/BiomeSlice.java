@@ -1,4 +1,4 @@
-package fionathemortal.betterbiomeblend.common.cache;
+package fionathemortal.betterbiomeblend.common.cache.source;
 
 import net.minecraft.world.level.biome.Biome;
 
