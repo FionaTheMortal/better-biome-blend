@@ -3,10 +3,10 @@ package fionathemortal.betterbiomeblend.fabric.compat.sodium;
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
 import fionathemortal.betterbiomeblend.common.ColorConfig;
 
-public class SodiumBlendConfig
+public class SodiumConfig
 {
     public static final ColorConfig[]
-    blendConfigs =
+    configs =
     {
         new ColorConfig( 0, 4, 0, 0),
         new ColorConfig( 1, 4, 0, 0),
@@ -32,13 +32,13 @@ public class SodiumBlendConfig
 
         int blendRadius = BetterBiomeBlendClient.getBlendRadiusSetting();
 
-        if (blendRadius >= 0 && blendRadius < blendConfigs.length)
+        if (blendRadius >= 0 && blendRadius < configs.length)
         {
-            result = blendConfigs[blendRadius];
+            result = configs[blendRadius];
         }
         else
         {
-            result = blendConfigs[blendConfigs.length - 1];
+            result = configs[configs.length - 1];
         }
 
         return result;

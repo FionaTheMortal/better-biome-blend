@@ -1,6 +1,6 @@
 package fionathemortal.betterbiomeblend.common;
 
-import fionathemortal.betterbiomeblend.common.compat.ColorResolverCompat;
+import fionathemortal.betterbiomeblend.common.compat.CustomColorResolver;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.world.level.ColorResolver;
 
@@ -32,7 +32,7 @@ public final class ColorType
         }
         else
         {
-            result = ColorResolverCompat.getColorType(resolver);
+            result = CustomColorResolver.getColorType(resolver);
         }
 
         return result;

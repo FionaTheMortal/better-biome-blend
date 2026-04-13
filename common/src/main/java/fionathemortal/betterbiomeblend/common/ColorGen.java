@@ -173,49 +173,4 @@ public final class ColorGen
 
         context.releaseOutput();
     }
-
-    public static void
-    genColors(
-        Level         world,
-        ColorResolver colorResolver,
-        int           colorType,
-        ColorConfig   config,
-        SliceCache    cache,
-        int           blockMinX,
-        int           blockMinY,
-        int           blockMinZ,
-        int           blockDimX,
-        int           blockDimY,
-        int           blockDimZ,
-        int[]         output,
-        int           outputMinX,
-        int           outputMinY,
-        int           outputMinZ,
-        int           outputArrayDimX,
-        int           outputArrayDimY)
-    {
-        ColorGenContext context = gatherColors(
-            world,
-            colorResolver,
-            colorType,
-            config,
-            cache,
-            blockMinX,
-            blockMinY,
-            blockMinZ,
-            blockDimX,
-            blockDimY,
-            blockDimZ);
-
-        blendColors(
-            context,
-            output,
-            outputMinX,
-            outputMinY,
-            outputMinZ,
-            outputArrayDimX,
-            outputArrayDimY);
-
-        endChunkGen(context);
-    }
 }

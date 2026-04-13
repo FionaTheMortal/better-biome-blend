@@ -82,9 +82,9 @@ public class MixinBiomeColorCache
         int maxY = bbb$baseY + Util.CHUNK_SIZE + MARGIN;
         int maxZ = bbb$baseZ + Util.CHUNK_SIZE + MARGIN;
 
-        int clampedX = Mth.clamp(blockX, minX, maxX);
-        int clampedY = Mth.clamp(blockY, minY, maxY);
-        int clampedZ = Mth.clamp(blockZ, minZ, maxZ);
+        int clampedX = Mth.clamp(blockX, minX, maxX - 1);
+        int clampedY = Mth.clamp(blockY, minY, maxY - 1);
+        int clampedZ = Mth.clamp(blockZ, minZ, maxZ - 1);
 
         int relX = clampedX - minX;
         int relY = clampedY - minY;

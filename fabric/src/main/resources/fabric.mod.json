@@ -8,8 +8,8 @@
     "FionaTheMortal"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "homepage": "",
+    "sources": "https://github.com/FionaTheMortal/better-biome-blend"
   },
   "license": "LGPL",
   "icon": "assets/betterbiomeblend/icon.png",
@@ -20,7 +20,7 @@
     ]
   },
   "mixins": [
-    "betterbiomeblend.mixins.json",
+    "betterbiomeblend-sodium.mixins.json",
     "betterbiomeblend-common.mixins.json"
   ],
   "depends": {

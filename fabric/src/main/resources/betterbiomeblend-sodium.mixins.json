@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "package": "fionathemortal.betterbiomeblend.fabric.compat.sodium.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "MixinBlockColorCache",
+    "MixinSodiumGameOptionPages",
+    "MixinClientLevel",
+    "WorldSliceAccessor"
+  ],
+  "mixins": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

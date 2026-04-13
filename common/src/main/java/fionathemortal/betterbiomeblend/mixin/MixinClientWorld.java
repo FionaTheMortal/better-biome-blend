@@ -38,7 +38,7 @@ public abstract class MixinClientWorld
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void
-    onInit(CallbackInfo ci)
+    bbb$onInit(CallbackInfo ci)
     {
         bbb$initLock = new ReentrantLock();
 
@@ -47,7 +47,7 @@ public abstract class MixinClientWorld
 
     @Inject(method = "clearTintCaches", at = @At("HEAD"))
     public void
-    onClearTintCaches(CallbackInfo ci)
+    bbb$onClearTintCaches(CallbackInfo ci)
     {
         ColorSource colorSource = bbb$colorSource;
 
@@ -61,7 +61,7 @@ public abstract class MixinClientWorld
 
     @Inject(method = "onChunkLoaded", at = @At("HEAD"))
     public void
-    onOnChunkLoaded(ChunkPos chunkPos, CallbackInfo ci)
+    bbb$onOnChunkLoaded(ChunkPos chunkPos, CallbackInfo ci)
     {
         ColorSource colorSource = bbb$colorSource;
 

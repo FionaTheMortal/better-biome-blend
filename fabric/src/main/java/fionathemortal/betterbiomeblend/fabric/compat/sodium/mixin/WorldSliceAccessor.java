@@ -1,4 +1,4 @@
-package fionathemortal.betterbiomeblend.fabric.mixin.sodium;
+package fionathemortal.betterbiomeblend.fabric.compat.sodium.mixin;
 
 import me.jellysquid.mods.sodium.client.world.WorldSlice;
 import org.spongepowered.asm.mixin.Mixin;

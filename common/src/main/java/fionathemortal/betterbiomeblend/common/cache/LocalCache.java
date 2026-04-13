@@ -2,7 +2,7 @@ package fionathemortal.betterbiomeblend.common.cache;
 
 import fionathemortal.betterbiomeblend.common.ColorType;
 import fionathemortal.betterbiomeblend.common.ColorSource;
-import fionathemortal.betterbiomeblend.common.compat.ColorResolverCompat;
+import fionathemortal.betterbiomeblend.common.compat.CustomColorResolver;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.world.level.ColorResolver;
 
@@ -45,7 +45,7 @@ public final class LocalCache
         }
         else
         {
-            result = ColorResolverCompat.getColorType(colorResolver);
+            result = CustomColorResolver.getColorType(colorResolver);
 
             ensureColorTypeSupport(result);
         }

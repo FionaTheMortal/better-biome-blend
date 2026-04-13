@@ -6,7 +6,7 @@ import net.minecraft.world.level.ColorResolver;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
-public final class ColorResolverCompat
+public final class CustomColorResolver
 {
     public static final ReentrantLock                             lock                = new ReentrantLock();
     public static final ConcurrentHashMap<ColorResolver, Integer> knownColorResolvers = new ConcurrentHashMap<>();

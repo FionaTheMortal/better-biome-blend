@@ -1,13 +1,9 @@
-package fionathemortal.betterbiomeblend.fabric.mixin.sodium;
+package fionathemortal.betterbiomeblend.fabric.compat.sodium.mixin;
 
 import fionathemortal.betterbiomeblend.common.ColorConfig;
-import fionathemortal.betterbiomeblend.common.ColorSource;
-import fionathemortal.betterbiomeblend.common.cache.LocalCache;
 import fionathemortal.betterbiomeblend.common.cache.SliceCache;
-import fionathemortal.betterbiomeblend.fabric.compat.sodium.SodiumBlendConfig;
+import fionathemortal.betterbiomeblend.fabric.compat.sodium.SodiumConfig;
 import fionathemortal.betterbiomeblend.fabric.compat.sodium.SourceCacheProvider;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
-import net.minecraft.client.color.block.BlockTintCache;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.level.ChunkPos;
 import org.spongepowered.asm.mixin.Mixin;
@@ -36,7 +32,7 @@ public abstract class MixinClientLevel implements SourceCacheProvider
 
     @Inject(method = "clearTintCaches", at = @At("HEAD"))
     public void
-    onClearTintCaches(CallbackInfo ci)
+    bbb$sodium$onClearTintCaches(CallbackInfo ci)
     {
         SliceCache cache = bbb$sodium$sourceCache;
 
@@ -50,7 +46,7 @@ public abstract class MixinClientLevel implements SourceCacheProvider
 
     @Inject(method = "onChunkLoaded", at = @At("HEAD"))
     public void
-    onOnChunkLoaded(ChunkPos chunkPos, CallbackInfo ci)
+    bbb$sodium$onOnChunkLoaded(ChunkPos chunkPos, CallbackInfo ci)
     {
         SliceCache cache = bbb$sodium$sourceCache;
 
@@ -77,7 +73,7 @@ public abstract class MixinClientLevel implements SourceCacheProvider
 
             if (result == null)
             {
-                ColorConfig config = SodiumBlendConfig.getCurrentConfig();
+                ColorConfig config = SodiumConfig.getCurrentConfig();
 
                 result = new SliceCache(config, config.getSourceConfig(), 512, 0);
 

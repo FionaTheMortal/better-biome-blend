@@ -1,9 +1,9 @@
-package fionathemortal.betterbiomeblend.fabric.mixin.sodium;
+package fionathemortal.betterbiomeblend.fabric.compat.sodium.mixin;
 
 import fionathemortal.betterbiomeblend.common.ColorType;
-import fionathemortal.betterbiomeblend.common.ColorGen;
 import fionathemortal.betterbiomeblend.common.cache.SliceCache;
 import fionathemortal.betterbiomeblend.common.util.Array3i;
+import fionathemortal.betterbiomeblend.fabric.compat.sodium.SodiumColorGen;
 import fionathemortal.betterbiomeblend.fabric.compat.sodium.SourceCacheProvider;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import me.jellysquid.mods.sodium.client.world.WorldSlice;
@@ -40,10 +40,11 @@ public class MixinBlockColorCache
 
     @Inject(
         method = "<init>",
-        at = @At("TAIL")
+        at = @At("TAIL"),
+        remap = false
     )
     public void
-    constructorTail(WorldSlice slice, int radius, CallbackInfo ci)
+    bbb$onInit(WorldSlice slice, int radius, CallbackInfo ci)
     {
         bbb$world = ((WorldSliceAccessor)slice).getWorld();
 
@@ -81,7 +82,7 @@ public class MixinBlockColorCache
 
             int colorType = ColorType.getColorTypeFromResolver(resolver);
 
-            ColorGen.genColors(
+            SodiumColorGen.genColors(
                 bbb$world,
                 resolver,
                 colorType,

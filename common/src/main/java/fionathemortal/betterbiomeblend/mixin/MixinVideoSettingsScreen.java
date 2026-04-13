@@ -26,9 +26,14 @@ public abstract class MixinVideoSettingsScreen extends OptionsSubScreen
         super(screen, options, component);
     }
 
-    @ModifyArg(method = "init", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/OptionsList;addBig(Lnet/minecraft/client/OptionInstance;)I"), index = 0)
+    @ModifyArg(
+        method = "init",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/gui/components/OptionsList;addBig(Lnet/minecraft/client/OptionInstance;)I"),
+            index = 0)
     private OptionInstance<?>
-    modifyAddBig(OptionInstance<?> argument)
+    bbb$modifyAddBig(OptionInstance<?> argument)
     {
         OptionInstance<?> result = argument;
 

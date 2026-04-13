@@ -1,4 +1,4 @@
-package fionathemortal.betterbiomeblend.fabric.mixin.sodium;
+package fionathemortal.betterbiomeblend.fabric.compat.sodium.mixin;
 
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
 import me.jellysquid.mods.sodium.client.gui.SodiumGameOptionPages;
@@ -34,13 +34,13 @@ public class MixinSodiumGameOptionPages
         locals = LocalCapture.CAPTURE_FAILSOFT,
         remap = false)
     private static void
-    quality(CallbackInfoReturnable<OptionPage> cir, List<OptionGroup> groups)
+    bbb$quality(CallbackInfoReturnable<OptionPage> cir, List<OptionGroup> groups)
     {
         groups.add(OptionGroup.createBuilder()
             .add(OptionImpl.createBuilder(int.class, vanillaOpts)
                 .setName(Component.translatable("bbb.biomeBlendRadius"))
                 .setTooltip(Component.translatable("bbb.biomeBlendRadius.tooltip"))
-                .setControl(option -> new SliderControl(option, 0, 13, 1, ControlValueFormatter.biomeBlend()))
+                .setControl(option -> new SliderControl(option, 0, 14, 1, ControlValueFormatter.biomeBlend()))
                 .setBinding((opts, value) -> BetterBiomeBlendClient.betterBiomeBlendRadius.set(value), opts -> BetterBiomeBlendClient.betterBiomeBlendRadius.get())
                 .setImpact(OptionImpact.LOW)
                 .setFlags(OptionFlag.REQUIRES_RENDERER_RELOAD)

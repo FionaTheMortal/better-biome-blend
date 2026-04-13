@@ -13,7 +13,7 @@ public abstract class MixinOptions
 {
     @Inject(method = "processOptions", at = @At("HEAD"))
     private void
-    injectHandle(Options.FieldAccess fieldAccess, CallbackInfo info)
+    bbb$onProcessOptions(Options.FieldAccess fieldAccess, CallbackInfo info)
     {
         fieldAccess.process("betterBiomeBlendRadius", BetterBiomeBlendClient.betterBiomeBlendRadius);
     }
