@@ -1,11 +1,11 @@
-package fionathemortal.betterbiomeblend.forge.compat.embeddium.mixin;
+package fionathemortal.betterbiomeblend.fabric.compat.sodium.mixin;
 
 import fionathemortal.betterbiomeblend.common.ColorConfig;
 import fionathemortal.betterbiomeblend.common.cache.Slice;
 import fionathemortal.betterbiomeblend.common.util.Array3i;
 import fionathemortal.betterbiomeblend.common.util.Util;
-import fionathemortal.betterbiomeblend.forge.compat.embeddium.EmbeddiumColorGen;
-import fionathemortal.betterbiomeblend.forge.compat.embeddium.EmbeddiumConfig;
+import fionathemortal.betterbiomeblend.fabric.compat.sodium.SodiumColorGen;
+import fionathemortal.betterbiomeblend.fabric.compat.sodium.SodiumConfig;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import me.jellysquid.mods.sodium.client.world.biome.BiomeColorCache;
 import me.jellysquid.mods.sodium.client.world.biome.BiomeSlice;
@@ -99,9 +99,9 @@ public class MixinBiomeColorCache
 
         if (!bbb$isValid(colors))
         {
-            ColorConfig config = EmbeddiumConfig.getCurrentConfig();
+            ColorConfig config = SodiumConfig.getCurrentConfig();
 
-            EmbeddiumColorGen.genColors(
+            SodiumColorGen.genColors(
                 biomeData,
                 resolver,
                 config,

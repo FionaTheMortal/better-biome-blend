@@ -1,29 +1,36 @@
 {
-  "schemaVersion": 1,
-  "id": "betterbiomeblend",
-  "version": "${version}",
-  "name": "Better Biome Blend",
-  "description": "    This mod increases the biome color blending radius and replaces the original blending algorithm with a more efficient one.",
-  "authors": [
-    "FionaTheMortal"
-  ],
-  "contact": {
-    "homepage": "",
-    "sources": "https://github.com/FionaTheMortal/better-biome-blend"
-  },
-  "license": "LGPL",
-  "icon": "assets/betterbiomeblend/icon.png",
-  "environment": "*",
-  "entrypoints": {
-    "client": [
-      "fionathemortal.betterbiomeblend.fabric.BetterBiomeBlendFabric"
-    ]
-  },
-  "mixins": [
-    "betterbiomeblend-sodium.mixins.json",
-    "betterbiomeblend-common.mixins.json"
-  ],
-  "depends": {
-    "minecraft": ">=1.19.2"
-  }
+    "schemaVersion": 1,
+    "id": "betterbiomeblend",
+    "version": "${version}",
+    "name": "${mod_name}",
+    "description": "${description}",
+    "authors": [
+        "${mod_author}"
+    ],
+    "contact": {
+        "homepage": "",
+        "sources": "https://github.com/FionaTheMortal/better-biome-blend/"
+    },
+    "license": "${license}",
+    "icon": "assets/betterbiomeblend/${mod_id}.png",
+    "environment": "*",
+    "entrypoints": {
+        "client": [
+            "fionathemortal.betterbiomeblend.fabric.BetterBiomeBlendFabric"
+        ]
+    },
+    "mixins": [
+        "${mod_id}.mixins.json",
+        "${mod_id}-sodium.mixins.json"
+    ],
+    "depends": {
+        "fabricloader": ">=0.14",
+        "fabric": "*",
+        "minecraft": "${minecraft_version}",
+        "java": ">=17"
+    },
+    "suggests": {
+        "another-mod": "*"
+    }
 }
+  

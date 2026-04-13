@@ -19,14 +19,5 @@ public class BetterBiomeBlendForge
                 () -> "client-only",
                 (v, n) -> n)
         );
-
-        DistExecutor.unsafeRunWhenOn(
-            Dist.CLIENT,
-            () ->
-                () ->
-                {
-                    MinecraftForge.EVENT_BUS.register(BetterBiomeBlendForgeClient.class);
-                }
-        );
     }
 }

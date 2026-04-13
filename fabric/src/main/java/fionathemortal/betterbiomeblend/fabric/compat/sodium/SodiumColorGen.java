@@ -1,12 +1,10 @@
 package fionathemortal.betterbiomeblend.fabric.compat.sodium;
 
 import fionathemortal.betterbiomeblend.common.ColorConfig;
-import fionathemortal.betterbiomeblend.common.ColorGather;
 import fionathemortal.betterbiomeblend.common.ColorGen;
 import fionathemortal.betterbiomeblend.common.ColorGenContext;
-import fionathemortal.betterbiomeblend.common.cache.SliceCache;
+import me.jellysquid.mods.sodium.client.world.biome.BiomeSlice;
 import net.minecraft.world.level.ColorResolver;
-import net.minecraft.world.level.Level;
 
 public final class SodiumColorGen
 {
@@ -33,11 +31,9 @@ public final class SodiumColorGen
 
     public static ColorGenContext
     gatherColors(
-        Level         world,
+        BiomeSlice source,
         ColorResolver resolver,
-        int           colorType,
         ColorConfig   config,
-        SliceCache    sourceCache,
         int           blockMinX,
         int           blockMinY,
         int           blockMinZ,
@@ -55,23 +51,16 @@ public final class SodiumColorGen
             blockDimY,
             blockDimZ);
 
-        ColorGather.gatherColors(
-            world,
-            resolver,
-            colorType,
-            sourceCache,
-            context);
+        SodiumColorGather.gatherColors(source, resolver, context);
 
         return context;
     }
 
     public static void
     genColors(
-        Level         world,
-        ColorResolver colorResolver,
-        int           colorType,
+        BiomeSlice    source,
+        ColorResolver resolver,
         ColorConfig   config,
-        SliceCache    cache,
         int           blockMinX,
         int           blockMinY,
         int           blockMinZ,
@@ -86,11 +75,9 @@ public final class SodiumColorGen
         int           outputArrayDimY)
     {
         ColorGenContext context = gatherColors(
-            world,
-            colorResolver,
-            colorType,
+            source,
+            resolver,
             config,
-            cache,
             blockMinX,
             blockMinY,
             blockMinZ,

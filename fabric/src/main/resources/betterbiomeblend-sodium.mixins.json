@@ -2,11 +2,11 @@
   "required": true,
   "package": "fionathemortal.betterbiomeblend.fabric.compat.sodium.mixin",
   "compatibilityLevel": "JAVA_17",
+  "minVersion": "0.8",
+  "refmap": "${mod_id}.refmap.json",
   "client": [
-    "MixinBlockColorCache",
     "MixinSodiumGameOptionPages",
-    "MixinClientLevel",
-    "WorldSliceAccessor"
+    "MixinBiomeColorCache"
   ],
   "mixins": [
   ],
