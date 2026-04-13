@@ -32,8 +32,6 @@ dependencies {
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive = false }
-
-    modImplementation "maven.modrinth:embeddium:0.3.18.1+mc1.19.2"
 }
 
 processResources {
