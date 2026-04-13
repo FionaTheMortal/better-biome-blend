@@ -1,17 +1,13 @@
 package fionathemortal.betterbiomeblend.common;
 
-import fionathemortal.betterbiomeblend.common.cache.source.ColorCache;
-import fionathemortal.betterbiomeblend.common.cache.source.ColorSlice;
+import fionathemortal.betterbiomeblend.common.cache.Slice;
+import fionathemortal.betterbiomeblend.common.cache.SliceCache;
 import fionathemortal.betterbiomeblend.common.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.Registry;
 import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.biome.Biomes;
-import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkStatus;
 
 public final class ColorGather
 {
@@ -19,108 +15,18 @@ public final class ColorGather
     public static final int SAMPLE_SEED_Y = 214013;
     public static final int SAMPLE_SEED_Z = 16807;
 
-    private static final int UNITIALIZED_COLOR = 0;
-
-    private static final int CHUNK_SAFETY_MARGIN = 2;
-
-
-    private static boolean
-    isRegionLoadedForSampling(
-        Level world,
-        int   blockMinX,
-        int   blockMinZ,
-        int   blockMaxX,
-        int   blockMaxZ)
-    {
-        boolean result = true;
-
-        int marginMinX = blockMinX - CHUNK_SAFETY_MARGIN;
-        int marginMinZ = blockMinZ - CHUNK_SAFETY_MARGIN;
-
-        int marginMaxX = blockMaxX + CHUNK_SAFETY_MARGIN;
-        int marginMaxZ = blockMaxZ + CHUNK_SAFETY_MARGIN;
-
-        int chunkMinX = Utility.blockToChunk(marginMinX);
-        int chunkMinZ = Utility.blockToChunk(marginMinZ);
-
-        int chunkMaxX = Utility.blockToChunk(marginMaxX + 15);
-        int chunkMaxZ = Utility.blockToChunk(marginMaxZ + 15);
-
-        outerLoop:
-        for (int chunkZ = chunkMinZ;
-             chunkZ < chunkMaxZ;
-             ++chunkZ)
-        {
-            for (int chunkX = chunkMinX;
-                 chunkX < chunkMaxX;
-                 ++chunkX)
-            {
-                ChunkAccess chunk = world.getChunk(chunkX, chunkZ, ChunkStatus.BIOMES, false);
-
-                if (chunk == null)
-                {
-                    result = false;
-                    break outerLoop;
-                }
-            }
-        }
-
-        return result;
-    }
-
-    private static boolean
-    isBlockLoadedForSampling(
-            Level world,
-            int   blockMinX,
-            int   blockMinZ)
-    {
-        boolean result = isRegionLoadedForSampling(world, blockMinX, blockMinZ, blockMinX + 1, blockMinZ + 1);
-
-        return result;
-    }
-
-    private static boolean
-    isRegionLoadedForBlending(Level world, BlendContext blendContext)
-    {
-        boolean result = isRegionLoadedForSampling(
-            world,
-            blendContext.sampleBlockMinX,
-            blendContext.sampleBlockMinZ,
-            blendContext.sampleBlockMaxX,
-            blendContext.sampleBlockMaxZ);
-
-        return result;
-    }
+    private static final int INVALID_COLOR = 0;
 
     public static Biome
-    getDefaultBiome(Level world)
+    getBiomeForBlock(Level world, BlockPos blockPosition)
     {
         Biome result = null;
-
-        Holder<Biome> biomeHolder = world.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getHolderOrThrow(Biomes.PLAINS);
-
-        if (biomeHolder.isBound())
-        {
-            result = biomeHolder.value();
-        }
-
-        return result;
-    }
-
-    public static Biome
-    getBiomeForBlockOrDefault(Level world, BlockPos blockPosition)
-    {
-        Biome result;
 
         Holder<Biome> biomeHolder = world.getBiome(blockPosition);
 
         if (biomeHolder.isBound())
         {
             result = biomeHolder.value();
-        }
-        else
-        {
-            result = getDefaultBiome(world);
         }
 
         return result;
@@ -131,7 +37,7 @@ public final class ColorGather
     {
         int result;
 
-        Biome biome = getBiomeForBlockOrDefault(world, blockPos);
+        Biome biome = getBiomeForBlock(world, blockPos);
 
         if (biome != null)
         {
@@ -148,10 +54,8 @@ public final class ColorGather
     public static int
     getRandomSamplePosition(int min, int blockSizeLog2, int seed)
     {
-        int blockMask = Utility.lowerBitMask(blockSizeLog2);
-
         int random = Random.noise(min, seed);
-        int offset = random & blockMask;
+        int offset = Util.lowerBits(random, blockSizeLog2);
         int result = min + offset;
 
         return result;
@@ -159,19 +63,15 @@ public final class ColorGather
 
     private static void
     gatherColorsInSlice(
-        Level         world,
-        ColorResolver colorResolver,
-        BlendContext  blendContext,
-        ColorSlice colorSlice,
-        int           sliceX,
-        int           sliceY,
-        int           sliceZ,
-        boolean       regionIsLoaded,
-        int           defaultColor)
+        Level           world,
+        ColorResolver   resolver,
+        ColorGenContext context,
+        Slice           slice,
+        int             sliceX,
+        int             sliceY,
+        int             sliceZ)
     {
-        final BlendConfig blendConfig = blendContext.blendConfig;
-
-        BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
+        final ColorConfig blendConfig = context.blendConfig;
 
         int sliceSampleMinX = blendConfig.getSampleFromSlice(sliceX);
         int sliceSampleMinY = blendConfig.getSampleFromSlice(sliceY);
@@ -181,25 +81,27 @@ public final class ColorGather
         int sliceSampleMaxY = blendConfig.getSampleFromSlice(sliceY + 1);
         int sliceSampleMaxZ = blendConfig.getSampleFromSlice(sliceZ + 1);
 
-        int sampleMinX = Math.max(blendContext.sampleMinX, sliceSampleMinX);
-        int sampleMinY = Math.max(blendContext.sampleMinY, sliceSampleMinY);
-        int sampleMinZ = Math.max(blendContext.sampleMinZ, sliceSampleMinZ);
+        int sampleMinX = Math.max(context.sampleMinX, sliceSampleMinX);
+        int sampleMinY = Math.max(context.sampleMinY, sliceSampleMinY);
+        int sampleMinZ = Math.max(context.sampleMinZ, sliceSampleMinZ);
 
-        int sampleMaxX = Math.min(blendContext.sampleMaxX, sliceSampleMaxX);
-        int sampleMaxY = Math.min(blendContext.sampleMaxY, sliceSampleMaxY);
-        int sampleMaxZ = Math.min(blendContext.sampleMaxZ, sliceSampleMaxZ);
+        int sampleMaxX = Math.min(context.sampleMaxX, sliceSampleMaxX);
+        int sampleMaxY = Math.min(context.sampleMaxY, sliceSampleMaxY);
+        int sampleMaxZ = Math.min(context.sampleMaxZ, sliceSampleMaxZ);
 
         int sliceMinX = sampleMinX - sliceSampleMinX;
         int sliceMinY = sampleMinY - sliceSampleMinY;
         int sliceMinZ = sampleMinZ - sliceSampleMinZ;
 
-        int blendMinX = sampleMinX - blendContext.sampleMinX;
-        int blendMinY = sampleMinY - blendContext.sampleMinY;
-        int blendMinZ = sampleMinZ - blendContext.sampleMinZ;
+        int blendMinX = sampleMinX - context.sampleMinX;
+        int blendMinY = sampleMinY - context.sampleMinY;
+        int blendMinZ = sampleMinZ - context.sampleMinZ;
 
         int sampleCountX = sampleMaxX - sampleMinX;
         int sampleCountY = sampleMaxY - sampleMinY;
         int sampleCountZ = sampleMaxZ - sampleMinZ;
+
+        BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
 
         for (int z = 0;
              z < sampleCountZ;
@@ -220,16 +122,16 @@ public final class ColorGather
                         sliceMinY + y,
                         sliceMinZ + z);
 
-                    int blendIndex = Array3c.getArrayIndex(
-                        blendContext.sampleCountX,
-                        blendContext.sampleCountY,
+                    int blendIndex = Array3i.getArrayIndex(
+                        context.sampleCountX,
+                        context.sampleCountY,
                         blendMinX + x,
                         blendMinY + y,
                         blendMinZ + z);
 
-                    int cachedColor = colorSlice.data[sliceIndex];
+                    int cachedColor = slice.blockColors[sliceIndex];
 
-                    if (cachedColor == UNITIALIZED_COLOR)
+                    if (cachedColor == INVALID_COLOR)
                     {
                         int sampleX = sampleMinX + x;
                         int sampleY = sampleMinY + y;
@@ -245,136 +147,57 @@ public final class ColorGather
 
                         blockPos.set(blockX, blockY, blockZ);
 
-                        if (regionIsLoaded || isBlockLoadedForSampling(world, blockX, blockZ))
-                        {
-                            cachedColor =  getColorForBlock(world, blockPos, blockX, blockZ, colorResolver);
+                        cachedColor = getColorForBlock(world, blockPos, blockX, blockZ, resolver);
 
-                            colorSlice.data[sliceIndex] = cachedColor;
-                        }
-                        else
-                        {
-                            cachedColor = defaultColor;
-                        }
+                        slice.blockColors[sliceIndex] = cachedColor;
                     }
 
-                    blendContext.setColorSample(cachedColor, blendIndex);
+                    context.setColorSample(cachedColor, blendIndex);
                 }
             }
         }
     }
 
-    private static int
-    getCenterColor(
-        Level         world,
-        ColorResolver colorResolver,
-        BlendContext  blendContext)
-    {
-        int centerX = (blendContext.blockMinX + blendContext.blockMaxX) / 2;
-        int centerY = (blendContext.blockMinY + blendContext.blockMaxY) / 2;
-        int centerZ = (blendContext.blockMinZ + blendContext.blockMaxZ) / 2;
-
-        BlockPos blockPos = new BlockPos(centerX, centerY, centerZ);
-
-        int result = getColorForBlock(world, blockPos, centerX, centerZ, colorResolver);
-
-        return result;
-    }
-
     public static void
-    gatherColorsForBlending(
-        Level         world,
-        ColorResolver colorResolver,
-        int           colorType,
-        ColorCache    colorCache,
-        BlendContext  blendContext)
+    gatherColors(
+        Level           world,
+        ColorResolver   colorResolver,
+        int             colorType,
+        SliceCache      cache,
+        ColorGenContext context)
     {
-        boolean regionIsLoaded = isRegionLoadedForBlending(world, blendContext);
-        int     defaultColor   = UNITIALIZED_COLOR;
-
-        if (!regionIsLoaded)
-        {
-            defaultColor = getCenterColor(world, colorResolver, blendContext);
-        }
-
-        final BlendConfig blendConfig = blendContext.blendConfig;
-
-        for (int sliceZ = blendContext.sliceMinZ;
-             sliceZ < blendContext.sliceMaxZ;
+        for (int sliceZ = context.sliceMinZ;
+             sliceZ < context.sliceMaxZ;
              ++sliceZ)
         {
-            for (int sliceY = blendContext.sliceMinY;
-                 sliceY < blendContext.sliceMaxY;
+            for (int sliceY = context.sliceMinY;
+                 sliceY < context.sliceMaxY;
                  ++sliceY)
             {
-                for (int sliceX = blendContext.sliceMinX;
-                     sliceX < blendContext.sliceMaxX;
+                for (int sliceX = context.sliceMinX;
+                     sliceX < context.sliceMaxX;
                      ++sliceX)
                 {
-                    ColorSlice slice = colorCache.getOrInitSlice(
-                        blendConfig.sliceSize,
+                    Slice slice = cache.getSlice(
                         sliceX,
                         sliceY,
                         sliceZ,
                         colorType,
+                        true,
                         false);
 
                     gatherColorsInSlice(
                         world,
                         colorResolver,
-                        blendContext,
+                        context,
                         slice,
                         sliceX,
                         sliceY,
-                        sliceZ,
-                        regionIsLoaded,
-                        defaultColor);
+                        sliceZ);
 
-                    colorCache.releaseSlice(slice);
+                    cache.releaseSlice(slice);
                 }
             }
-        }
-
-        if (!regionIsLoaded)
-        {
-            blendContext.colorBitsInclusive = defaultColor;
-            blendContext.colorBitsExclusive = defaultColor;
-        }
-    }
-
-    private static void
-    gatherColorsDirectly(
-        Level         world,
-        ColorResolver colorResolver,
-        int           colorType,
-        ColorCache    colorCache,
-        int           blockMinX,
-        int           blockMinY,
-        int           blockMinZ,
-        int[]         output,
-        int           outputMinX,
-        int           outputMinY,
-        int           outputMinZ,
-        int           outputDimX,
-        int           outputDimY,
-        int           outputDimZ,
-        int           outputStrideX,
-        int           outputStrideY,
-        int           outputStrideZ)
-    {
-        BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
-
-        int blockMaxX = blockMinX + outputDimX;
-        int blockMaxZ = blockMinZ + outputDimZ;
-
-        boolean regionIsLoaded = isRegionLoadedForSampling(world, blockMinX, blockMinZ, blockMaxX, blockMaxZ);
-
-        if (regionIsLoaded)
-        {
-
-        }
-        else
-        {
-            // TODO: Single color approximation
         }
     }
 }

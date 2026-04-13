@@ -1,28 +1,28 @@
 package fionathemortal.betterbiomeblend.common;
 
-public final class BlendConfig
-{
-    public static final int BIOME_BLEND_RADIUS_MIN = 0;
-    public static final int BIOME_BLEND_RADIUS_MAX = 14;
+import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
+import fionathemortal.betterbiomeblend.common.cache.CacheConfig;
 
-    public static final BlendConfig[]
+public final class ColorConfig
+{
+    public static final ColorConfig[]
     blendConfigs =
     {
-        new BlendConfig( 0, 4, 0, 2),
-        new BlendConfig( 1, 4, 0, 2),
-        new BlendConfig( 2, 3, 1, 2),
-        new BlendConfig( 3, 3, 1, 2),
-        new BlendConfig( 4, 3, 1, 2),
-        new BlendConfig( 5, 3, 1, 2),
-        new BlendConfig( 6, 2, 2, 2),
-        new BlendConfig( 7, 2, 2, 2),
-        new BlendConfig( 8, 2, 2, 2),
-        new BlendConfig( 9, 2, 2, 2),
-        new BlendConfig(10, 2, 2, 2),
-        new BlendConfig(11, 2, 2, 2),
-        new BlendConfig(12, 2, 2, 2),
-        new BlendConfig(13, 2, 2, 2),
-        new BlendConfig(14, 2, 2, 2)
+        new ColorConfig( 0, 4, 0, 0),
+        new ColorConfig( 1, 4, 0, 0),
+        new ColorConfig( 2, 3, 1, 0),
+        new ColorConfig( 3, 3, 1, 1),
+        new ColorConfig( 4, 3, 1, 0),
+        new ColorConfig( 5, 3, 1, 1),
+        new ColorConfig( 6, 2, 2, 2),
+        new ColorConfig( 7, 2, 2, 2),
+        new ColorConfig( 8, 2, 2, 0),
+        new ColorConfig( 9, 2, 2, 2),
+        new ColorConfig(10, 2, 2, 2),
+        new ColorConfig(11, 2, 2, 2),
+        new ColorConfig(12, 2, 2, 0),
+        new ColorConfig(13, 2, 2, 2),
+        new ColorConfig(14, 2, 2, 2)
     };
 
     public final int blendRadius;
@@ -38,12 +38,12 @@ public final class BlendConfig
     public final int sliceSizeLog2;
     public final int sliceSize;
 
-    // NOTE: The sample and slice coordinate offset in blocks
+    // NOTE: The sample and slice origin offset in blocks
 
     public final int baseOffset;
 
     public
-    BlendConfig(int blendRadius, int sliceSizeLog2, int sampleSizeLog2, int baseOffset)
+    ColorConfig(int blendRadius, int sliceSizeLog2, int sampleSizeLog2, int baseOffset)
     {
         this.blendRadius    = blendRadius;
         this.blendDim       = 2 * blendRadius + 1;
@@ -57,10 +57,12 @@ public final class BlendConfig
         this.baseOffset     = baseOffset;
     }
 
-    public static BlendConfig
-    getBlendConfigForBlendRadius(int blendRadius)
+    public static ColorConfig
+    getCurrentConfig()
     {
-        BlendConfig result;
+        ColorConfig result;
+
+        int blendRadius = BetterBiomeBlendClient.getBlendRadiusSetting();
 
         if (blendRadius >= 0 && blendRadius < blendConfigs.length)
         {
@@ -68,16 +70,24 @@ public final class BlendConfig
         }
         else
         {
-            result = blendConfigs[0];
+            result = blendConfigs[blendConfigs.length - 1];
         }
 
         return result;
     }
 
-    public int
-    ceilBlockToSample(int block)
+    public CacheConfig
+    getSourceConfig()
     {
-        int result = (block - baseOffset + sampleSize - 1) >> sampleSizeLog2;
+        CacheConfig result = new CacheConfig(sliceSizeLog2, sampleSizeLog2, baseOffset, 2);
+
+        return result;
+    }
+
+    public CacheConfig
+    getResultConfig()
+    {
+        CacheConfig result = new CacheConfig(4, 0, 0, blendRadius + 2);
 
         return result;
     }
@@ -91,11 +101,9 @@ public final class BlendConfig
     }
 
     public int
-    getSampleFromBlock(int block)
+    ceilBlockToSample(int block)
     {
-        int result = floorBlockToSample(block);
-
-        return result;
+        return floorBlockToSample(block + sampleSize - 1);
     }
 
     public int

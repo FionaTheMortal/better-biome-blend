@@ -5,6 +5,14 @@ public final class Array1c
     public static final int ELEMENT_SIZE = 3;
 
     public static int
+    getArrayIndex(int x)
+    {
+        int result = ELEMENT_SIZE * x;
+
+        return result;
+    }
+
+    public static int
     getSize(int dimX)
     {
         int result = ELEMENT_SIZE * dimX;

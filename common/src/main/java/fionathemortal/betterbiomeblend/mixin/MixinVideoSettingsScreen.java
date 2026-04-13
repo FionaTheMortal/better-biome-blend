@@ -1,10 +1,8 @@
 package fionathemortal.betterbiomeblend.mixin;
 
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.OptionInstance;
 import net.minecraft.client.Options;
-import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.OptionsList;
 import net.minecraft.client.gui.screens.OptionsSubScreen;
 import net.minecraft.client.gui.screens.Screen;
@@ -15,6 +13,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
+@SuppressWarnings("unused")
 @Mixin(value = VideoSettingsScreen.class)
 public abstract class MixinVideoSettingsScreen extends OptionsSubScreen
 {

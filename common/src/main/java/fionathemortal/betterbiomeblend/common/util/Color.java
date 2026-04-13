@@ -2,6 +2,8 @@ package fionathemortal.betterbiomeblend.common.util;
 
 public final class Color
 {
+    public static final int DEBUG_PINK = makeRGBAWithFullAlpha(0xFF, 0x00, 0xFF);
+
     public static final float[] sRGBLUT = new float[256];
 
     static
@@ -14,8 +16,6 @@ public final class Color
             sRGBLUT[i] = sRGBToLinear(color);
         }
     }
-
-    public static final int DEBUG_PINK = makeRGBAWithFullAlpha(0xFF, 0x00, 0xFF);
 
     public static int
     makeRGBAWithFullAlpha(int R, int G, int B)

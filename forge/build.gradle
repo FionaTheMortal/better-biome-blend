@@ -15,13 +15,13 @@ loom {
         extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
 
         mixinConfig "betterbiomeblend-common.mixins.json"
-        mixinConfig "betterbiomeblend.mixins.json"
+        mixinConfig "betterbiomeblend-embeddium.mixins.json"
     }
 }
 
 configurations {
     common
-    shadowCommon
+    shadowCommon // Don't use shadow from the shadow plugin since it *excludes* files.
     compileClasspath.extendsFrom common
     runtimeClasspath.extendsFrom common
     developmentForge.extendsFrom common
@@ -32,6 +32,8 @@ dependencies {
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive = false }
+
+    modImplementation "maven.modrinth:embeddium:0.3.18.1+mc1.19.2"
 }
 
 processResources {
@@ -47,17 +49,12 @@ shadowJar {
     exclude "architectury.common.json"
 
     configurations = [project.configurations.shadowCommon]
-    classifier "dev-shadow"
+    archiveClassifier = "dev-shadow"
 }
 
 remapJar {
     input.set shadowJar.archiveFile
     dependsOn shadowJar
-    classifier null
-}
-
-jar {
-    classifier "dev"
 }
 
 sourcesJar {

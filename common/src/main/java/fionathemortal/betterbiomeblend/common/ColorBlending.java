@@ -1,81 +1,117 @@
 package fionathemortal.betterbiomeblend.common;
 
-import fionathemortal.betterbiomeblend.common.util.Array2c;
-import fionathemortal.betterbiomeblend.common.util.Array3c;
-import fionathemortal.betterbiomeblend.common.util.Array3i;
-import fionathemortal.betterbiomeblend.common.util.Color;
+import fionathemortal.betterbiomeblend.common.util.*;
 
 import java.util.Arrays;
 
 public final class ColorBlending
 {
-    private static void
-    blendColorsInLine(BlendContext blendContext, BlendConfig blendConfig, int sampleIndexY, int sampleIndexZ)
+    private static int
+    getSampleContribution(ColorConfig blendConfig, int blockMin, int blockMax, int sample)
     {
-        int lineFirst = Array3c.getArrayIndex(
-            blendContext.sampleCountX,
-            blendContext.sampleCountY,
+        int sampleMin = blendConfig.getBlockFromSample(sample);
+        int sampleMax = sampleMin + blendConfig.sampleSize;
+
+        int overlapMin = Math.max(sampleMin, blockMin);
+        int overlapMax = Math.min(sampleMax, blockMax);
+
+        int contribution = overlapMax - overlapMin;
+
+        int result = Math.max(0, contribution);
+
+        return result;
+    }
+
+    private static void
+    copyLineForBlending(ColorGenContext context, int sampleIndexY, int sampleIndexZ)
+    {
+        int lineFirst = Array3i.getArrayIndex(
+            context.sampleCountX,
+            context.sampleCountY,
             0,
             sampleIndexY,
             sampleIndexZ);
 
-        int lowerFilter = blendContext.blockMinX - blendConfig.blendRadius;
-        int upperFilter = blendContext.blockMinX + blendConfig.blendRadius;
+        int dstIndex = 0;
+        int srcIndex = lineFirst;
+
+        for (int x = 0;
+            x < context.sampleCountX;
+            ++x)
+        {
+            int color = context.samples[srcIndex];
+
+            Color.sRGBByteToOKLabs(color, context.lineSamples, dstIndex);
+
+            srcIndex += 1;
+            dstIndex += Array3c.ELEMENT_SIZE;
+        }
+    }
+
+    private static void
+    blendColorsInLine(ColorGenContext context, ColorConfig blendConfig, int sampleIndexY, int sampleIndexZ)
+    {
+        copyLineForBlending(context, sampleIndexY, sampleIndexZ);
+
+        int lowerFilter = context.blockMinX - blendConfig.blendRadius;
+        int upperFilter = context.blockMinX + blendConfig.blendRadius;
 
         float sumR = 0;
         float sumG = 0;
         float sumB = 0;
 
-        for (int block = lowerFilter;
-             block < upperFilter;
-             ++block)
+        final int lowerFilterSample = blendConfig.floorBlockToSample(lowerFilter);
+        final int upperFilterSample = blendConfig.ceilBlockToSample(upperFilter);
+
+        for (int sampleX = lowerFilterSample;
+            sampleX < upperFilterSample;
+            ++sampleX)
         {
-            int sampleIndexX = blendConfig.getSampleFromBlock(block) - blendContext.sampleMinX;
+            int sampleIndex = sampleX - context.sampleMinX;
+            int sampleFirst = Array1c.getArrayIndex(sampleIndex);
 
-            int sampleIndex = lineFirst + Array3c.ELEMENT_SIZE * sampleIndexX;
+            float sampleR = context.lineSamples[sampleFirst    ];
+            float sampleG = context.lineSamples[sampleFirst + 1];
+            float sampleB = context.lineSamples[sampleFirst + 2];
 
-            float sampleR = blendContext.samples[sampleIndex    ];
-            float sampleG = blendContext.samples[sampleIndex + 1];
-            float sampleB = blendContext.samples[sampleIndex + 2];
+            float contribution = getSampleContribution(blendConfig, lowerFilter, upperFilter, sampleX);
 
-            sumR += sampleR;
-            sumG += sampleG;
-            sumB += sampleB;
+            sumR += sampleR * contribution;
+            sumG += sampleG * contribution;
+            sumB += sampleB * contribution;
         }
 
-        int lineRingBufferIndex = (sampleIndexY % blendContext.lineCount);
-
-        int outputDimX = blendContext.outputDimX;
-
-        int outputIndexY = Array2c.getArrayIndex(outputDimX, 0, lineRingBufferIndex);
+        final int outputRingBufferIndex = (sampleIndexY % context.lineCount);
+        final int outputDim = context.outputDimX;
+        final int outputLineBase = Array2c.getArrayIndex(outputDim, 0, outputRingBufferIndex);
 
         for (int x = 0;
-             x < outputDimX;
+             x < outputDim;
              ++x)
         {
-            int upperSampleIndexX = blendConfig.getSampleFromBlock(upperFilter) - blendContext.sampleMinX;
-            int lowerSampleIndexX = blendConfig.getSampleFromBlock(lowerFilter) - blendContext.sampleMinX;
+            int upperSampleIndex = blendConfig.floorBlockToSample(upperFilter) - context.sampleMinX;
+            int lowerSampleIndex = blendConfig.floorBlockToSample(lowerFilter) - context.sampleMinX;
 
-            int upperSampleIndex  = lineFirst + Array3c.ELEMENT_SIZE * upperSampleIndexX;
-            int lowerSampleIndex  = lineFirst + Array2c.ELEMENT_SIZE * lowerSampleIndexX;
+            int upperSampleFirst = Array1c.getArrayIndex(upperSampleIndex);
+            int lowerSampleFirst = Array1c.getArrayIndex(lowerSampleIndex);
 
-            float upperSampleR = blendContext.samples[upperSampleIndex    ];
-            float upperSampleG = blendContext.samples[upperSampleIndex + 1];
-            float upperSampleB = blendContext.samples[upperSampleIndex + 2];
+            float upperSampleR = context.lineSamples[upperSampleFirst    ];
+            float upperSampleG = context.lineSamples[upperSampleFirst + 1];
+            float upperSampleB = context.lineSamples[upperSampleFirst + 2];
 
             sumR += upperSampleR;
             sumG += upperSampleG;
             sumB += upperSampleB;
 
-            int outputIndex = outputIndexY + Array2c.ELEMENT_SIZE * x;
+            int outputIndex = outputLineBase + Array1c.getArrayIndex(x);
 
-            blendContext.lineBuffer[outputIndex    ] = sumR;
-            blendContext.lineBuffer[outputIndex + 1] = sumG;
-            blendContext.lineBuffer[outputIndex + 2] = sumB;
+            context.lineBuffer[outputIndex    ] = sumR;
+            context.lineBuffer[outputIndex + 1] = sumG;
+            context.lineBuffer[outputIndex + 2] = sumB;
 
-            float lowerSampleR = blendContext.samples[lowerSampleIndex    ];
-            float lowerSampleG = blendContext.samples[lowerSampleIndex + 1];
-            float lowerSampleB = blendContext.samples[lowerSampleIndex + 2];
+            float lowerSampleR = context.lineSamples[lowerSampleFirst    ];
+            float lowerSampleG = context.lineSamples[lowerSampleFirst + 1];
+            float lowerSampleB = context.lineSamples[lowerSampleFirst + 2];
 
             sumR -= lowerSampleR;
             sumG -= lowerSampleG;
@@ -87,93 +123,80 @@ public final class ColorBlending
     }
 
     private static void
-    accumulateLine(BlendContext blendContext, int lineIndex, int blockCount)
+    accumulateLine(ColorGenContext colorGenContext, int lineIndex, int blockCount)
     {
-        int dimX = blendContext.outputDimX;
-
-        int line = Array2c.getArrayIndex(dimX, 0, lineIndex);
+        final int dimX = colorGenContext.outputDimX;
+        final int line = Array2c.getArrayIndex(dimX, 0, lineIndex);
 
         for (int index = 0;
-             index < Array2c.ELEMENT_SIZE * dimX;
+             index < Array1c.ELEMENT_SIZE * dimX;
              ++index)
         {
-            blendContext.lineSum[index] += blockCount * blendContext.lineBuffer[line + index];
+            colorGenContext.lineSum[index] += blockCount * colorGenContext.lineBuffer[line + index];
         }
     }
 
     private static int
-    initLineBuffers(BlendContext blendContext, int planeIndex)
+    initLineBuffers(ColorGenContext colorGenContext, int planeIndex)
     {
-        Arrays.fill(blendContext.lineSum, 0.0f);
+        ColorConfig blendConfig = colorGenContext.blendConfig;
 
-        BlendConfig blendConfig = blendContext.blendConfig;
+        Arrays.fill(colorGenContext.lineSum, 0.0f);
 
-        int lowerFilter = blendContext.blockMinY - blendConfig.blendRadius;
-        int upperFilter = blendContext.blockMinY + blendConfig.blendRadius;
+        int lowerFilter = colorGenContext.blockMinY - blendConfig.blendRadius;
+        int upperFilter = colorGenContext.blockMinY + blendConfig.blendRadius;
 
-        int prevSampleIndexY = Integer.MIN_VALUE;
+        int lowerFilterSample = blendConfig.floorBlockToSample(lowerFilter);
+        int upperFilterSample = blendConfig.ceilBlockToSample(upperFilter);
 
-        int blockCount = 0;
+        int lastSampleIndexY = Integer.MIN_VALUE;
 
-        for (int y = lowerFilter;
-             y < upperFilter;
-             ++y, ++blockCount)
+        for (int sampleY = lowerFilterSample;
+            sampleY < upperFilterSample;
+            ++sampleY)
         {
-            int sampleIndexY = blendConfig.getSampleFromBlock(y) - blendContext.sampleMinY;
+            int sampleIndexY = sampleY - colorGenContext.sampleMinY;
+            int contribution = getSampleContribution(blendConfig, lowerFilter, upperFilter, sampleY);
 
-            if (sampleIndexY != prevSampleIndexY)
-            {
-                if (prevSampleIndexY != Integer.MIN_VALUE)
-                {
-                    accumulateLine(blendContext, prevSampleIndexY, blockCount);
-                }
+            blendColorsInLine(colorGenContext, blendConfig, sampleIndexY, planeIndex);
+            accumulateLine(colorGenContext, sampleIndexY, contribution);
 
-                blendColorsInLine(blendContext, blendConfig, sampleIndexY, planeIndex);
-
-                prevSampleIndexY = sampleIndexY;
-
-                blockCount = 0;
-            }
+            lastSampleIndexY = sampleIndexY;
         }
 
-        if (blockCount > 0)
-        {
-            accumulateLine(blendContext, prevSampleIndexY, blockCount);
-        }
-
-        return prevSampleIndexY;
+        return lastSampleIndexY;
     }
 
     private static void
-    blendColorsInPlane(BlendContext blendContext, BlendConfig blendConfig, int sampleIndexZ)
+    blendColorsInPlane(ColorGenContext colorGenContext, ColorConfig blendConfig, int sampleIndexZ)
     {
-        int prevLineIndex = initLineBuffers(blendContext, sampleIndexZ);
+        int prevLineIndex = initLineBuffers(colorGenContext, sampleIndexZ);
 
-        int outputDimX = blendContext.outputDimX;
-        int outputDimY = blendContext.outputDimY;
+        int outputDimX = colorGenContext.outputDimX;
+        int outputDimY = colorGenContext.outputDimY;
 
-        int planeRingBufferIndex = (sampleIndexZ % blendContext.planeCount);
+        int planeRingBufferIndex = (sampleIndexZ % colorGenContext.planeCount);
         int planeRingBufferFirst = Array3c.getArrayIndex(outputDimX, outputDimY, 0, 0, planeRingBufferIndex);
 
-        int lowerFilter = blendContext.blockMinY - blendConfig.blendRadius;
-        int upperFilter = blendContext.blockMinY + blendConfig.blendRadius;
+        int lowerFilter = colorGenContext.blockMinY - blendConfig.blendRadius;
+        int upperFilter = colorGenContext.blockMinY + blendConfig.blendRadius;
 
         for (int y = 0;
              y < outputDimY;
              ++y)
         {
-            int upperLineIndexY = blendConfig.getSampleFromBlock(upperFilter) - blendContext.sampleMinY;
-            int lowerLineIndexY = blendConfig.getSampleFromBlock(lowerFilter) - blendContext.sampleMinY;
+            int upperLineIndexY = blendConfig.floorBlockToSample(upperFilter) - colorGenContext.sampleMinY;
+            int lowerLineIndexY = blendConfig.floorBlockToSample(lowerFilter) - colorGenContext.sampleMinY;
 
             if (upperLineIndexY != prevLineIndex)
             {
-                blendColorsInLine(blendContext, blendConfig, upperLineIndexY, sampleIndexZ);
+                blendColorsInLine(colorGenContext, blendConfig, upperLineIndexY, sampleIndexZ);
 
                 prevLineIndex = upperLineIndexY;
             }
 
-            int upperLineFirst = Array2c.getArrayIndex(outputDimX, 0, upperLineIndexY % blendContext.lineCount);
-            int lowerLineFirst = Array2c.getArrayIndex(outputDimX, 0, lowerLineIndexY % blendContext.lineCount);
+            int upperLineFirst = Array2c.getArrayIndex(outputDimX, 0, upperLineIndexY % colorGenContext.lineCount);
+            int lowerLineFirst = Array2c.getArrayIndex(outputDimX, 0, lowerLineIndexY % colorGenContext.lineCount);
 
             int outputIndex = planeRingBufferFirst + Array2c.getArrayIndex(outputDimX, 0, y);
             int sampleIndex = 0;
@@ -185,25 +208,25 @@ public final class ColorBlending
                 int upperSampleIndex = upperLineFirst + sampleIndex;
                 int lowerSampleIndex = lowerLineFirst + sampleIndex;
 
-                float colorR = blendContext.lineSum[sampleIndex    ];
-                float colorG = blendContext.lineSum[sampleIndex + 1];
-                float colorB = blendContext.lineSum[sampleIndex + 2];
+                float colorR = colorGenContext.lineSum[sampleIndex    ];
+                float colorG = colorGenContext.lineSum[sampleIndex + 1];
+                float colorB = colorGenContext.lineSum[sampleIndex + 2];
 
-                colorR += blendContext.lineBuffer[upperSampleIndex    ];
-                colorG += blendContext.lineBuffer[upperSampleIndex + 1];
-                colorB += blendContext.lineBuffer[upperSampleIndex + 2];
+                colorR += colorGenContext.lineBuffer[upperSampleIndex    ];
+                colorG += colorGenContext.lineBuffer[upperSampleIndex + 1];
+                colorB += colorGenContext.lineBuffer[upperSampleIndex + 2];
 
-                blendContext.planeBuffer[outputIndex    ] = colorR;
-                blendContext.planeBuffer[outputIndex + 1] = colorG;
-                blendContext.planeBuffer[outputIndex + 2] = colorB;
+                colorGenContext.planeBuffer[outputIndex    ] = colorR;
+                colorGenContext.planeBuffer[outputIndex + 1] = colorG;
+                colorGenContext.planeBuffer[outputIndex + 2] = colorB;
 
-                colorR -= blendContext.lineBuffer[lowerSampleIndex    ];
-                colorG -= blendContext.lineBuffer[lowerSampleIndex + 1];
-                colorB -= blendContext.lineBuffer[lowerSampleIndex + 2];
+                colorR -= colorGenContext.lineBuffer[lowerSampleIndex    ];
+                colorG -= colorGenContext.lineBuffer[lowerSampleIndex + 1];
+                colorB -= colorGenContext.lineBuffer[lowerSampleIndex + 2];
 
-                blendContext.lineSum[sampleIndex    ] = colorR;
-                blendContext.lineSum[sampleIndex + 1] = colorG;
-                blendContext.lineSum[sampleIndex + 2] = colorB;
+                colorGenContext.lineSum[sampleIndex    ] = colorR;
+                colorGenContext.lineSum[sampleIndex + 1] = colorG;
+                colorGenContext.lineSum[sampleIndex + 2] = colorB;
 
                 outputIndex += Array3c.ELEMENT_SIZE;
                 sampleIndex += Array2c.ELEMENT_SIZE;
@@ -215,10 +238,10 @@ public final class ColorBlending
     }
 
     private static void
-    accumulatePlane(BlendContext blendContext, int planeIndex, int blockCount)
+    accumulatePlane(ColorGenContext colorGenContext, int planeIndex, int blockCount)
     {
-        int dimX = blendContext.outputDimX;
-        int dimY = blendContext.outputDimY;
+        int dimX = colorGenContext.outputDimX;
+        int dimY = colorGenContext.outputDimY;
 
         int plane = Array3c.getArrayIndex(dimX, dimY, 0, 0, planeIndex);
 
@@ -226,97 +249,85 @@ public final class ColorBlending
              index < 3 * dimX * dimY;
              ++index)
         {
-            blendContext.planeSum[index] += blockCount * blendContext.planeBuffer[plane + index];
+            colorGenContext.planeSum[index] += blockCount * colorGenContext.planeBuffer[plane + index];
         }
     }
 
     private static int
-    initPlaneBuffers(BlendContext blendContext)
+    initPlaneBuffers(ColorGenContext context)
     {
-        Arrays.fill(blendContext.planeSum, 0.0f);
+        ColorConfig config = context.blendConfig;
 
-        BlendConfig blendConfig = blendContext.blendConfig;
+        Arrays.fill(context.planeSum, 0.0f);
 
-        int lowerFilter = blendContext.blockMinZ - blendConfig.blendRadius;
-        int upperFilter = blendContext.blockMinZ + blendConfig.blendRadius;
+        int lowerFilter = context.blockMinZ - config.blendRadius;
+        int upperFilter = context.blockMinZ + config.blendRadius;
 
-        int prevSampleIndexZ = Integer.MIN_VALUE;
+        int lowerFilterSample = config.floorBlockToSample(lowerFilter);
+        int upperFilterSample = config.ceilBlockToSample(upperFilter);
 
-        int blockCount = 0;
+        int lastSampleIndexZ = Integer.MIN_VALUE;
 
-        for (int z = lowerFilter;
-             z < upperFilter;
-             ++z, ++blockCount)
+        for (int sampleZ = lowerFilterSample;
+             sampleZ < upperFilterSample;
+             ++sampleZ)
         {
-            int sampleIndexZ = blendConfig.getSampleFromBlock(z) - blendContext.sampleMinZ;
+            int sampleIndexZ = sampleZ - context.sampleMinZ;
+            int contribution = getSampleContribution(config, lowerFilter, upperFilter, sampleZ);
 
-            if (sampleIndexZ != prevSampleIndexZ)
-            {
-                if (prevSampleIndexZ != Integer.MIN_VALUE)
-                {
-                    accumulatePlane(blendContext, prevSampleIndexZ, blockCount);
-                }
+            blendColorsInPlane(context, config, sampleIndexZ);
+            accumulatePlane(context, sampleIndexZ, contribution);
 
-                blendColorsInPlane(blendContext, blendConfig, sampleIndexZ);
-
-                prevSampleIndexZ = sampleIndexZ;
-
-                blockCount = 0;
-            }
+            lastSampleIndexZ = sampleIndexZ;
         }
 
-        if (blockCount > 0)
-        {
-            accumulatePlane(blendContext, prevSampleIndexZ, blockCount);
-        }
-
-        return prevSampleIndexZ;
+        return lastSampleIndexZ;
     }
 
     public static void
-    blendColors(BlendContext blendContext)
+    blendColors(ColorGenContext colorGenContext)
     {
-        int prevSampleIndexZ = initPlaneBuffers(blendContext);
+        int prevSampleIndexZ = initPlaneBuffers(colorGenContext);
 
-        int[] output = blendContext.output;
+        int[] output = colorGenContext.output;
 
-        int outputMinX = blendContext.outputMinX;
-        int outputMinY = blendContext.outputMinY;
-        int outputMinZ = blendContext.outputMinZ;
+        int outputMinX = colorGenContext.outputMinX;
+        int outputMinY = colorGenContext.outputMinY;
+        int outputMinZ = colorGenContext.outputMinZ;
 
-        int outputDimX = blendContext.outputDimX;
-        int outputDimY = blendContext.outputDimY;
-        int outputDimZ = blendContext.outputDimZ;
+        int outputDimX = colorGenContext.outputDimX;
+        int outputDimY = colorGenContext.outputDimY;
+        int outputDimZ = colorGenContext.outputDimZ;
 
-        int outputArrayDimX = blendContext.outputArrayDimX;
-        int outputArrayDimY = blendContext.outputArrayDimY;
+        int outputArrayDimX = colorGenContext.outputArrayDimX;
+        int outputArrayDimY = colorGenContext.outputArrayDimY;
 
         int outputStrideX = Array3i.getStrideX();
         int outputStrideY = Array3i.getStrideY(outputArrayDimX);
 
-        BlendConfig blendConfig = blendContext.blendConfig;
+        ColorConfig blendConfig = colorGenContext.blendConfig;
 
-        int lowerFilter = blendContext.blockMinZ - blendConfig.blendRadius;
-        int upperFilter = blendContext.blockMinZ + blendConfig.blendRadius;
+        int lowerFilter = colorGenContext.blockMinZ - blendConfig.blendRadius;
+        int upperFilter = colorGenContext.blockMinZ + blendConfig.blendRadius;
 
-        float filterMultiplier = blendContext.filterMultiplier;
+        float filterMultiplier = colorGenContext.filterMultiplier;
 
         for (int z = 0;
              z < outputDimZ;
              ++z)
         {
-            int upperSampleIndexZ = blendConfig.getSampleFromBlock(upperFilter) - blendContext.sampleMinZ;
-            int lowerSampleIndexZ = blendConfig.getSampleFromBlock(lowerFilter) - blendContext.sampleMinZ;
+            int upperSampleIndexZ = blendConfig.floorBlockToSample(upperFilter) - colorGenContext.sampleMinZ;
+            int lowerSampleIndexZ = blendConfig.floorBlockToSample(lowerFilter) - colorGenContext.sampleMinZ;
 
             if (upperSampleIndexZ != prevSampleIndexZ)
             {
-                blendColorsInPlane(blendContext, blendConfig, upperSampleIndexZ);
+                blendColorsInPlane(colorGenContext, blendConfig, upperSampleIndexZ);
 
                 prevSampleIndexZ = upperSampleIndexZ;
             }
 
-            int upperPlaneIndex = (upperSampleIndexZ % blendContext.planeCount);
-            int lowerPlaneIndex = (lowerSampleIndexZ % blendContext.planeCount);
+            int upperPlaneIndex = (upperSampleIndexZ % colorGenContext.planeCount);
+            int lowerPlaneIndex = (lowerSampleIndexZ % colorGenContext.planeCount);
 
             int upperPlaneFirst = Array3c.getArrayIndex(outputDimX, outputDimY, 0, 0, upperPlaneIndex);
             int lowerPlaneFirst = Array3c.getArrayIndex(outputDimX, outputDimY, 0, 0, lowerPlaneIndex);
@@ -338,13 +349,13 @@ public final class ColorBlending
                     int upperSampleIndex = upperPlaneFirst + sampleIndex;
                     int lowerSampleIndex = lowerPlaneFirst + sampleIndex;
 
-                    float colorR = blendContext.planeSum[sampleIndex    ];
-                    float colorG = blendContext.planeSum[sampleIndex + 1];
-                    float colorB = blendContext.planeSum[sampleIndex + 2];
+                    float colorR = colorGenContext.planeSum[sampleIndex    ];
+                    float colorG = colorGenContext.planeSum[sampleIndex + 1];
+                    float colorB = colorGenContext.planeSum[sampleIndex + 2];
 
-                    colorR += blendContext.planeBuffer[upperSampleIndex    ];
-                    colorG += blendContext.planeBuffer[upperSampleIndex + 1];
-                    colorB += blendContext.planeBuffer[upperSampleIndex + 2];
+                    colorR += colorGenContext.planeBuffer[upperSampleIndex    ];
+                    colorG += colorGenContext.planeBuffer[upperSampleIndex + 1];
+                    colorB += colorGenContext.planeBuffer[upperSampleIndex + 2];
 
                     float filteredR = filterMultiplier * colorR;
                     float filteredG = filterMultiplier * colorG;
@@ -352,13 +363,13 @@ public final class ColorBlending
 
                     output[outputIndex] = Color.OKLabsTosRGBAInt(filteredR, filteredG, filteredB);
 
-                    colorR -= blendContext.planeBuffer[lowerSampleIndex    ];
-                    colorG -= blendContext.planeBuffer[lowerSampleIndex + 1];
-                    colorB -= blendContext.planeBuffer[lowerSampleIndex + 2];
+                    colorR -= colorGenContext.planeBuffer[lowerSampleIndex    ];
+                    colorG -= colorGenContext.planeBuffer[lowerSampleIndex + 1];
+                    colorB -= colorGenContext.planeBuffer[lowerSampleIndex + 2];
 
-                    blendContext.planeSum[sampleIndex    ] = colorR;
-                    blendContext.planeSum[sampleIndex + 1] = colorG;
-                    blendContext.planeSum[sampleIndex + 2] = colorB;
+                    colorGenContext.planeSum[sampleIndex    ] = colorR;
+                    colorGenContext.planeSum[sampleIndex + 1] = colorG;
+                    colorGenContext.planeSum[sampleIndex + 2] = colorB;
 
                     outputIndex += outputStrideX;
                     sampleIndex += Array3c.ELEMENT_SIZE;

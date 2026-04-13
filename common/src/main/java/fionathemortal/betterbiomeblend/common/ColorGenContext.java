@@ -1,29 +1,15 @@
 package fionathemortal.betterbiomeblend.common;
 
-import fionathemortal.betterbiomeblend.common.util.Array1c;
-import fionathemortal.betterbiomeblend.common.util.Array2c;
-import fionathemortal.betterbiomeblend.common.util.Array3c;
-import fionathemortal.betterbiomeblend.common.util.Color;
+import fionathemortal.betterbiomeblend.common.util.*;
 
-import java.util.Arrays;
-
-public final class BlendContext
+public final class ColorGenContext
 {
     public static final int INITIAL_COLOR_BITS_EXCLUSIVE = 0xFFFFFFFF;
     public static final int INITIAL_COLOR_BITS_INCLUSIVE = 0;
 
-    public final BlendConfig blendConfig;
+    public final ColorConfig blendConfig;
 
-    public float[] samples;
-
-    public float[] lineBuffer;
-    public float[] lineSum;
-
-    public float[] planeBuffer;
-    public float[] planeSum;
-
-    public int lineCount;
-    public int planeCount;
+    public int[] samples;
 
     // NOTE: Blocks
 
@@ -79,63 +65,61 @@ public final class BlendContext
     public float filterMultiplier;
     public float filterSupport;
 
+    // NOTE: Blending
+
+    public float[] lineSamples;
+    public float[] lineBuffer;
+    public float[] lineSum;
+
+    public float[] planeBuffer;
+    public float[] planeSum;
+
+    public int lineCount;
+    public int planeCount;
+
     // NOTE: Output
 
     int[] output;
-
-    int outputDimX;
-    int outputDimY;
-    int outputDimZ;
 
     int outputMinX;
     int outputMinY;
     int outputMinZ;
 
+    int outputDimX;
+    int outputDimY;
+    int outputDimZ;
+
     int outputArrayDimX;
     int outputArrayDimY;
 
-    public BlendContext(BlendConfig blendConfig)
+    public
+    ColorGenContext(ColorConfig blendConfig)
     {
         this.blendConfig = blendConfig;
     }
 
     public void
-    init(
+    initSource(
         int   blockMinX,
         int   blockMinY,
         int   blockMinZ,
-        int[] output,
-        int   outputMinX,
-        int   outputMinY,
-        int   outputMinZ,
-        int   outputDimX,
-        int   outputDimY,
-        int   outputDimZ,
-        int   outputDataDimX,
-        int   outputDataDimY)
+        int   blockDimX,
+        int   blockDimY,
+        int   blockDimZ)
     {
         resetColorBits();
-
-        this.output = output;
-
-        this.outputMinX = outputMinX;
-        this.outputMinY = outputMinY;
-        this.outputMinZ = outputMinZ;
-
-        this.outputDimX = outputDimX;
-        this.outputDimY = outputDimY;
-        this.outputDimZ = outputDimZ;
-
-        this.outputArrayDimX = outputDataDimX;
-        this.outputArrayDimY = outputDataDimY;
 
         this.blockMinX = blockMinX;
         this.blockMinY = blockMinY;
         this.blockMinZ = blockMinZ;
 
-        this.blockMaxX = blockMinX + outputDimX;
-        this.blockMaxY = blockMinY + outputDimY;
-        this.blockMaxZ = blockMinZ + outputDimZ;
+        this.blockMaxX = blockMinX + blockDimX;
+        this.blockMaxY = blockMinY + blockDimY;
+        this.blockMaxZ = blockMinZ + blockDimZ;
+
+        this.outputDimX = blockDimX;
+        this.outputDimY = blockDimY;
+        this.outputDimZ = blockDimZ;
 
         int blendMinX = this.blockMinX - blendConfig.blendRadius;
         int blendMinY = this.blockMinY - blendConfig.blendRadius;
@@ -145,13 +129,13 @@ public final class BlendContext
         int blendMaxY = this.blockMaxY + blendConfig.blendRadius;
         int blendMaxZ = this.blockMaxZ + blendConfig.blendRadius;
 
-        this.sampleMinX = blendConfig.getSampleFromBlock(blendMinX);
-        this.sampleMinY = blendConfig.getSampleFromBlock(blendMinY);
-        this.sampleMinZ = blendConfig.getSampleFromBlock(blendMinZ);
+        this.sampleMinX = blendConfig.floorBlockToSample(blendMinX);
+        this.sampleMinY = blendConfig.floorBlockToSample(blendMinY);
+        this.sampleMinZ = blendConfig.floorBlockToSample(blendMinZ);
 
-        this.sampleMaxX = blendConfig.getSampleFromBlock(blendMaxX + blendConfig.sampleSize - 1);
-        this.sampleMaxY = blendConfig.getSampleFromBlock(blendMaxY + blendConfig.sampleSize - 1);
-        this.sampleMaxZ = blendConfig.getSampleFromBlock(blendMaxZ + blendConfig.sampleSize - 1);
+        this.sampleMaxX = blendConfig.ceilBlockToSample(blendMaxX);
+        this.sampleMaxY = blendConfig.ceilBlockToSample(blendMaxY);
+        this.sampleMaxZ = blendConfig.ceilBlockToSample(blendMaxZ);
 
         this.sampleCountX = this.sampleMaxX - this.sampleMinX;
         this.sampleCountY = this.sampleMaxY - this.sampleMinY;
@@ -180,9 +164,31 @@ public final class BlendContext
         filterMultiplier = 1.0f / filterSupport;
 
         ensureBufferCapacities();
+    }
 
-        Arrays.fill(lineSum, 0.0f);
-        Arrays.fill(planeSum, 0.0f);
+    public void
+    initOutput(
+        int[] output,
+        int   outputMinX,
+        int   outputMinY,
+        int   outputMinZ,
+        int   outputDataDimX,
+        int   outputDataDimY)
+    {
+        this.output = output;
+
+        this.outputMinX = outputMinX;
+        this.outputMinY = outputMinY;
+        this.outputMinZ = outputMinZ;
+
+        this.outputArrayDimX = outputDataDimX;
+        this.outputArrayDimY = outputDataDimY;
+    }
+
+    public void
+    releaseOutput()
+    {
+        this.output = null;
     }
 
     private void
@@ -192,22 +198,31 @@ public final class BlendContext
         this.colorBitsInclusive = INITIAL_COLOR_BITS_INCLUSIVE;
     }
 
-    public void
-    free()
-    {
-        this.output = null;
-
-        resetColorBits();
-    }
-
     public boolean
-    isSingleColor()
+    isSolid()
     {
         boolean result = false;
 
         if (this.colorBitsExclusive == this.colorBitsInclusive)
         {
             result = true;
+        }
+        else
+        {
+            int i = 0;
+        }
+
+        return result;
+    }
+
+    public int
+    getSingleColor()
+    {
+        int result = 0;
+
+        if (isSolid())
+        {
+            result = this.colorBitsExclusive;
         }
 
         return result;
@@ -216,7 +231,7 @@ public final class BlendContext
     public void
     setColorSample(int color, int index)
     {
-        Color.sRGBByteToOKLabs(color, this.samples, index);
+        this.samples[index] = color;
 
         this.colorBitsExclusive &= color;
         this.colorBitsInclusive |= color;
@@ -225,7 +240,8 @@ public final class BlendContext
     private void
     ensureBufferCapacities()
     {
-        this.samples     = Array3c.ensureCapacity(this.samples, sampleCountX, sampleCountY, sampleCountZ);
+        this.samples     = Array3i.ensureCapacity(this.samples, sampleCountX, sampleCountY, sampleCountZ);
+        this.lineSamples = Array1c.ensureCapacity(this.lineSamples, sampleCountX);
         this.lineSum     = Array1c.ensureCapacity(this.lineSum, outputDimX);
         this.lineBuffer  = Array2c.ensureCapacity(this.lineBuffer, outputDimX, lineCount);
         this.planeSum    = Array2c.ensureCapacity(this.planeSum, outputDimX, outputDimY);

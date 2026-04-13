@@ -1,7 +1,5 @@
 package fionathemortal.betterbiomeblend.common.debug;
 
-import fionathemortal.betterbiomeblend.common.cache.output.BlendChunk;
-
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
@@ -278,38 +276,6 @@ public final class Debug
         else
         {
             colorTypeMiss.getAndIncrement();
-        }
-    }
-
-    public static AtomicLong threadLocalHit  = new AtomicLong();
-    public static AtomicLong threadLocalMiss = new AtomicLong();
-
-    public static void
-    countThreadLocalChunk(BlendChunk chunk)
-    {
-        if (chunk != null)
-        {
-            threadLocalHit.getAndIncrement();
-        }
-        else
-        {
-            threadLocalMiss.getAndIncrement();
-        }
-    }
-
-    public static AtomicLong blendCacheHit  = new AtomicLong();
-    public static AtomicLong blendCacheMiss = new AtomicLong();
-
-    public static void
-    countBlendCache(BlendChunk chunk)
-    {
-        if (chunk != null)
-        {
-            blendCacheHit.getAndIncrement();
-        }
-        else
-        {
-            blendCacheMiss.getAndIncrement();
         }
     }
 }

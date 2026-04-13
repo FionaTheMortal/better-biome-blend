@@ -2,8 +2,6 @@ package fionathemortal.betterbiomeblend;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import fionathemortal.betterbiomeblend.common.BlendConfig;
-import fionathemortal.betterbiomeblend.common.BlendContext;
 import fionathemortal.betterbiomeblend.common.debug.Debug;
 import fionathemortal.betterbiomeblend.common.debug.DebugSummary;
 import net.minecraft.client.Minecraft;
@@ -12,7 +10,6 @@ import net.minecraft.client.Options;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.datafix.fixes.BlendingDataRemoveFromNetherEndFix;
 import net.minecraft.world.entity.player.Player;
 
 public final class BetterBiomeBlendClient
@@ -31,19 +28,9 @@ public final class BetterBiomeBlendClient
         });
 
     public static int
-    getBiomeBlendRadius()
+    getBlendRadiusSetting()
     {
         return betterBiomeBlendRadius.get();
-    }
-
-    public static BlendConfig
-    getCurrentBlendConfig()
-    {
-        int blendRadius = getBiomeBlendRadius();
-
-        BlendConfig result = BlendConfig.getBlendConfigForBlendRadius(blendRadius);
-
-        return result;
     }
 
     public static void
