@@ -3,8 +3,8 @@ package fionathemortal.betterbiomeblend.forge.compat.embeddium;
 import fionathemortal.betterbiomeblend.common.ColorConfig;
 import fionathemortal.betterbiomeblend.common.ColorGen;
 import fionathemortal.betterbiomeblend.common.ColorGenContext;
-import me.jellysquid.mods.sodium.client.world.biome.BiomeSlice;
 import net.minecraft.world.level.ColorResolver;
+import org.embeddedt.embeddium.impl.world.biome.BiomeSlice;
 
 public final class EmbeddiumColorGen
 {

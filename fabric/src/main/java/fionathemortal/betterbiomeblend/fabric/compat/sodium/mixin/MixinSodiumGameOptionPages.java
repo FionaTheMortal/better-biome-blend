@@ -1,11 +1,11 @@
 package fionathemortal.betterbiomeblend.fabric.compat.sodium.mixin;
 
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
-import me.jellysquid.mods.sodium.client.gui.SodiumGameOptionPages;
-import me.jellysquid.mods.sodium.client.gui.options.*;
-import me.jellysquid.mods.sodium.client.gui.options.control.ControlValueFormatter;
-import me.jellysquid.mods.sodium.client.gui.options.control.SliderControl;
-import me.jellysquid.mods.sodium.client.gui.options.storage.MinecraftOptionsStorage;
+import net.caffeinemc.mods.sodium.client.gui.SodiumGameOptionPages;
+import net.caffeinemc.mods.sodium.client.gui.options.*;
+import net.caffeinemc.mods.sodium.client.gui.options.control.ControlValueFormatter;
+import net.caffeinemc.mods.sodium.client.gui.options.control.SliderControl;
+import net.caffeinemc.mods.sodium.client.gui.options.storage.MinecraftOptionsStorage;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -28,7 +28,7 @@ public class MixinSodiumGameOptionPages
         method = "quality",
         at = @At(
             value = "INVOKE",
-            target = "Lme/jellysquid/mods/sodium/client/gui/options/OptionGroup;createBuilder()Lme/jellysquid/mods/sodium/client/gui/options/OptionGroup$Builder;",
+            target = "Lnet/caffeinemc/mods/sodium/client/gui/options/OptionGroup;createBuilder()Lnet/caffeinemc/mods/sodium/client/gui/options/OptionGroup$Builder;",
             ordinal = 2,
             shift = At.Shift.AFTER),
         locals = LocalCapture.CAPTURE_FAILSOFT,

@@ -4,9 +4,9 @@ import fionathemortal.betterbiomeblend.common.ColorConfig;
 import fionathemortal.betterbiomeblend.common.ColorGather;
 import fionathemortal.betterbiomeblend.common.ColorGenContext;
 import fionathemortal.betterbiomeblend.common.util.Array3i;
-import me.jellysquid.mods.sodium.client.world.biome.BiomeSlice;
 import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.biome.Biome;
+import org.embeddedt.embeddium.impl.world.biome.BiomeSlice;
 
 public final class EmbeddiumColorGather
 {

@@ -4,7 +4,7 @@ import fionathemortal.betterbiomeblend.common.ColorConfig;
 import fionathemortal.betterbiomeblend.common.ColorGather;
 import fionathemortal.betterbiomeblend.common.ColorGenContext;
 import fionathemortal.betterbiomeblend.common.util.Array3i;
-import me.jellysquid.mods.sodium.client.world.biome.BiomeSlice;
+import net.caffeinemc.mods.sodium.client.world.biome.LevelBiomeSlice;
 import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.biome.Biome;
 
@@ -12,11 +12,11 @@ public final class SodiumColorGather
 {
     private static int
     getColor(
-        BiomeSlice    source,
-        ColorResolver resolver,
-        int           x,
-        int           y,
-        int           z)
+        LevelBiomeSlice source,
+        ColorResolver   resolver,
+        int             x,
+        int             y,
+        int             z)
     {
         Biome biome = source.getBiome(x, y, z).value();
 
@@ -27,7 +27,7 @@ public final class SodiumColorGather
 
     public static void
     gatherColors(
-        BiomeSlice      source,
+        LevelBiomeSlice source,
         ColorResolver   resolver,
         ColorGenContext context)
     {

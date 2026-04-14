@@ -3,7 +3,7 @@ package fionathemortal.betterbiomeblend.fabric.compat.sodium;
 import fionathemortal.betterbiomeblend.common.ColorConfig;
 import fionathemortal.betterbiomeblend.common.ColorGen;
 import fionathemortal.betterbiomeblend.common.ColorGenContext;
-import me.jellysquid.mods.sodium.client.world.biome.BiomeSlice;
+import net.caffeinemc.mods.sodium.client.world.biome.LevelBiomeSlice;
 import net.minecraft.world.level.ColorResolver;
 
 public final class SodiumColorGen
@@ -31,15 +31,15 @@ public final class SodiumColorGen
 
     public static ColorGenContext
     gatherColors(
-        BiomeSlice source,
-        ColorResolver resolver,
-        ColorConfig   config,
-        int           blockMinX,
-        int           blockMinY,
-        int           blockMinZ,
-        int           blockDimX,
-        int           blockDimY,
-        int           blockDimZ)
+        LevelBiomeSlice source,
+        ColorResolver   resolver,
+        ColorConfig     config,
+        int             blockMinX,
+        int             blockMinY,
+        int             blockMinZ,
+        int             blockDimX,
+        int             blockDimY,
+        int             blockDimZ)
     {
         ColorGenContext context = acquireContext(config);
 
@@ -58,21 +58,21 @@ public final class SodiumColorGen
 
     public static void
     genColors(
-        BiomeSlice    source,
-        ColorResolver resolver,
-        ColorConfig   config,
-        int           blockMinX,
-        int           blockMinY,
-        int           blockMinZ,
-        int           blockDimX,
-        int           blockDimY,
-        int           blockDimZ,
-        int[]         output,
-        int           outputMinX,
-        int           outputMinY,
-        int           outputMinZ,
-        int           outputArrayDimX,
-        int           outputArrayDimY)
+        LevelBiomeSlice source,
+        ColorResolver   resolver,
+        ColorConfig     config,
+        int             blockMinX,
+        int             blockMinY,
+        int             blockMinZ,
+        int             blockDimX,
+        int             blockDimY,
+        int             blockDimZ,
+        int[]           output,
+        int             outputMinX,
+        int             outputMinY,
+        int             outputMinZ,
+        int             outputArrayDimX,
+        int             outputArrayDimY)
     {
         ColorGenContext context = gatherColors(
             source,

@@ -1,18 +1,28 @@
 plugins {
     id 'multiloader-loader'
-    id 'fabric-loom' version '1.6-SNAPSHOT'
+    id 'fabric-loom'
 }
+
+repositories {
+    maven {
+        url = "https://maven.parchmentmc.org"
+    }
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
-    mappings loom.officialMojangMappings()
+    mappings loom.layered {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${parchment_minecraft}:${parchment_version}@zip")
+    }
     modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
 
-    modCompileOnly "maven.modrinth:sodium:mc1.20.6-0.5.11"
+    modImplementation "maven.modrinth:sodium:mc1.21.1-0.6.13-fabric"
 }
 
 loom {
-    def aw = project(":common").file("src/main/resources/${mod_id}.accesswidener")
+    def aw = project(':common').file("src/main/resources/${mod_id}.accesswidener")
     if (aw.exists()) {
         accessWidenerPath.set(aw)
     }
@@ -22,15 +32,15 @@ loom {
     runs {
         client {
             client()
-            setConfigName("Fabric Client")
+            setConfigName('Fabric Client')
             ideConfigGenerated(true)
-            runDir("runs/client")
+            runDir('runs/client')
         }
         server {
             server()
-            setConfigName("Fabric Server")
+            setConfigName('Fabric Server')
             ideConfigGenerated(true)
-            runDir("runs/server")
+            runDir('runs/server')
         }
     }
 }
