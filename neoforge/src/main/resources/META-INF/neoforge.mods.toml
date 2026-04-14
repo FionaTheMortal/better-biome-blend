@@ -16,6 +16,8 @@ description = "${description}" #mandatory (Supports multiline text)
 config = "${mod_id}.mixins.json"
 [[mixins]]
 config = "${mod_id}-embeddium.mixins.json"
+[[mixins]]
+config = "${mod_id}-sodium.mixins.json"
 [[dependencies.${mod_id}]] #optional
 modId = "neoforge" #mandatory
 type="required" #mandatory (Can be one of "required", "optional", "incompatible" or "discouraged")
