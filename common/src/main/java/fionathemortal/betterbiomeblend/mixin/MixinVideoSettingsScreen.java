@@ -17,9 +17,6 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 @Mixin(value = VideoSettingsScreen.class)
 public abstract class MixinVideoSettingsScreen extends OptionsSubScreen
 {
-    @Shadow
-    private OptionsList list;
-
     public
     MixinVideoSettingsScreen(Screen screen, Options options, Component component)
     {
@@ -30,7 +27,7 @@ public abstract class MixinVideoSettingsScreen extends OptionsSubScreen
         method = "init",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/components/OptionsList;addBig(Lnet/minecraft/client/OptionInstance;)I"),
+            target = "Lnet/minecraft/client/gui/components/OptionsList;addBig(Lnet/minecraft/client/OptionInstance;)V"),
             index = 0)
     private OptionInstance<?>
     bbb$modifyAddBig(OptionInstance<?> argument)

@@ -2,6 +2,15 @@ package fionathemortal.betterbiomeblend.common.util;
 
 public class Util
 {
+    public static final boolean RUNTIME_FALSE;
+    public static final boolean RUNTIME_TRUE;
+
+    static
+    {
+        RUNTIME_FALSE = false;
+        RUNTIME_TRUE  = true;
+    }
+
     public static final int CHUNK_SIZE_LOG_2 = 4;
     public static final int CHUNK_SIZE       = (1 << CHUNK_SIZE_LOG_2);
 

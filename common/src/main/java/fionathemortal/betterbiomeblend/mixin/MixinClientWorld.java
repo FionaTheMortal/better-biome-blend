@@ -10,10 +10,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.ColorResolver;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -21,11 +18,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.concurrent.locks.ReentrantLock;
 
 @SuppressWarnings("unused")
-@Mixin(value = ClientLevel.class)
+@Mixin(value = ClientLevel.class, priority = 500)
 public abstract class MixinClientWorld
 {
     @Shadow
-    private final Object2ObjectArrayMap<ColorResolver, BlockTintCache> tintCaches = new Object2ObjectArrayMap<>();
+    private Object2ObjectArrayMap<ColorResolver, BlockTintCache> tintCaches;
 
     @Unique
     private ThreadLocal<LocalCache> bbb$threadLocalCache;
@@ -131,6 +128,13 @@ public abstract class MixinClientWorld
             if (slice == null)
             {
                 slice = colorSource.genSlice(chunkX, chunkY, chunkZ, colorType, colorResolver);
+
+                // NOTE: Give fabric mixin an injection target
+
+                if (Util.RUNTIME_FALSE)
+                {
+                    BlockTintCache cache = tintCaches.get(colorResolver);
+                }
             }
 
             localCache.putSlice(colorSource, slice, colorType, colorResolver);
