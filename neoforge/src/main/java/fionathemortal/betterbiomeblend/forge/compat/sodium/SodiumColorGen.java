@@ -1,12 +1,12 @@
-package fionathemortal.betterbiomeblend.forge.compat.embeddium;
+package fionathemortal.betterbiomeblend.forge.compat.sodium;
 
 import fionathemortal.betterbiomeblend.common.ColorConfig;
 import fionathemortal.betterbiomeblend.common.ColorGen;
 import fionathemortal.betterbiomeblend.common.ColorGenContext;
+import net.caffeinemc.mods.sodium.client.world.biome.LevelBiomeSlice;
 import net.minecraft.world.level.ColorResolver;
-import org.embeddedt.embeddium.impl.world.biome.BiomeSlice;
 
-public final class EmbeddiumColorGen
+public final class SodiumColorGen
 {
     private static final ThreadLocal<ColorGenContext> threadLocalContext = new ThreadLocal<>();
 
@@ -31,15 +31,15 @@ public final class EmbeddiumColorGen
 
     public static ColorGenContext
     gatherColors(
-        BiomeSlice    source,
-        ColorResolver resolver,
-        ColorConfig   config,
-        int           blockMinX,
-        int           blockMinY,
-        int           blockMinZ,
-        int           blockDimX,
-        int           blockDimY,
-        int           blockDimZ)
+        LevelBiomeSlice source,
+        ColorResolver   resolver,
+        ColorConfig     config,
+        int             blockMinX,
+        int             blockMinY,
+        int             blockMinZ,
+        int             blockDimX,
+        int             blockDimY,
+        int             blockDimZ)
     {
         ColorGenContext context = acquireContext(config);
 
@@ -51,28 +51,28 @@ public final class EmbeddiumColorGen
             blockDimY,
             blockDimZ);
 
-        EmbeddiumColorGather.gatherColors(source, resolver, context);
+        SodiumColorGather.gatherColors(source, resolver, context);
 
         return context;
     }
 
     public static void
     genColors(
-        BiomeSlice    source,
-        ColorResolver resolver,
-        ColorConfig   config,
-        int           blockMinX,
-        int           blockMinY,
-        int           blockMinZ,
-        int           blockDimX,
-        int           blockDimY,
-        int           blockDimZ,
-        int[]         output,
-        int           outputMinX,
-        int           outputMinY,
-        int           outputMinZ,
-        int           outputArrayDimX,
-        int           outputArrayDimY)
+        LevelBiomeSlice source,
+        ColorResolver   resolver,
+        ColorConfig     config,
+        int             blockMinX,
+        int             blockMinY,
+        int             blockMinZ,
+        int             blockDimX,
+        int             blockDimY,
+        int             blockDimZ,
+        int[]           output,
+        int             outputMinX,
+        int             outputMinY,
+        int             outputMinZ,
+        int             outputArrayDimX,
+        int             outputArrayDimY)
     {
         ColorGenContext context = gatherColors(
             source,

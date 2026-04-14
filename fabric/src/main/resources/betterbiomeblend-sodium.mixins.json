@@ -5,7 +5,7 @@
   "minVersion": "0.8",
   "refmap": "${mod_id}.refmap.json",
   "client": [
-    "MixinSodiumGameOptionPages",
+    "MixinSodiumConfigBuilder",
     "MixinBiomeColorCache"
   ],
   "mixins": [

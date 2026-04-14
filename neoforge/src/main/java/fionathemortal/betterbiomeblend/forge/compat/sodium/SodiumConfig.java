@@ -1,9 +1,9 @@
-package fionathemortal.betterbiomeblend.forge.compat.embeddium;
+package fionathemortal.betterbiomeblend.forge.compat.sodium;
 
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
 import fionathemortal.betterbiomeblend.common.ColorConfig;
 
-public final class EmbeddiumConfig
+public class SodiumConfig
 {
     public static final ColorConfig[]
     configs =

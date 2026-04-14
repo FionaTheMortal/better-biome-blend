@@ -3,15 +3,15 @@ package fionathemortal.betterbiomeblend.mixin;
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
 import net.minecraft.client.OptionInstance;
 import net.minecraft.client.Options;
-import net.minecraft.client.gui.components.OptionsList;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.options.OptionsSubScreen;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import net.minecraft.client.gui.screens.options.VideoSettingsScreen;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @SuppressWarnings("unused")
 @Mixin(value = VideoSettingsScreen.class)
@@ -23,22 +23,27 @@ public abstract class MixinVideoSettingsScreen extends OptionsSubScreen
         super(screen, options, component);
     }
 
-    @ModifyArg(
-        method = "addOptions()V",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/components/OptionsList;addBig(Lnet/minecraft/client/OptionInstance;)V"),
-            index = 0)
-    private OptionInstance<?>
-    bbb$modifyAddBig(OptionInstance<?> argument)
+    @Inject(
+        method = "qualityOptions",
+        at = @At("RETURN"),
+        cancellable = true)
+    private static void
+    bbb$modifyQualityOptions(Options options, CallbackInfoReturnable<OptionInstance<?>[]> cir)
     {
-        OptionInstance<?> result = argument;
+        var original = cir.getReturnValue();
 
-        if (argument == this.options.biomeBlendRadius())
+        for (int index = 0;
+             index < original.length;
+             ++index)
         {
-            result = BetterBiomeBlendClient.betterBiomeBlendRadius;
+            OptionInstance<?> option = original[index];
+
+            if (option == options.biomeBlendRadius())
+            {
+                original[index] = BetterBiomeBlendClient.betterBiomeBlendRadius;
+            }
         }
 
-        return result;
+        cir.setReturnValue(original);
     }
 }

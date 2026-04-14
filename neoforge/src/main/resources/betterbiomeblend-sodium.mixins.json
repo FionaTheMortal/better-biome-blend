@@ -1,12 +1,12 @@
 {
   "required": true,
-  "package": "fionathemortal.betterbiomeblend.forge.compat.embeddium.mixin",
+  "package": "fionathemortal.betterbiomeblend.forge.compat.sodium.mixin",
   "compatibilityLevel": "JAVA_21",
   "minVersion": "0.8",
   "refmap": "${mod_id}.refmap.json",
   "client": [
-    "MixinBiomeColorCache",
-    "MixinEmbeddiumGameOptionPages"
+    "MixinSodiumConfigBuilder",
+    "MixinBiomeColorCache"
   ],
   "mixins": [
   ],

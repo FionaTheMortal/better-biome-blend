@@ -1,17 +1,17 @@
-package fionathemortal.betterbiomeblend.forge.compat.embeddium.mixin;
+package fionathemortal.betterbiomeblend.forge.compat.sodium.mixin;
 
 import fionathemortal.betterbiomeblend.common.ColorConfig;
 import fionathemortal.betterbiomeblend.common.cache.Slice;
 import fionathemortal.betterbiomeblend.common.util.Array3i;
 import fionathemortal.betterbiomeblend.common.util.Util;
-import fionathemortal.betterbiomeblend.forge.compat.embeddium.EmbeddiumColorGen;
-import fionathemortal.betterbiomeblend.forge.compat.embeddium.EmbeddiumConfig;
+import fionathemortal.betterbiomeblend.forge.compat.sodium.SodiumColorGen;
+import fionathemortal.betterbiomeblend.forge.compat.sodium.SodiumConfig;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import net.caffeinemc.mods.sodium.client.world.biome.LevelBiomeSlice;
+import net.caffeinemc.mods.sodium.client.world.biome.LevelColorCache;
+import net.caffeinemc.mods.sodium.client.world.cloned.ChunkRenderContext;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ColorResolver;
-import org.embeddedt.embeddium.impl.world.biome.BiomeColorCache;
-import org.embeddedt.embeddium.impl.world.biome.BiomeSlice;
-import org.embeddedt.embeddium.impl.world.cloned.ChunkRenderContext;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -20,14 +20,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = BiomeColorCache.class)
+@Mixin(value = LevelColorCache.class)
 public class MixinBiomeColorCache
 {
     private static final int MARGIN     = 2;
     private static final int SLICE_SIZE = Util.CHUNK_SIZE + 2 * MARGIN;
 
     @Shadow(remap = false)
-    private BiomeSlice biomeData;
+    private LevelBiomeSlice biomeData;
 
     @Unique
     private int bbb$baseX;
@@ -99,9 +99,9 @@ public class MixinBiomeColorCache
 
         if (!bbb$isValid(colors))
         {
-            ColorConfig config = EmbeddiumConfig.getCurrentConfig();
+            ColorConfig config = SodiumConfig.getCurrentConfig();
 
-            EmbeddiumColorGen.genColors(
+            SodiumColorGen.genColors(
                 biomeData,
                 resolver,
                 config,
