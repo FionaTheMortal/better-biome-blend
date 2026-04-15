@@ -1,12 +1,15 @@
 package fionathemortal.betterbiomeblend.fabric.compat.sodium.mixin;
 
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
+import fionathemortal.betterbiomeblend.common.accessor.MixinOptionsAccessor;
 import me.jellysquid.mods.sodium.client.gui.SodiumGameOptionPages;
 import me.jellysquid.mods.sodium.client.gui.options.*;
 import me.jellysquid.mods.sodium.client.gui.options.control.ControlValueFormatter;
 import me.jellysquid.mods.sodium.client.gui.options.control.SliderControl;
 import me.jellysquid.mods.sodium.client.gui.options.storage.MinecraftOptionsStorage;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -38,10 +41,10 @@ public class MixinSodiumGameOptionPages
     {
         groups.add(OptionGroup.createBuilder()
             .add(OptionImpl.createBuilder(int.class, vanillaOpts)
-                .setName(Component.translatable("bbb.biomeBlendRadius"))
-                .setTooltip(Component.translatable("bbb.biomeBlendRadius.tooltip"))
+                .setName(new TranslatableComponent("bbb.biomeBlendRadius"))
+                .setTooltip(new TranslatableComponent("bbb.biomeBlendRadius.tooltip"))
                 .setControl(option -> new SliderControl(option, 0, 14, 1, ControlValueFormatter.biomeBlend()))
-                .setBinding((opts, value) -> BetterBiomeBlendClient.betterBiomeBlendRadius.set(value), opts -> BetterBiomeBlendClient.betterBiomeBlendRadius.get())
+                .setBinding((opts, value) -> ((MixinOptionsAccessor)(opts)).bbb$setBetterBiomeBlendRadius(value), opts -> ((MixinOptionsAccessor)(opts)).bbb$getBetterBiomeBlendRadius())
                 .setImpact(OptionImpact.LOW)
                 .setFlags(OptionFlag.REQUIRES_RENDERER_RELOAD)
                 .build())

@@ -1,7 +1,7 @@
 package fionathemortal.betterbiomeblend.mixin;
 
 import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
-import net.minecraft.client.OptionInstance;
+import net.minecraft.client.Option;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.components.OptionsList;
 import net.minecraft.client.gui.screens.OptionsSubScreen;
@@ -30,14 +30,14 @@ public abstract class MixinVideoSettingsScreen extends OptionsSubScreen
         method = "init",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/components/OptionsList;addBig(Lnet/minecraft/client/OptionInstance;)I"),
+            target = "Lnet/minecraft/client/gui/components/OptionsList;addBig(Lnet/minecraft/client/Option;)I"),
             index = 0)
-    private OptionInstance<?>
-    bbb$modifyAddBig(OptionInstance<?> argument)
+    private Option
+    bbb$modifyAddBig(Option argument)
     {
-        OptionInstance<?> result = argument;
+        Option result = argument;
 
-        if (argument == this.options.biomeBlendRadius())
+        if (argument == Option.BIOME_BLEND_RADIUS)
         {
             result = BetterBiomeBlendClient.betterBiomeBlendRadius;
         }

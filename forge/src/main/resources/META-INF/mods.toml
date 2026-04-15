@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "[41,)"
+loaderVersion = "[40,)"
 issueTrackerURL = "https://github.com/FionaTheMortal/better-biome-blend/issues"
 license = "LGPL"
 
@@ -14,13 +14,13 @@ description = "    This mod increases the biome color blending radius and replac
 [[dependencies.betterbiomeblend]]
 modId = "forge"
 mandatory = true
-versionRange = "[41,)"
+versionRange = "[40,)"
 ordering = "NONE"
-side = "BOTH"
+side = "CLIENT"
 
 [[dependencies.betterbiomeblend]]
 modId = "minecraft"
 mandatory = true
-versionRange = "[1.19.2,)"
+versionRange = "[1.18.2,)"
 ordering = "NONE"
 side = "BOTH"

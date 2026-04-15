@@ -8,7 +8,6 @@ import fionathemortal.betterbiomeblend.fabric.compat.sodium.SourceCacheProvider;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import me.jellysquid.mods.sodium.client.world.WorldSlice;
 import me.jellysquid.mods.sodium.client.world.biome.BlockColorCache;
-
 import net.minecraft.core.SectionPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ColorResolver;
