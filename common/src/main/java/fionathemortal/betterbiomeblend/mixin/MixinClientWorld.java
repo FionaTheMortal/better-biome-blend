@@ -64,8 +64,8 @@ public abstract class MixinClientWorld
 
         if (colorSource != null)
         {
-            int chunkX = chunkPos.x;
-            int chunkZ = chunkPos.z;
+            int chunkX = chunkPos.x();
+            int chunkZ = chunkPos.z();
 
             colorSource.invalidateChunk(chunkX, chunkZ);
         }
