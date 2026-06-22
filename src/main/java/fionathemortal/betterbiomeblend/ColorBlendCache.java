@@ -1,16 +1,15 @@
 package fionathemortal.betterbiomeblend;
 
-public final class ColorBlendCache
-{
-    int    blendRadius;
+public final class ColorBlendCache {
+
+    int blendRadius;
     byte[] color;
 
     float[] R;
     float[] G;
     float[] B;
 
-    public ColorBlendCache(int blendRadius)
-    {
+    public ColorBlendCache(int blendRadius) {
         int genCacheDim = 16 + 2 * blendRadius;
 
         this.blendRadius = blendRadius;

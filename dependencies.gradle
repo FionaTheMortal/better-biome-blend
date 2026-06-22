@@ -1,0 +1,15 @@
+/*
+ * Add project dependencies here.
+ *
+ * The GTNH ExampleMod convention supports configurations such as api,
+ * implementation, compileOnly, runtimeOnlyNonPublishable, and
+ * annotationProcessor.
+ */
+dependencies {
+    shadowCompile('it.unimi.dsi:fastutil:8.5.15') {
+        transitive = false
+    }
+
+    // OptiFine is intentionally not declared here; the 1.7.10 compatibility
+    // hook target should be chosen during the Java porting pass.
+}

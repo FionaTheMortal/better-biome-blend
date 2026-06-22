@@ -1,7 +1,7 @@
 package fionathemortal.betterbiomeblend;
 
-public interface ColorChunkCacheProvider
-{
+public interface ColorChunkCacheProvider {
+
     ColorChunkCache getColorChunkCache();
 
     ThreadLocal<ColorChunk> getTreadLocalGrassChunk();

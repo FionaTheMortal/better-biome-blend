@@ -1,0 +1,7 @@
+This jar includes relocated classes from fastutil.
+
+fastutil
+Copyright (C) 2002-2024 Sebastiano Vigna
+Licensed under the Apache License, Version 2.0.
+https://fastutil.di.unimi.it/
+https://www.apache.org/licenses/LICENSE-2.0

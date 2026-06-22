@@ -2,12 +2,18 @@
     "required": true,
     "compatibilityLevel": "JAVA_8",
     "package": "fionathemortal.betterbiomeblend.mixin",
-    "refmap": "refmap.betterbiomeblend.json",
+    "refmap": "mixins.betterbiomeblend.refmap.json",
     "target": "@env(DEFAULT)",
     "mixins": [
     ],
     "client": [
-        "MixinBiomeColorHelper",
+        "MixinBlockDoublePlant",
+        "MixinBlockGrass",
+        "MixinBlockLeaves",
+        "MixinBlockLiquid",
+        "MixinBlockReed",
+        "MixinBlockTallGrass",
+        "MixinBlockVine",
         "MixinWorldClient"
     ],
     "server": [],
