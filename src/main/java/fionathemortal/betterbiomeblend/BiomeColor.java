@@ -177,7 +177,8 @@ public final class BiomeColor
         {
             threadLocal = ((ColorChunkCacheProvider)world).getTreadLocalGrassChunk();
         }
-        else
+
+        if (threadLocal == null)
         {
             threadLocal = StaticCompatibilityCache.getThreadLocalGrassChunkWrapper();
         }
@@ -196,7 +197,8 @@ public final class BiomeColor
         {
             threadLocal = ((ColorChunkCacheProvider)world).getTreadLocalWaterChunk();
         }
-        else
+
+        if (threadLocal == null)
         {
             threadLocal = StaticCompatibilityCache.getThreadLocalWaterChunkWrapper();
         }
@@ -215,7 +217,8 @@ public final class BiomeColor
         {
             threadLocal = ((ColorChunkCacheProvider)world).getTreadLocalFoliageChunk();
         }
-        else
+
+        if (threadLocal == null)
         {
             threadLocal = StaticCompatibilityCache.getThreadLocalFoliageChunkWrapper();
         }
@@ -234,7 +237,8 @@ public final class BiomeColor
         {
             threadLocal = ((ColorChunkCacheProvider)world).getTreadLocalGenericChunk();
         }
-        else
+
+        if (threadLocal == null)
         {
             threadLocal = StaticCompatibilityCache.getThreadLocalGenericChunkWrapper();
         }
@@ -246,13 +250,20 @@ public final class BiomeColor
     getThreadLocalChunk(ThreadLocal<ColorChunk> threadLocal, int chunkX, int chunkZ, int colorType)
     {
         ColorChunk result = null;
-        ColorChunk local = threadLocal.get();
 
-        long key = ColorChunkCache.getChunkKey(chunkX, chunkZ, colorType);
-
-        if (local.key == key)
+        if (threadLocal != null)
         {
-            result = local;
+            ColorChunk local = threadLocal.get();
+
+            if (local != null)
+            {
+                long key = ColorChunkCache.getChunkKey(chunkX, chunkZ, colorType);
+
+                if (local.key == key)
+                {
+                    result = local;
+                }
+            }
         }
 
         return result;
@@ -261,11 +272,17 @@ public final class BiomeColor
     public static void
     setThreadLocalChunk(ThreadLocal<ColorChunk> threadLocal, ColorChunk chunk, ColorChunkCache cache)
     {
-        ColorChunk local = threadLocal.get();
+        if (threadLocal != null)
+        {
+            ColorChunk local = threadLocal.get();
 
-        cache.releaseChunk(local);
+            if (local != null)
+            {
+                cache.releaseChunk(local);
+            }
 
-        threadLocal.set(chunk);
+            threadLocal.set(chunk);
+        }
     }
 
     public static void
