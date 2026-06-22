@@ -86,11 +86,8 @@ if (propertyBool('publish_to_modrinth')) {
         gameVersions = ['1.12.2']
         loaders = ['forge']
         debugMode = propertyBool('modrinth_debug')
-        if (propertyBool('use_mixins') || propertyBool('use_asset_mover')) {
+        if (propertyBool('use_asset_mover')) {
             dependencies {
-                if (propertyBool('use_mixins')) {
-                    required.project 'mixinbooter'
-                }
                 if (propertyBool('use_asset_mover')) {
                     required.project 'assetmover'
                 }
