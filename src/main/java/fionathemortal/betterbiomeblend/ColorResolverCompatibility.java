@@ -2,37 +2,57 @@ package fionathemortal.betterbiomeblend;
 
 import net.minecraft.world.biome.BiomeColorHelper;
 
-import javax.swing.plaf.synth.ColorType;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ColorResolverCompatibility
 {
-    public static final Lock                                             lock                = new ReentrantLock();
-    public static final HashMap<BiomeColorHelper.ColorResolver, Integer> knownColorResolvers = new HashMap<>();
+    public static final Lock                                            lock                = new ReentrantLock();
+    public static volatile Map<BiomeColorHelper.ColorResolver, Integer> knownColorResolvers = createInitialColorResolvers();
 
     public static int nextColorID = BiomeColorType.LAST + 1;
 
-    static
+    private static Map<BiomeColorHelper.ColorResolver, Integer>
+    createInitialColorResolvers()
     {
-        knownColorResolvers.put(BiomeColorHelper.GRASS_COLOR, BiomeColorType.GRASS);
-        knownColorResolvers.put(BiomeColorHelper.WATER_COLOR, BiomeColorType.WATER);
-        knownColorResolvers.put(BiomeColorHelper.FOLIAGE_COLOR, BiomeColorType.FOLIAGE);
+        Map<BiomeColorHelper.ColorResolver, Integer> result = new HashMap<>();
+
+        result.put(BiomeColorHelper.GRASS_COLOR, BiomeColorType.GRASS);
+        result.put(BiomeColorHelper.WATER_COLOR, BiomeColorType.WATER);
+        result.put(BiomeColorHelper.FOLIAGE_COLOR, BiomeColorType.FOLIAGE);
+
+        return result;
     }
 
     public static int
     addNewColorResolver(BiomeColorHelper.ColorResolver colorResolver)
     {
+        Integer result;
+
         lock.lock();
+        try
+        {
+            result = knownColorResolvers.get(colorResolver);
 
-        int id = nextColorID++;
+            if (result == null)
+            {
+                result = nextColorID++;
 
-        knownColorResolvers.put(colorResolver, id);
+                Map<BiomeColorHelper.ColorResolver, Integer> newKnownColorResolvers = new HashMap<>(knownColorResolvers);
 
-        lock.unlock();
+                newKnownColorResolvers.put(colorResolver, result);
 
-        return id;
+                knownColorResolvers = newKnownColorResolvers;
+            }
+        }
+        finally
+        {
+            lock.unlock();
+        }
+
+        return result;
     }
 
     public static int

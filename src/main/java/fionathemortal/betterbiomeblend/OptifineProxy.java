@@ -7,28 +7,42 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeColorHelper;
 import net.minecraftforge.event.terraingen.BiomeEvent;
 import net.optifine.CustomColors;
-import scala.Int;
 
 import java.util.HashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.Map;
 
 public class OptifineProxy
 {
-    private static final HashMap<CustomColors.IColorizer, Integer> knownColorizers = new HashMap<>();
+    private static volatile Map<CustomColors.IColorizer, Integer> knownColorizers = new HashMap<>();
 
     private static int
     addNewColorizer(CustomColors.IColorizer colorizer)
     {
+        Integer result;
+
         ColorResolverCompatibility.lock.lock();
 
-        int id = ColorResolverCompatibility.nextColorID++;
+        try
+        {
+            result = knownColorizers.get(colorizer);
 
-        knownColorizers.put(colorizer, id);
+            if (result == null)
+            {
+                result = ColorResolverCompatibility.nextColorID++;
 
-        ColorResolverCompatibility.lock.unlock();
+                Map<CustomColors.IColorizer, Integer> newKnownColorizers = new HashMap<>(knownColorizers);
 
-        return id;
+                newKnownColorizers.put(colorizer, result);
+
+                knownColorizers = newKnownColorizers;
+            }
+        }
+        finally
+        {
+            ColorResolverCompatibility.lock.unlock();
+        }
+
+        return result;
     }
 
     public static int

@@ -532,7 +532,7 @@ public final class BiomeColor
 
                     if (chunkCache instanceof ChunkCache)
                     {
-                        result = ((ChunkCache) blockAccess).world;
+                        result = chunkCache.world;
                     }
                 }
             }
