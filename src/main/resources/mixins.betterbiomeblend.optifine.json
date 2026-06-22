@@ -1,5 +1,5 @@
 {
-    "required": true,
+    "required": false,
     "compatibilityLevel": "JAVA_8",
     "package": "fionathemortal.betterbiomeblend.mixin",
     "refmap": "refmap.betterbiomeblend.json",
@@ -7,8 +7,7 @@
     "mixins": [
     ],
     "client": [
-        "MixinBiomeColorHelper",
-        "MixinWorldClient"
+        "MixinCustomColors"
     ],
     "server": [],
     "minVersion": "0.8.5"
