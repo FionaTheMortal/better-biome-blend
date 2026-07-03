@@ -1,16 +1,15 @@
 package fionathemortal.betterbiomeblend.mixin;
 
-import fionathemortal.betterbiomeblend.BetterBiomeBlendClient;
+import fionathemortal.betterbiomeblend.BetterBiomeBlendOptions;
 import net.minecraft.client.OptionInstance;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.options.OptionsSubScreen;
+import net.minecraft.client.gui.screens.options.VideoSettingsScreen;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
-import net.minecraft.client.gui.screens.options.VideoSettingsScreen;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @SuppressWarnings("unused")
@@ -30,7 +29,7 @@ public abstract class MixinVideoSettingsScreen extends OptionsSubScreen
     private static void
     bbb$modifyQualityOptions(Options options, CallbackInfoReturnable<OptionInstance<?>[]> cir)
     {
-        var original = cir.getReturnValue();
+        OptionInstance<?>[] original = cir.getReturnValue();
 
         for (int index = 0;
              index < original.length;
@@ -40,7 +39,7 @@ public abstract class MixinVideoSettingsScreen extends OptionsSubScreen
 
             if (option == options.biomeBlendRadius())
             {
-                original[index] = BetterBiomeBlendClient.betterBiomeBlendRadius;
+                original[index] = ((BetterBiomeBlendOptions) options).betterBiomeBlendRadius();
             }
         }
 

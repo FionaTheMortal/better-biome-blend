@@ -4,3 +4,4 @@ accessible field net/minecraft/client/Options biomeBlendRadius Lnet/minecraft/cl
 mutable    field net/minecraft/client/Options biomeBlendRadius Lnet/minecraft/client/OptionInstance;
 
 accessible class net/minecraft/client/Options$FieldAccess
+accessible class net/minecraft/client/Options$OptionAccess

@@ -14,6 +14,7 @@
     "license": "${license}",
     "icon": "assets/betterbiomeblend/${mod_id}.png",
     "environment": "*",
+    "accessWidener": "betterbiomeblend.accesswidener",
     "entrypoints": {
         "client": [
             "fionathemortal.betterbiomeblend.fabric.BetterBiomeBlendFabric"
@@ -30,4 +31,3 @@
         "java": ">=${java_version}"
     }
 }
-  

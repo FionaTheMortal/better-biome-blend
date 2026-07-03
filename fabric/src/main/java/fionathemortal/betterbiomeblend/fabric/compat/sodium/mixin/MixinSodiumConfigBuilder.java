@@ -63,7 +63,7 @@ public class MixinSodiumConfigBuilder
                 .setTooltip(Component.translatable("bbb.biomeBlendRadius.tooltip"))
                 .setRange(0, 14, 1)
                 .setDefaultValue(14)
-                .setBinding((value) -> BetterBiomeBlendClient.betterBiomeBlendRadius.set(value), () -> BetterBiomeBlendClient.betterBiomeBlendRadius.get())
+                .setBinding(BetterBiomeBlendClient::setBlendRadiusSetting, BetterBiomeBlendClient::getBlendRadiusSetting)
                 .setImpact(OptionImpact.LOW)
                 .setFlags(OptionFlag.REQUIRES_RENDERER_RELOAD)));
     }
