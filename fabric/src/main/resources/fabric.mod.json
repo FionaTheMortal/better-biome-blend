@@ -17,6 +17,9 @@
     "entrypoints": {
         "client": [
             "fionathemortal.betterbiomeblend.fabric.BetterBiomeBlendFabric"
+        ],
+        "sodium:config_api_user": [
+            "fionathemortal.betterbiomeblend.fabric.compat.sodium.SodiumConfigEntryPoint"
         ]
     },
     "mixins": [
@@ -30,4 +33,3 @@
         "java": ">=${java_version}"
     }
 }
-  

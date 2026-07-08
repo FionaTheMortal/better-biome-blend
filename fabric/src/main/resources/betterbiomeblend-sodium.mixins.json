@@ -1,6 +1,7 @@
 {
   "required": true,
   "package": "fionathemortal.betterbiomeblend.fabric.compat.sodium.mixin",
+  "plugin": "fionathemortal.betterbiomeblend.fabric.compat.sodium.mixin.SodiumMixinPlugin",
   "compatibilityLevel": "JAVA_21",
   "minVersion": "0.8",
   "refmap": "${mod_id}.refmap.json",

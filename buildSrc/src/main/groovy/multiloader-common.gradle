@@ -13,6 +13,12 @@ java {
     withJavadocJar()
 }
 
+tasks.withType(JavaExec).configureEach {
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(java_version)
+    }
+}
+
 repositories {
     mavenCentral()
     // https://docs.gradle.org/current/userguide/declaring_repositories.html#declaring_content_exclusively_found_in_one_repository
@@ -34,6 +40,13 @@ repositories {
         url = "https://api.modrinth.com/maven"
         content {
             includeGroup "maven.modrinth"
+        }
+    }
+    maven {
+        name = "CaffeineMC"
+        url = "https://maven.caffeinemc.net/releases"
+        content {
+            includeGroup "net.caffeinemc"
         }
     }
 }

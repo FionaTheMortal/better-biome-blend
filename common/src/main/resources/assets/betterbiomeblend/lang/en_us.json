@@ -8,5 +8,7 @@
   "options.biomeBlendRadius.29": "29x29 (WOAH!)",
 
   "bbb.biomeBlendRadius" : "Better Biome Blend",
+  "bbb.sodium.biomeBlend" : "Biome Blend",
+  "bbb.sodium.general" : "General",
   "bbb.biomeBlendRadius.tooltip" : "Controls the blend radius used by Better Biome Blend. "
 }

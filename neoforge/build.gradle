@@ -44,6 +44,7 @@ neoForge {
 dependencies {
     compileOnly "maven.modrinth:embeddium:1.0.15+mc1.21.1"
     compileOnly "maven.modrinth:sodium:mc1.21.1-0.6.13-neoforge"
+    compileOnly "net.caffeinemc:sodium-neoforge-api:0.8.12+mc1.21.1"
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
