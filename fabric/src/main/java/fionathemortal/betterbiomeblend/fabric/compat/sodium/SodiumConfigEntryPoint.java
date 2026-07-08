@@ -38,6 +38,11 @@ public class SodiumConfigEntryPoint implements ConfigEntryPoint
             .setRange(0, 14, 1)
             .setValueFormatter(value -> {
                 int diameter = value * 2 + 1;
+                if (diameter == 1)
+                {
+                    return Component.translatable("gui.none");
+                }
+
                 return Component.literal(diameter + "x" + diameter);
             })
             .setImpact(OptionImpact.LOW)
