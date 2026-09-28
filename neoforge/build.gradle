@@ -42,13 +42,13 @@ neoForge {
 
 repositories {
     maven {
-        name "caffeinemcRepositoryReleases"
-        url "https://maven.caffeinemc.net/releases"
+        name = "caffeinemcRepositoryReleases"
+        url = "https://maven.caffeinemc.net/releases"
     }
 }
 
 dependencies {
-    compileOnly "net.caffeinemc:sodium-neoforge-mod:0.9.0+mc26.2"
+    compileOnly "net.caffeinemc:sodium-neoforge-mod:0.9.2+mc26.3"
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }

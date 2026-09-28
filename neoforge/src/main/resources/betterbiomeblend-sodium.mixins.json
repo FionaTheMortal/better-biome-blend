@@ -1,5 +1,5 @@
 {
-  "required": true,
+  "required": false,
   "package": "fionathemortal.betterbiomeblend.forge.compat.sodium.mixin",
   "compatibilityLevel": "JAVA_21",
   "minVersion": "0.8",
