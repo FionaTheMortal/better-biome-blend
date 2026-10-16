@@ -48,7 +48,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly "net.caffeinemc:sodium-neoforge-mod:0.9.2+mc26.3"
+    compileOnly "net.caffeinemc:sodium-neoforge-mod:0.9.3-beta.1+mc26.3"
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }

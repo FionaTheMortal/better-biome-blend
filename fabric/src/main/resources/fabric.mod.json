@@ -16,6 +16,9 @@
     "environment": "*",
     "accessWidener": "betterbiomeblend.accesswidener",
     "entrypoints": {
+        "sodium:config_api_user": [
+            "fionathemortal.betterbiomeblend.fabric.compat.sodium.SodiumConfigEntryPoint"
+        ],
         "client": [
             "fionathemortal.betterbiomeblend.fabric.BetterBiomeBlendFabric"
         ]
